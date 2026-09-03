@@ -30,8 +30,8 @@ def send_password_reset_email(to_name: str, to_email: str, reset_link: str) -> b
     msg["To"] = to_email
 
     try:
-        with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT) as server:
-            server.starttls()
+		with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=10) as server:            
+		server.starttls()
             if settings.SMTP_USER and settings.SMTP_PASSWORD:
                 server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
             server.sendmail(settings.SMTP_FROM, [to_email], msg.as_string())
