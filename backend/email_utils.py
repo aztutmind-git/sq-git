@@ -51,6 +51,7 @@ def send_password_reset_email(to_name: str, to_email: str, reset_link: str) -> b
         headers={
             "Authorization": f"Bearer {settings.RESEND_API_KEY}",
             "Content-Type": "application/json",
+            "User-Agent": "SyllabusQuest-Backend/1.0",
         },
     )
 
