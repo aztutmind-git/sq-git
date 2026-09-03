@@ -5,7 +5,7 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
 from config import settings
-from database import Base, engine
+import seed
 import models  # noqa: F401  (ensures models are registered on Base before create_all)
 from rate_limit import limiter
 from routers import auth, students, questions, progress
@@ -49,8 +49,7 @@ app.include_router(progress.router)
 @app.on_event("startup")
 def on_startup():
     # For production, prefer Alembic migrations over create_all().
-    Base.metadata.create_all(bind=engine)
-
+    seed.main()
 
 @app.get("/api/health")
 def health():
