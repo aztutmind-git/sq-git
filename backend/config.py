@@ -40,14 +40,11 @@ class Settings(BaseSettings):
     # ---- CORS ----
     CORS_ORIGINS: str = "*"  # comma-separated list in production, e.g. "https://yourapp.com"
 
-    # ---- Optional SMTP (for actually emailing password-reset links) ----
-    SMTP_HOST: str | None = None
-    SMTP_PORT: int = 587
-    SMTP_USER: str | None = None
-    SMTP_PASSWORD: str | None = None
-    SMTP_FROM: str | None = None
-    # Base URL of the frontend, used to build the reset link, e.g. https://app.example.com
+    # ---- Optional email API (for actually emailing password-reset links) ----
+    RESEND_API_KEY: str | None = None
+    EMAIL_FROM: str | None = None
     FRONTEND_RESET_URL: str = "http://localhost:8000/reset-password.html"
+    # Base URL of the frontend, used to build the reset link, e.g. https://app.example.com
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 

@@ -1,22 +1,34 @@
 """
-Minimal SMTP sender for password-reset emails.
+Sends password-reset emails via Resend's HTTP API instead of SMTP.
 
-If SMTP_HOST is not configured, `send_password_reset_email` is a no-op that
+Render's free web services block outbound SMTP ports (25, 465, 587)
+entirely, so a normal SMTP library can never connect from a free-tier
+backend — see:
+https://render.com/changelog/free-web-services-will-no-longer-allow-outbound-traffic-to-smtp-ports
+
+Resend (and other transactional email APIs) send over a normal HTTPS POST
+request instead, which isn't affected by that block. Uses only Python's
+built-in urllib, so no extra dependency is needed.
+
+If RESEND_API_KEY isn't set, `send_password_reset_email` is a no-op that
 returns False — the caller (routers/auth.py) then falls back to returning
 the reset link directly in the API response, which is convenient for local
-development but should be disabled in production once SMTP is set up.
+development but should be disabled in production once this is set up.
 """
-import smtplib
-from email.mime.text import MIMEText
+import json
+import urllib.request
+import urllib.error
 
 from config import settings
 
+RESEND_API_URL = "https://api.resend.com/emails"
+
 
 def send_password_reset_email(to_name: str, to_email: str, reset_link: str) -> bool:
-    if not settings.SMTP_HOST or not settings.SMTP_FROM:
+    if not settings.RESEND_API_KEY or not settings.EMAIL_FROM:
         return False
 
-    body = (
+    body_text = (
         f"Hi {to_name},\n\n"
         f"We received a request to reset the password for your SyllabusQuest account.\n"
         f"Click the link below to set a new password. This link expires in "
@@ -24,18 +36,37 @@ def send_password_reset_email(to_name: str, to_email: str, reset_link: str) -> b
         f"{reset_link}\n\n"
         f"If you did not request this, you can safely ignore this email.\n"
     )
-    msg = MIMEText(body)
-    msg["Subject"] = "Reset your SyllabusQuest password"
-    msg["From"] = settings.SMTP_FROM
-    msg["To"] = to_email
+
+    payload = json.dumps({
+        "from": settings.EMAIL_FROM,
+        "to": [to_email],
+        "subject": "Reset your SyllabusQuest password",
+        "text": body_text,
+    }).encode("utf-8")
+
+    request = urllib.request.Request(
+        RESEND_API_URL,
+        data=payload,
+        method="POST",
+        headers={
+            "Authorization": f"Bearer {settings.RESEND_API_KEY}",
+            "Content-Type": "application/json",
+        },
+    )
 
     try:
-        with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=10) as server:
-            server.starttls()
-            if settings.SMTP_USER and settings.SMTP_PASSWORD:
-                server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
-            server.sendmail(settings.SMTP_FROM, [to_email], msg.as_string())
-        return True
-    except Exception as e:  # pragma: no cover - best effort, log and fall back
+        with urllib.request.urlopen(request, timeout=10) as response:
+            if 200 <= response.status < 300:
+                return True
+            print(f"[email_utils] Resend API returned status {response.status}")
+            return False
+    except urllib.error.HTTPError as e:
+        try:
+            detail = e.read().decode("utf-8")
+        except Exception:
+            detail = str(e)
+        print(f"[email_utils] Resend API error {e.code}: {detail}")
+        return False
+    except Exception as e:
         print(f"[email_utils] Failed to send reset email: {e}")
         return False
