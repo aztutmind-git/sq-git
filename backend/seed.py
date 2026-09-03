@@ -39,8 +39,6 @@ def main():
             )
             db.add(admin)
             db.commit()
-            print(f"Created default admin '{settings.DEFAULT_ADMIN_USERID}' "
-                  f"(password: '{settings.DEFAULT_ADMIN_PASSWORD}') — please change this after first login.")
         else:
             print("Admin account already exists, skipping.")
 
