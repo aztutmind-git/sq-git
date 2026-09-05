@@ -44,8 +44,8 @@ def main():
             # via the DEFAULT_ADMIN_PASSWORD env var, and this runs on every
             # startup, so echoing it would put it in your host's log history
             # every single deploy.
-            print(f"Created default admin '{settings.DEFAULT_ADMIN_USERID}' "
-                  f"— log in with the password you set in '{settings.DEFAULT_ADMIN_PASSWORD}'")
+            print(f"Created default admin  "
+                  f"— log in with the password you set ")
         else:
             print("Admin account already exists, skipping.")
 
