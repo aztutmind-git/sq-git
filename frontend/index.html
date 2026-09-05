@@ -36,12 +36,17 @@
   --c-mathematics-d:#3E4FC0;
   --c-nutrition:#F2735E;
   --c-nutrition-d:#D0523E;
+
+  /* theme defaults (Classic) — overridden per theme-* class on <body> below */
+  --theme-outer-bg: var(--ink);
+  --theme-home-bg: var(--paper);
+  --theme-accent: var(--gold);
 }
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;}
 body{
   font-family:'Inter',system-ui,sans-serif;
-  background:var(--ink);
+  background:var(--theme-outer-bg);
   color:var(--ink);
   min-height:100vh;
   -webkit-font-smoothing:antialiased;
@@ -53,6 +58,31 @@ button{font-family:inherit;cursor:pointer;border:none;}
 input,select{font-family:inherit;}
 ::-webkit-scrollbar{width:0;height:0;}
 
+/* ---------- THEMES ----------
+   Each theme swaps a few CSS variables. Applied via a class on <body>
+   (theme-garden / theme-racetrack / theme-space / theme-ocean). Classic
+   (no class) uses the :root defaults above untouched. */
+body.theme-garden{
+  --theme-outer-bg: radial-gradient(circle at 15% 10%, #eafbe7 0%, transparent 45%), radial-gradient(circle at 85% 20%, #fde8f3 0%, transparent 45%), radial-gradient(circle at 40% 90%, #e3f6e0 0%, transparent 50%), #dff2da;
+  --theme-home-bg: radial-gradient(circle at 10% 0%, #eafbe7 0%, transparent 40%), radial-gradient(circle at 90% 100%, #fdeef8 0%, transparent 45%), var(--paper);
+  --theme-accent: #4CAF6D;
+}
+body.theme-racetrack{
+  --theme-outer-bg: repeating-linear-gradient(135deg, #1c1c22 0 26px, #232328 26px 52px), linear-gradient(#141416,#141416);
+  --theme-home-bg: linear-gradient(180deg, #fff6d8 0%, var(--paper) 55%), repeating-linear-gradient(90deg, transparent 0 38px, rgba(0,0,0,0.035) 38px 40px);
+  --theme-accent: #E23D3D;
+}
+body.theme-space{
+  --theme-outer-bg: radial-gradient(1.5px 1.5px at 20% 20%, #ffffff88 50%, transparent), radial-gradient(1.5px 1.5px at 70% 60%, #ffffff66 50%, transparent), radial-gradient(2px 2px at 40% 85%, #ffffff77 50%, transparent), radial-gradient(2px 2px at 90% 30%, #ffffff55 50%, transparent), radial-gradient(circle at 30% 20%, #2b1f66, transparent 55%), #0b0824;
+  --theme-home-bg: radial-gradient(circle at 85% 0%, #ece4ff 0%, transparent 45%), radial-gradient(circle at 10% 100%, #e3ecff 0%, transparent 45%), var(--paper);
+  --theme-accent: #8B7CF6;
+}
+body.theme-ocean{
+  --theme-outer-bg: radial-gradient(circle at 20% 15%, #d6f3ff33 0%, transparent 45%), radial-gradient(circle at 80% 80%, #a0e8ff22 0%, transparent 50%), linear-gradient(180deg,#0b3f5c,#082c42);
+  --theme-home-bg: radial-gradient(circle at 90% 0%, #e0f7fb 0%, transparent 45%), radial-gradient(circle at 5% 100%, #e5f6ff 0%, transparent 45%), var(--paper);
+  --theme-accent: #2AA6C9;
+}
+
 .app{
   max-width:480px;
   margin:0 auto;
@@ -60,6 +90,63 @@ input,select{font-family:inherit;}
   background:var(--ink);
   position:relative;
   overflow-x:hidden;
+}
+/* On tablet/desktop widths, the app becomes a centered "phone shell" — give
+   it a shadow and let the themed outer background show around it, instead
+   of stranding a full-bleed mobile layout in the middle of a wide viewport. */
+@media (min-width:600px){
+  body{display:flex;justify-content:center;padding:24px 0;}
+  .app{
+    min-height:calc(100vh - 48px);
+    border-radius:28px;
+    box-shadow:0 30px 70px rgba(0,0,0,0.45);
+  }
+}
+/* The admin console is dense dashboard content (student list, Excel upload,
+   full question bank) — cramming it into the same 480px phone shell as the
+   student-facing screens makes it painful to use on a laptop. Widen just
+   this screen into a two-column layout once there's room for it. The
+   student-facing gamified screens intentionally stay phone-shell width at
+   any viewport size — that's a deliberate design choice, not a gap. */
+@media (min-width:900px){
+  body.admin-active .app{max-width:1080px;}
+  body.admin-active #screen-admin{
+    display:grid;
+    grid-template-columns:360px 1fr;
+    align-items:start;
+    gap:20px;
+    padding:0 20px 100px;
+  }
+  body.admin-active #screen-admin .admin-top{
+    grid-column:1 / -1;
+    margin:0 -20px;
+    border-radius:0 0 20px 20px;
+  }
+  body.admin-active #screen-admin #admin-students,
+  body.admin-active #screen-admin #admin-upload{
+    grid-column:1;
+  }
+  body.admin-active #screen-admin .admin-subjrow{
+    grid-column:2;
+    padding:16px 0 4px;
+  }
+  body.admin-active #screen-admin .admin-section{
+    grid-column:2;
+    padding:0 0 40px;
+  }
+  body.admin-active .fab{
+    position:static;
+    grid-column:2;
+    max-width:none;
+    width:auto;
+    display:inline-block;
+    margin:4px 0 0;
+  }
+}
+@media (max-width:359px){
+  /* smallest phones — tighten a couple of spots that get cramped */
+  .two-col{flex-direction:column;}
+  .hero-line h1{font-size:26px;}
 }
 .screen{display:none;min-height:100vh;flex-direction:column;}
 .screen.active{display:flex;}
@@ -140,7 +227,7 @@ input,select{font-family:inherit;}
 .admin-link{margin-top:18px;text-align:center;font-size:12px;color:#8b86c4;text-decoration:underline;background:none;}
 
 /* ---------- HOME ---------- */
-#screen-home{background:var(--paper);}
+#screen-home{background:var(--theme-home-bg);}
 .topbar{
   background:var(--ink);color:#fff;padding:18px 20px 24px;border-radius:0 0 26px 26px;
   display:flex;align-items:center;justify-content:space-between;
@@ -301,6 +388,20 @@ input,select{font-family:inherit;}
 .close-x{position:absolute;top:14px;right:14px;background:rgba(0,0,0,0.06);width:30px;height:30px;border-radius:50%;font-size:14px;}
 .radio-row{display:flex;gap:8px;}
 .radio-row label{flex:1;display:flex;align-items:center;gap:7px;background:#fff;border:1.5px solid var(--paper-line);border-radius:10px;padding:10px 10px;font-size:12.5px;font-weight:600;}
+.theme-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.theme-opt{
+  border-radius:16px;padding:16px 12px;text-align:left;position:relative;overflow:hidden;
+  min-height:88px;display:flex;flex-direction:column;justify-content:flex-end;
+  border:2.5px solid transparent;color:#fff;
+}
+.theme-opt.selected{border-color:var(--gold);box-shadow:0 0 0 3px rgba(240,180,41,0.25);}
+.theme-opt .t-icon{font-size:22px;position:absolute;top:12px;left:12px;}
+.theme-opt .t-name{font-family:'Fredoka';font-weight:600;font-size:13.5px;}
+.theme-opt.t-classic{background:linear-gradient(155deg,var(--ink),var(--ink-2));}
+.theme-opt.t-garden{background:linear-gradient(155deg,#4CAF6D,#2F8A4C);}
+.theme-opt.t-racetrack{background:linear-gradient(155deg,#3a3a40,#1c1c22);}
+.theme-opt.t-space{background:linear-gradient(155deg,#5B4FC4,#2b1f66);}
+.theme-opt.t-ocean{background:linear-gradient(155deg,#2AA6C9,#0b3f5c);}
 .msg-note{font-size:12px;color:var(--muted);text-align:center;margin-top:10px;}
 .toast{
   position:fixed;top:16px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 18px;
@@ -309,7 +410,6 @@ input,select{font-family:inherit;}
 .toast.show{opacity:1;top:26px;}
 .hidden{display:none !important;}
 </style>
-<script>window.SQ_API_BASE = 'https://sq-git.onrender.com';</script>
 </head>
 <body>
 <div class="app">
@@ -357,6 +457,7 @@ input,select{font-family:inherit;}
       </div>
       <div style="display:flex;gap:8px;align-items:center;">
         <div class="stat">⚡ <span id="home-xp">0</span></div>
+        <button class="topbar-btn" onclick="openThemeModal()" aria-label="Change theme">🎨</button>
         <button class="topbar-btn" onclick="logout()">Switch</button>
       </div>
     </div>
@@ -491,8 +592,8 @@ input,select{font-family:inherit;}
   <div class="modal-card" style="position:relative;">
     <button class="close-x" onclick="closeAddModal()">✕</button>
     <h3>Add a question</h3>
-    <div class="field"><label>Level (1 = Foundation … 5 = Mastery/Tough)</label>
-      <select id="new-level"><option value="1">Level 1 — Foundation</option><option value="2">Level 2 — Building</option><option value="3">Level 3 — Application</option><option value="4">Level 4 — Challenge</option><option value="5">Level 5 — Mastery (tough)</option></select>
+    <div class="field"><label>Level (1 = easiest — no upper limit)</label>
+      <input type="number" id="new-level" min="1" step="1" value="1" placeholder="e.g. 1, 5, 12...">
     </div>
     <div class="field"><label>Board</label>
       <div class="radio-row">
@@ -532,6 +633,16 @@ input,select{font-family:inherit;}
   </div>
 </div>
 
+<!-- THEME PICKER MODAL -->
+<div class="modal" id="theme-modal">
+  <div class="modal-card" style="position:relative;">
+    <button class="close-x" onclick="closeThemeModal()">✕</button>
+    <h3>Pick your look</h3>
+    <p class="msg-note" style="margin-bottom:14px;">Choose whatever feels most like you — you can change this anytime.</p>
+    <div class="theme-grid" id="theme-grid"></div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -562,6 +673,14 @@ const LEVEL_META = {
   4:{label:'Challenge',  diff:'Hard'},
   5:{label:'Mastery',    diff:'Expert'},
 };
+// Levels beyond 5 have no named tier — fall back to a plain "Level N" label,
+// cycling through the same 5 difficulty tags so the UI still shows *some*
+// sense of escalating difficulty without needing new admin-side config.
+function levelMeta(lvl){
+  if(LEVEL_META[lvl]) return LEVEL_META[lvl];
+  const cycled = LEVEL_META[((lvl - 1) % 5) + 1];
+  return {label:`Level ${lvl}`, diff:cycled.diff};
+}
 const AVATARS = ['🦊','🐼','🦉','🐯','🐸','🐨','🦁','🐵','🐢','🦄'];
 
 /* =========================================================
@@ -588,6 +707,10 @@ function subjMeta(key){ return SUBJECTS.find(s=>s.key===key); }
 function goto(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
+  // The admin console gets a wider, multi-column layout on desktop widths
+  // (see the body.admin-active rules in <style>) since it's content-dense
+  // dashboard-style work, unlike the phone-shell student screens.
+  document.body.classList.toggle('admin-active', id === 'screen-admin');
   window.scrollTo(0,0);
 }
 function toast(msg){
@@ -698,12 +821,49 @@ async function adminLogin(){
 }
 function onLoginSuccess(data){
   STATE.token = data.access_token;
-  STATE.user = {userid:data.userid, name:data.name, role:data.role, avatar:data.avatar, grade:data.grade, board:data.board};
+  STATE.user = {userid:data.userid, name:data.name, role:data.role, avatar:data.avatar, grade:data.grade, board:data.board, theme:data.theme || 'classic'};
   localStorage.setItem('sq_token', STATE.token);
+  applyTheme(STATE.user.theme);
 }
+
+/* ---------- theme picker ---------- */
+const THEMES = [
+  {key:'classic',   icon:'⭐', name:'Classic'},
+  {key:'garden',    icon:'🌸', name:'Garden'},
+  {key:'racetrack', icon:'🏁', name:'Race Track'},
+  {key:'space',     icon:'🚀', name:'Space'},
+  {key:'ocean',     icon:'🌊', name:'Ocean'},
+];
+function applyTheme(theme){
+  document.body.classList.remove(...THEMES.map(t=>`theme-${t.key}`));
+  if(theme && theme !== 'classic') document.body.classList.add(`theme-${theme}`);
+}
+function openThemeModal(){
+  const grid = document.getElementById('theme-grid');
+  const current = (STATE.user && STATE.user.theme) || 'classic';
+  grid.innerHTML = THEMES.map(t=>`
+    <button class="theme-opt t-${t.key} ${t.key===current?'selected':''}" onclick="selectTheme('${t.key}')">
+      <span class="t-icon">${t.icon}</span>
+      <span class="t-name">${t.name}</span>
+    </button>`).join('');
+  document.getElementById('theme-modal').classList.add('active');
+}
+function closeThemeModal(){ document.getElementById('theme-modal').classList.remove('active'); }
+async function selectTheme(theme){
+  applyTheme(theme); // instant feedback, even before the save round-trip finishes
+  if(STATE.user) STATE.user.theme = theme;
+  try{
+    await api('/api/auth/set-theme', {method:'POST', body:{theme}});
+    closeThemeModal();
+  }catch(err){
+    toast(err.message || 'Could not save theme');
+  }
+}
+
 function logout(){
   STATE.token = null; STATE.user = null; STATE.progress = {};
   localStorage.removeItem('sq_token');
+  applyTheme('classic');
   goto('screen-auth');
 }
 function adminLogout(){
@@ -760,9 +920,9 @@ async function submitPasswordReset(){
 async function loadMyProgress(){
   const rows = await api('/api/progress');
   const map = {};
-  rows.forEach(r => map[r.subject] = {unlocked_level:r.unlocked_level, xp:r.xp, stars:r.stars || {}});
+  rows.forEach(r => map[r.subject] = {unlocked_level:r.unlocked_level, max_level:r.max_level, xp:r.xp, stars:r.stars || {}});
   // Ensure every known subject has an entry even if the backend hasn't created one yet
-  SUBJECTS.forEach(s => { if(!map[s.key]) map[s.key] = {unlocked_level:1, xp:0, stars:{}}; });
+  SUBJECTS.forEach(s => { if(!map[s.key]) map[s.key] = {unlocked_level:1, max_level:5, xp:0, stars:{}}; });
   STATE.progress = map;
 }
 function totalXp(){
@@ -780,15 +940,15 @@ function enterHome(){
 function renderSubjectGrid(){
   const grid = document.getElementById('subject-grid');
   grid.innerHTML = SUBJECTS.map(s=>{
-    const sp = STATE.progress[s.key] || {unlocked_level:1, stars:{}};
-    const totalLevels = 5;
+    const sp = STATE.progress[s.key] || {unlocked_level:1, max_level:5, stars:{}};
+    const totalLevels = sp.max_level || 5;
     const doneLevels = Object.keys(sp.stars).length;
     const pct = Math.round((doneLevels/totalLevels)*100);
     return `<button class="subj-card" style="background:linear-gradient(155deg, var(${s.c}), var(${s.cd}));" onclick="openSubject('${s.key}')">
       <div class="icon">${s.icon}</div>
       <div>
         <div class="name">${s.name}</div>
-        <div class="prog">Level ${sp.unlocked_level} of 5</div>
+        <div class="prog">Level ${sp.unlocked_level} of ${totalLevels}</div>
         <div class="bar"><i style="width:${pct}%"></i></div>
       </div>
     </button>`;
@@ -803,7 +963,7 @@ function openSubject(key){
   const s = subjMeta(key);
   const prog = STATE.progress[key];
   document.getElementById('map-title').textContent = s.name;
-  document.getElementById('map-sub').textContent = `${s.icon} 5 levels · Level ${prog.unlocked_level} unlocked`;
+  document.getElementById('map-sub').textContent = `${s.icon} ${prog.max_level} levels · Level ${prog.unlocked_level} unlocked`;
   document.getElementById('map-xp').textContent = prog.xp;
   document.getElementById('screen-map').style.background = `linear-gradient(180deg, var(${s.c}), var(${s.cd}) 60%, #1a1440)`;
   renderPath(key);
@@ -814,8 +974,8 @@ function renderPath(key){
   const prog = STATE.progress[key];
   const wrap = document.getElementById('path-wrap');
   let html = '';
-  for(let lvl=5; lvl>=1; lvl--){
-    const meta = LEVEL_META[lvl];
+  for(let lvl=prog.max_level; lvl>=1; lvl--){
+    const meta = levelMeta(lvl);
     const state = lvl < prog.unlocked_level ? 'done' : (lvl === prog.unlocked_level ? 'unlocked' : 'locked');
     const stars = prog.stars[lvl] || 0;
     let bg = state==='locked' ? '' : `background:linear-gradient(155deg, var(${s.c}), var(${s.cd}));`;
@@ -867,7 +1027,7 @@ function renderQuestion(){
   document.getElementById('screen-quiz').style.background = '#FBF7EC';
   document.getElementById('quiz-progress').style.width = `${(quiz.idx/quiz.questions.length)*100}%`;
   renderHearts();
-  document.getElementById('q-difficulty').textContent = LEVEL_META[quiz.level].diff;
+  document.getElementById('q-difficulty').textContent = levelMeta(quiz.level).diff;
   document.getElementById('q-difficulty').style.background = `var(${s.c})`;
   document.getElementById('q-difficulty').style.color = '#fff';
   document.getElementById('q-board').textContent = q.board;
@@ -933,7 +1093,7 @@ async function finishLevel(outOfHearts){
   document.getElementById('result-title').textContent = outOfHearts ? 'Out of hearts' : (passed ? 'Level complete!' : 'So close — try again');
   document.getElementById('result-sub').textContent = outOfHearts
     ? 'You ran out of hearts. Give it another shot.'
-    : (passed ? `You cleared Level ${quiz.level} · ${LEVEL_META[quiz.level].diff}` : 'You need at least 50% correct to unlock the next level.');
+    : (passed ? `You cleared Level ${quiz.level} · ${levelMeta(quiz.level).diff}` : 'You need at least 50% correct to unlock the next level.');
   document.getElementById('result-stars').textContent = passed ? '⭐'.repeat(stars) + '☆'.repeat(3-stars) : '☆☆☆';
   document.getElementById('result-correct').textContent = `${quiz.correct}/${total}`;
   document.getElementById('result-xp').textContent = `+${xpGained}`;
@@ -943,8 +1103,9 @@ async function finishLevel(outOfHearts){
 function closeResult(){
   document.getElementById('result-overlay').classList.remove('active');
   renderPath(STATE.currentSubject);
-  document.getElementById('map-xp').textContent = STATE.progress[STATE.currentSubject].xp;
-  document.getElementById('map-sub').textContent = `${subjMeta(STATE.currentSubject).icon} 5 levels · Level ${STATE.progress[STATE.currentSubject].unlocked_level} unlocked`;
+  const p = STATE.progress[STATE.currentSubject];
+  document.getElementById('map-xp').textContent = p.xp;
+  document.getElementById('map-sub').textContent = `${subjMeta(STATE.currentSubject).icon} ${p.max_level} levels · Level ${p.unlocked_level} unlocked`;
   goto('screen-map');
 }
 
@@ -1047,11 +1208,17 @@ async function renderAdminSection(){
   try{ questions = await api(`/api/admin/questions?subject=${encodeURIComponent(key)}`); }
   catch(err){ toast(err.message || 'Could not load questions'); return; }
 
+  // Always show at least levels 1-5 as empty slots to fill in, but extend
+  // upward automatically if questions exist beyond that — this is what
+  // makes level count open-ended instead of hardcoded.
+  const highestUploaded = questions.reduce((max,q)=>Math.max(max,q.level), 0);
+  const topLevel = Math.max(5, highestUploaded);
+
   let html = '';
-  for(let lvl=1; lvl<=5; lvl++){
+  for(let lvl=1; lvl<=topLevel; lvl++){
     const qs = questions.filter(q=>q.level===lvl);
     html += `<div class="admin-level-block">
-      <h4><span>Level ${lvl} — ${LEVEL_META[lvl].label}</span><span>${qs.length} questions</span></h4>
+      <h4><span>Level ${lvl} — ${levelMeta(lvl).label}</span><span>${qs.length} questions</span></h4>
       ${qs.map(q=>{
         const opts = [q.option_a, q.option_b, q.option_c, q.option_d];
         return `<div class="q-row">
@@ -1110,7 +1277,8 @@ renderAvatarPicker();
   if(!STATE.token) return;
   try{
     const me = await api('/api/auth/me');
-    STATE.user = {userid:me.userid, name:me.name, role:me.role, avatar:me.avatar, grade:me.grade, board:me.board};
+    STATE.user = {userid:me.userid, name:me.name, role:me.role, avatar:me.avatar, grade:me.grade, board:me.board, theme:me.theme || 'classic'};
+    applyTheme(STATE.user.theme);
     if(me.role === 'admin'){
       STATE.isAdmin = true;
       await renderAdminSubjRow();

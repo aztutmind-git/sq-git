@@ -25,7 +25,7 @@ def whoami(user: models.User = Depends(get_current_user)):
     return schemas.TokenResponse(
         access_token="", role=user.role.value, name=user.name, userid=user.userid,
         avatar=user.avatar, grade=user.grade, board=user.board,
-        must_reset_password=user.must_reset_password,
+        must_reset_password=user.must_reset_password, theme=user.theme,
     )
 
 
@@ -39,6 +39,29 @@ def set_password(payload: schemas.SetPasswordRequest, db: Session = Depends(get_
     user.must_reset_password = False
     db.commit()
     return {"message": "Password updated."}
+
+
+@router.post("/set-email")
+def set_email(payload: schemas.SetEmailRequest, db: Session = Depends(get_db),
+              user: models.User = Depends(get_current_user)):
+    """Lets a logged-in user (including admin accounts, which don't get an
+    email at creation time) add or update their own email — needed for
+    "forgot password" to actually send them a real email instead of only
+    working through the in-app dev-mode fallback."""
+    user.email = payload.email
+    db.commit()
+    return {"message": "Email updated."}
+
+
+@router.post("/set-theme")
+def set_theme(payload: schemas.SetThemeRequest, db: Session = Depends(get_db),
+              user: models.User = Depends(get_current_user)):
+    """Lets a logged-in student pick their own visual theme (Garden, Race
+    Track, Space, Ocean, or the original Classic look). Validated against
+    schemas.VALID_THEMES so a bad value never gets stored."""
+    user.theme = payload.theme
+    db.commit()
+    return {"message": "Theme updated.", "theme": user.theme}
 
 
 @router.post("/login", response_model=schemas.TokenResponse)
@@ -60,6 +83,7 @@ def login(request: Request, payload: schemas.LoginRequest, db: Session = Depends
         grade=user.grade,
         board=user.board,
         must_reset_password=user.must_reset_password,
+        theme=user.theme,
     )
 
 

@@ -33,12 +33,19 @@ def main():
         if not existing_admin:
             admin = models.User(
                 userid=settings.DEFAULT_ADMIN_USERID,
+                email=settings.DEFAULT_ADMIN_EMAIL,
                 hashed_password=hash_password(settings.DEFAULT_ADMIN_PASSWORD),
                 name="Administrator",
                 role=models.Role.admin,
             )
             db.add(admin)
             db.commit()
+            # Deliberately NOT printing the password here — you already set it
+            # via the DEFAULT_ADMIN_PASSWORD env var, and this runs on every
+            # startup, so echoing it would put it in your host's log history
+            # every single deploy.
+            print(f"Created default admin '{settings.DEFAULT_ADMIN_USERID}' "
+                  f"— log in with the password you set in DEFAULT_ADMIN_PASSWORD.")
         else:
             print("Admin account already exists, skipping.")
 

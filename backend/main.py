@@ -5,8 +5,8 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
 from config import settings
-import seed
 import models  # noqa: F401  (ensures models are registered on Base before create_all)
+import seed
 from rate_limit import limiter
 from routers import auth, students, questions, progress
 
@@ -48,8 +48,13 @@ app.include_router(progress.router)
 
 @app.on_event("startup")
 def on_startup():
-    # For production, prefer Alembic migrations over create_all().
+    # seed.main() creates tables (if missing), the default admin (if none
+    # exists), and the starter question bank (if the table is empty) — it's
+    # safe to call on every startup since each step checks first. This means
+    # a fresh deploy self-initializes without needing Shell access, which
+    # some Render plans don't include.
     seed.main()
+
 
 @app.get("/api/health")
 def health():

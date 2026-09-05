@@ -18,6 +18,7 @@ class TokenResponse(BaseModel):
     grade: Optional[str] = None
     board: Optional[str] = None
     must_reset_password: bool = False
+    theme: str = "classic"
 
 
 class ForgotPasswordRequest(BaseModel):
@@ -56,6 +57,24 @@ class SetPasswordRequest(BaseModel):
     new_password: str = Field(min_length=6)
 
 
+class SetEmailRequest(BaseModel):
+    email: EmailStr
+
+
+VALID_THEMES = {"classic", "garden", "racetrack", "space", "ocean"}
+
+
+class SetThemeRequest(BaseModel):
+    theme: str
+
+    @field_validator("theme")
+    @classmethod
+    def theme_must_be_known(cls, v):
+        if v not in VALID_THEMES:
+            raise ValueError(f"theme must be one of {sorted(VALID_THEMES)}")
+        return v
+
+
 class StudentOut(BaseModel):
     id: str
     userid: str
@@ -72,7 +91,7 @@ class StudentOut(BaseModel):
 # ---------- questions ----------
 class QuestionCreate(BaseModel):
     subject: str
-    level: int = Field(ge=1, le=5)
+    level: int = Field(ge=1, le=1000)  # no real ceiling — a subject's max level is just however high its questions go
     board: str = "CBSE"
     question: str
     option_a: str
@@ -122,6 +141,7 @@ class ExcelUploadResult(BaseModel):
 class SubjectProgress(BaseModel):
     subject: str
     unlocked_level: int
+    max_level: int  # highest level with any questions uploaded — drives the level map, no longer hardcoded
     xp: int
     stars: Dict[str, int]
 

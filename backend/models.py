@@ -35,6 +35,7 @@ class User(Base):
     grade = Column(String(8), nullable=True)
     board = Column(String(16), nullable=True)
     avatar = Column(String(8), nullable=True, default="🦊")
+    theme = Column(String(32), nullable=False, default="classic")
 
     is_active = Column(Boolean, default=True, nullable=False)
     must_reset_password = Column(Boolean, default=False, nullable=False)

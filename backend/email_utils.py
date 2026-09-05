@@ -51,6 +51,9 @@ def send_password_reset_email(to_name: str, to_email: str, reset_link: str) -> b
         headers={
             "Authorization": f"Bearer {settings.RESEND_API_KEY}",
             "Content-Type": "application/json",
+            # Resend's API sits behind Cloudflare, which blocks the default
+            # "Python-urllib/x.y" User-Agent as a suspected bot (error 1010).
+            # Any normal-looking value avoids that.
             "User-Agent": "SyllabusQuest-Backend/1.0",
         },
     )
@@ -62,12 +65,13 @@ def send_password_reset_email(to_name: str, to_email: str, reset_link: str) -> b
             print(f"[email_utils] Resend API returned status {response.status}")
             return False
     except urllib.error.HTTPError as e:
+        # Resend returns a JSON error body worth surfacing (e.g. unverified domain)
         try:
             detail = e.read().decode("utf-8")
         except Exception:
             detail = str(e)
         print(f"[email_utils] Resend API error {e.code}: {detail}")
         return False
-    except Exception as e:
+    except Exception as e:  # pragma: no cover - best effort, log and fall back
         print(f"[email_utils] Failed to send reset email: {e}")
         return False

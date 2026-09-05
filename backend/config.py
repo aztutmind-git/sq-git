@@ -36,15 +36,20 @@ class Settings(BaseSettings):
     # ---- Bootstrap admin (created by seed script if no admin exists) ----
     DEFAULT_ADMIN_USERID: str = "admin"
     DEFAULT_ADMIN_PASSWORD: str = "admin123"  # CHANGE THIS after first login
+    DEFAULT_ADMIN_EMAIL: str | None = None  # set this so "forgot password" can email the admin too
 
     # ---- CORS ----
     CORS_ORIGINS: str = "*"  # comma-separated list in production, e.g. "https://yourapp.com"
 
     # ---- Optional email API (for actually emailing password-reset links) ----
+    # Uses Resend's HTTP API (https://resend.com) instead of SMTP. Render's
+    # free web services block outbound SMTP ports (25/465/587) entirely, so
+    # an HTTP-based provider is what actually works without upgrading your
+    # Render plan — see https://render.com/changelog/free-web-services-will-no-longer-allow-outbound-traffic-to-smtp-ports
     RESEND_API_KEY: str | None = None
-    EMAIL_FROM: str | None = None
-    FRONTEND_RESET_URL: str = "http://localhost:8000/reset-password.html"
+    EMAIL_FROM: str | None = None  # must be on a domain verified in Resend, e.g. noreply@yourdomain.com
     # Base URL of the frontend, used to build the reset link, e.g. https://app.example.com
+    FRONTEND_RESET_URL: str = "http://localhost:8000/reset-password.html"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 

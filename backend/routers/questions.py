@@ -147,9 +147,9 @@ def admin_upload_excel(file: UploadFile = File(...), db: Session = Depends(get_d
             skipped += 1
             errors.append(f"Row {row_num}: invalid level '{level_raw}'")
             continue
-        if not (1 <= level <= 5):
+        if level < 1:
             skipped += 1
-            errors.append(f"Row {row_num}: level must be 1-5")
+            errors.append(f"Row {row_num}: level must be 1 or higher")
             continue
         if not (question_text and a and b and c and d):
             skipped += 1
