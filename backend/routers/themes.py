@@ -119,6 +119,49 @@ async def admin_add_icons(
     return schemas.ThemeOut(key=theme.key, name=theme.name, icon_count=len(theme.icons))
 
 
+@router.put("/admin/themes/{key}", response_model=schemas.ThemeOut)
+async def admin_update_theme(
+    key: str,
+    name: Optional[str] = Form(default=None),
+    background: Optional[UploadFile] = File(default=None),
+    db: Session = Depends(get_db),
+    _admin: models.User = Depends(require_admin),
+):
+    """Rename a theme and/or replace its background image. Icons are managed
+    separately (add via POST .../icons, remove via DELETE .../icons/{index})
+    so a background swap never disturbs the existing icon set."""
+    theme = db.query(models.Theme).filter(models.Theme.key == key).first()
+    if not theme:
+        raise HTTPException(status_code=404, detail="Theme not found")
+
+    if name and name.strip():
+        theme.name = name.strip()
+    if background is not None:
+        bg_bytes, bg_mime = await _read_and_validate_image(background, "Background image")
+        theme.background_image = bg_bytes
+        theme.background_mime = bg_mime
+
+    db.commit()
+    db.refresh(theme)
+    return schemas.ThemeOut(key=theme.key, name=theme.name, icon_count=len(theme.icons))
+
+
+@router.delete("/admin/themes/{key}/icons/{index}", response_model=schemas.ThemeOut)
+def admin_delete_icon(key: str, index: int, db: Session = Depends(get_db),
+                       _admin: models.User = Depends(require_admin)):
+    """Remove a single icon by its position. Remaining icons keep their
+    relative order and simply shift down — level nodes cycle through
+    whatever icons remain, so this never breaks the level map."""
+    theme = db.query(models.Theme).filter(models.Theme.key == key).first()
+    if not theme or index < 0 or index >= len(theme.icons):
+        raise HTTPException(status_code=404, detail="Icon not found")
+
+    db.delete(theme.icons[index])
+    db.commit()
+    db.refresh(theme)
+    return schemas.ThemeOut(key=theme.key, name=theme.name, icon_count=len(theme.icons))
+
+
 @router.delete("/admin/themes/{key}", status_code=status.HTTP_204_NO_CONTENT)
 def admin_delete_theme(key: str, db: Session = Depends(get_db), _admin: models.User = Depends(require_admin)):
     if key == "classic":

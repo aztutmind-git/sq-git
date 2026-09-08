@@ -865,6 +865,7 @@ async function adminLogin(){
     await renderAdminSection();
     renderAvatarPicker();
     await renderAdminStudentList();
+    await renderAdminThemeList();
     goto('screen-admin');
   }catch(err){
     toast(err.message || 'Incorrect admin user ID or password');
@@ -1293,6 +1294,150 @@ async function handleExcelUpload(evt){
     statusEl.textContent = err.message || 'Could not read that file — please check it is a valid Excel file.';
   }
   document.getElementById('admin-excel-file').value = '';
+}
+
+/* =========================================================
+   ADMIN — visual theme management
+   ========================================================= */
+async function uploadTheme(){
+  const statusEl = document.getElementById('theme-upload-status');
+  const key = document.getElementById('new-theme-key').value.trim().toLowerCase();
+  const name = document.getElementById('new-theme-name').value.trim();
+  const bgInput = document.getElementById('new-theme-bg');
+  const iconsInput = document.getElementById('new-theme-icons');
+  const bgFile = bgInput.files[0];
+
+  if(!key || !name){ statusEl.textContent = 'Enter a theme key and display name.'; return; }
+  if(!bgFile){ statusEl.textContent = 'Choose a background image.'; return; }
+
+  const form = new FormData();
+  form.append('key', key);
+  form.append('name', name);
+  form.append('background', bgFile);
+  for(const f of iconsInput.files) form.append('icons', f);
+
+  statusEl.textContent = 'Uploading…';
+  try{
+    const theme = await api('/api/admin/themes', {method:'POST', body:form, isForm:true});
+    statusEl.textContent = `"${theme.name}" added successfully${theme.icon_count ? ` with ${theme.icon_count} icon${theme.icon_count===1?'':'s'}` : ''}.`;
+    toast(`Theme "${theme.name}" added`);
+    document.getElementById('new-theme-key').value = '';
+    document.getElementById('new-theme-name').value = '';
+    bgInput.value = '';
+    iconsInput.value = '';
+    await renderAdminThemeList();
+  }catch(err){
+    statusEl.textContent = err.message || 'Could not upload that theme.';
+    toast(err.message || 'Theme upload failed');
+  }
+}
+let EXPANDED_THEME_KEYS = new Set(); // which theme cards are currently showing their edit panel
+
+async function renderAdminThemeList(){
+  const wrap = document.getElementById('admin-theme-list');
+  if(!wrap) return;
+  let themes;
+  try{ themes = await api('/api/admin/themes'); }
+  catch(err){ wrap.innerHTML = `<p class="empty-note">${err.message || 'Could not load themes'}</p>`; return; }
+  if(!themes.length){ wrap.innerHTML = '<p class="empty-note">No themes uploaded yet — add one above.</p>'; return; }
+
+  wrap.innerHTML = themes.map(t => {
+    const isOpen = EXPANDED_THEME_KEYS.has(t.key);
+    const iconThumbs = Array.from({length: t.icon_count}, (_, i) => `
+      <div style="position:relative;display:inline-block;margin:0 6px 6px 0;">
+        <img src="${API_BASE}/api/themes/${encodeURIComponent(t.key)}/icons/${i}" alt=""
+             style="width:52px;height:52px;border-radius:8px;object-fit:cover;display:block;">
+        <button onclick="deleteThemeIcon('${t.key}', ${i})" title="Remove this icon"
+                style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:#E15554;color:#fff;font-size:12px;line-height:1;border:2px solid var(--paper);cursor:pointer;">✕</button>
+      </div>`).join('');
+
+    return `
+    <div class="user-row" style="flex-wrap:wrap;">
+      <img src="${API_BASE}/api/themes/${encodeURIComponent(t.key)}/background" alt=""
+           style="width:44px;height:44px;border-radius:10px;object-fit:cover;flex-shrink:0;">
+      <div class="meta"><b>${escapeHtml(t.name)}</b><span>${escapeHtml(t.key)} · ${t.icon_count} icon${t.icon_count===1?'':'s'}</span></div>
+      <button onclick="toggleThemeEdit('${t.key}')">${isOpen ? 'Close' : 'Edit'}</button>
+      <button onclick="deleteTheme('${t.key}')">Remove</button>
+      ${isOpen ? `
+      <div style="flex-basis:100%;margin-top:14px;padding-top:14px;border-top:1px solid var(--paper-line);">
+        <div class="field"><label>Display name</label><input id="edit-theme-name-${t.key}" value="${escapeHtml(t.name)}"></div>
+        <div class="field"><label>Replace background image (optional)</label><input type="file" id="edit-theme-bg-${t.key}" accept="image/*"></div>
+        <button class="btn-primary" onclick="saveThemeEdit('${t.key}')">Save changes</button>
+        <p class="msg-note" id="edit-theme-status-${t.key}"></p>
+
+        <div style="margin-top:16px;">
+          <label style="display:block;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#948c68;margin-bottom:8px;">Character icons</label>
+          <div>${iconThumbs || '<p class="empty-note">No icons yet.</p>'}</div>
+        </div>
+        <div class="field" style="margin-top:10px;"><label>Add more icons</label><input type="file" id="edit-theme-add-icons-${t.key}" accept="image/*" multiple></div>
+        <button class="btn-primary" onclick="addIconsToExistingTheme('${t.key}')">Add icons</button>
+        <p class="msg-note" id="edit-theme-icons-status-${t.key}"></p>
+      </div>` : ''}
+    </div>`;
+  }).join('');
+}
+function toggleThemeEdit(key){
+  if(EXPANDED_THEME_KEYS.has(key)) EXPANDED_THEME_KEYS.delete(key);
+  else EXPANDED_THEME_KEYS.add(key);
+  renderAdminThemeList();
+}
+async function saveThemeEdit(key){
+  const statusEl = document.getElementById(`edit-theme-status-${key}`);
+  const name = document.getElementById(`edit-theme-name-${key}`).value.trim();
+  const bgInput = document.getElementById(`edit-theme-bg-${key}`);
+  const form = new FormData();
+  if(name) form.append('name', name);
+  if(bgInput.files[0]) form.append('background', bgInput.files[0]);
+  statusEl.textContent = 'Saving…';
+  try{
+    const theme = await api(`/api/admin/themes/${encodeURIComponent(key)}`, {method:'PUT', body:form, isForm:true});
+    statusEl.textContent = `"${theme.name}" updated successfully.`;
+    toast('Theme updated');
+    bgInput.value = '';
+    await renderAdminThemeList();
+  }catch(err){
+    statusEl.textContent = err.message || 'Could not save changes.';
+    toast(err.message || 'Update failed');
+  }
+}
+async function addIconsToExistingTheme(key){
+  const statusEl = document.getElementById(`edit-theme-icons-status-${key}`);
+  const input = document.getElementById(`edit-theme-add-icons-${key}`);
+  if(!input.files.length){ statusEl.textContent = 'Choose at least one icon image.'; return; }
+  const form = new FormData();
+  for(const f of input.files) form.append('icons', f);
+  statusEl.textContent = 'Uploading…';
+  try{
+    const theme = await api(`/api/admin/themes/${encodeURIComponent(key)}/icons`, {method:'POST', body:form, isForm:true});
+    statusEl.textContent = `Now ${theme.icon_count} icon${theme.icon_count===1?'':'s'} added successfully.`;
+    toast('Icons added');
+    input.value = '';
+    await renderAdminThemeList();
+  }catch(err){
+    statusEl.textContent = err.message || 'Could not add icons.';
+    toast(err.message || 'Icon upload failed');
+  }
+}
+async function deleteThemeIcon(key, index){
+  if(!confirm('Remove this icon?')) return;
+  try{
+    await api(`/api/admin/themes/${encodeURIComponent(key)}/icons/${index}`, {method:'DELETE'});
+    toast('Icon removed');
+    await renderAdminThemeList();
+  }catch(err){
+    toast(err.message || 'Could not remove icon');
+  }
+}
+async function deleteTheme(key){
+  if(!confirm(`Delete the "${key}" theme? Students using it will fall back to Classic.`)) return;
+  try{
+    await api(`/api/admin/themes/${encodeURIComponent(key)}`, {method:'DELETE'});
+    EXPANDED_THEME_KEYS.delete(key);
+    toast('Theme deleted');
+    await renderAdminThemeList();
+  }catch(err){
+    toast(err.message || 'Could not delete theme');
+  }
 }
 
 /* =========================================================
