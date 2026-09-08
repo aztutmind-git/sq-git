@@ -73,6 +73,38 @@ def main():
         else:
             print(f"Questions table already has {question_count} rows, skipping starter load.")
 
+        # ---- starter themes (Garden background, Ocean background + icons) ----
+        assets_dir = Path(__file__).parent / "seed_assets"
+
+        def seed_theme(key: str, name: str, bg_filename: str, icon_dir: str | None = None):
+            if db.query(models.Theme).filter(models.Theme.key == key).first():
+                print(f"Theme '{key}' already exists, skipping.")
+                return
+            bg_path = assets_dir / bg_filename
+            if not bg_path.exists():
+                print(f"Skipping theme '{key}' — {bg_path} not found.")
+                return
+            theme = models.Theme(
+                key=key, name=name,
+                background_image=bg_path.read_bytes(), background_mime="image/jpeg",
+            )
+            db.add(theme)
+            db.flush()
+            if icon_dir:
+                icon_files = sorted((assets_dir / icon_dir).glob("*.jpg"))
+                for i, icon_path in enumerate(icon_files):
+                    db.add(models.ThemeIcon(
+                        theme_id=theme.id, image=icon_path.read_bytes(),
+                        mime="image/jpeg", sort_order=i,
+                    ))
+                print(f"Seeded theme '{key}' with {len(icon_files)} icons.")
+            else:
+                print(f"Seeded theme '{key}' (background only, no icons yet).")
+            db.commit()
+
+        seed_theme("garden", "Garden", "garden_background.jpg")
+        seed_theme("ocean", "Ocean", "ocean_background.jpg", icon_dir="ocean_icons")
+
     finally:
         db.close()
 

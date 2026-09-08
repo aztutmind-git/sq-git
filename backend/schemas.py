@@ -1,5 +1,5 @@
 from typing import Optional, List, Dict
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, EmailStr, Field
 
 
 # ---------- auth ----------
@@ -61,18 +61,17 @@ class SetEmailRequest(BaseModel):
     email: EmailStr
 
 
-VALID_THEMES = {"classic", "garden", "racetrack", "space", "ocean"}
+class ThemeOut(BaseModel):
+    key: str
+    name: str
+    icon_count: int
 
 
 class SetThemeRequest(BaseModel):
-    theme: str
-
-    @field_validator("theme")
-    @classmethod
-    def theme_must_be_known(cls, v):
-        if v not in VALID_THEMES:
-            raise ValueError(f"theme must be one of {sorted(VALID_THEMES)}")
-        return v
+    # "classic" is always valid (the permanent built-in, no image needed).
+    # Anything else is checked against the themes table in the endpoint itself,
+    # since Pydantic validators don't have DB access — see routers/auth.py.
+    theme: str = Field(min_length=1, max_length=32)
 
 
 class StudentOut(BaseModel):

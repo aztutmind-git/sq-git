@@ -123,7 +123,8 @@ body.theme-ocean{
     border-radius:0 0 20px 20px;
   }
   body.admin-active #screen-admin #admin-students,
-  body.admin-active #screen-admin #admin-upload{
+  body.admin-active #screen-admin #admin-upload,
+  body.admin-active #screen-admin #admin-themes{
     grid-column:1;
   }
   body.admin-active #screen-admin .admin-subjrow{
@@ -142,6 +143,21 @@ body.theme-ocean{
     display:inline-block;
     margin:4px 0 0;
   }
+}
+/* The level map is the one other screen (besides admin) that benefits from
+   real width on larger viewports — the whole point of a themed background
+   is to feel like an immersive scene, not a strip peeking around a narrow
+   phone-shell column. Home/quiz/login stay phone-shell width on purpose;
+   that's the right size for focused reading and answering questions. */
+@media (min-width:700px){
+  body.map-active .app{max-width:1000px;}
+  body.map-active .path-wrap::before{left:50%;}
+  body.map-active .level-node-wrap:nth-child(4n+1){padding-left:22%;}
+  body.map-active .level-node-wrap:nth-child(4n+3){padding-right:22%;}
+}
+@media (min-width:900px){
+  body.map-active .level-node-wrap:nth-child(4n+1){padding-left:28%;}
+  body.map-active .level-node-wrap:nth-child(4n+3){padding-right:28%;}
 }
 @media (max-width:359px){
   /* smallest phones — tighten a couple of spots that get cramped */
@@ -253,7 +269,14 @@ body.theme-ocean{
 .subj-card .bar i{display:block;height:100%;background:#fff;border-radius:4px;}
 
 /* ---------- MAP ---------- */
-#screen-map{color:#fff;min-height:100vh;}
+#screen-map{color:#fff;min-height:100vh;background:var(--theme-outer-bg);position:relative;}
+#screen-map::before{
+  /* Keeps the top bar / path readable over busy uploaded artwork without
+     hiding the art itself — a soft top-to-bottom scrim, not a flat overlay. */
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:0;
+  background:linear-gradient(180deg, rgba(10,8,30,0.55) 0%, rgba(10,8,30,0.25) 18%, rgba(10,8,30,0.15) 45%, rgba(10,8,30,0.45) 100%);
+}
+#screen-map > *{position:relative;z-index:1;}
 .map-top{padding:16px 16px 14px;display:flex;align-items:center;gap:12px;}
 .icon-btn{width:38px;height:38px;border-radius:11px;background:rgba(255,255,255,0.12);color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;}
 .map-top .titles{flex:1;}
@@ -276,6 +299,15 @@ body.theme-ocean{
 .level-node{
   width:78px;height:78px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;
   position:relative;z-index:2;border:none;
+}
+.level-node.has-icon{
+  width:84px;height:84px;box-shadow:0 8px 0 rgba(0,0,0,0.28), 0 0 0 4px rgba(255,255,255,0.85);
+}
+.level-node.has-icon.unlocked.pulse{box-shadow:0 8px 0 rgba(0,0,0,0.28), 0 0 0 4px rgba(255,255,255,0.85), 0 0 0 8px rgba(255,255,255,0.25);}
+.node-badge{
+  position:absolute;bottom:-6px;right:-6px;background:var(--ink);color:#fff;
+  font-family:'Fredoka';font-weight:700;font-size:13px;width:24px;height:24px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;box-shadow:0 2px 0 rgba(0,0,0,0.3);z-index:3;
 }
 .level-node .num{font-family:'Fredoka';font-weight:700;font-size:22px;}
 .level-node .tag{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;margin-top:1px;}
@@ -392,16 +424,13 @@ body.theme-ocean{
 .theme-opt{
   border-radius:16px;padding:16px 12px;text-align:left;position:relative;overflow:hidden;
   min-height:88px;display:flex;flex-direction:column;justify-content:flex-end;
-  border:2.5px solid transparent;color:#fff;
+  border:2.5px solid transparent;color:#fff;background:linear-gradient(155deg,var(--ink),var(--ink-2));
 }
 .theme-opt.selected{border-color:var(--gold);box-shadow:0 0 0 3px rgba(240,180,41,0.25);}
 .theme-opt .t-icon{font-size:22px;position:absolute;top:12px;left:12px;}
-.theme-opt .t-name{font-family:'Fredoka';font-weight:600;font-size:13.5px;}
-.theme-opt.t-classic{background:linear-gradient(155deg,var(--ink),var(--ink-2));}
-.theme-opt.t-garden{background:linear-gradient(155deg,#4CAF6D,#2F8A4C);}
-.theme-opt.t-racetrack{background:linear-gradient(155deg,#3a3a40,#1c1c22);}
-.theme-opt.t-space{background:linear-gradient(155deg,#5B4FC4,#2b1f66);}
-.theme-opt.t-ocean{background:linear-gradient(155deg,#2AA6C9,#0b3f5c);}
+.theme-opt .t-thumb{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;}
+.theme-opt .t-name{font-family:'Fredoka';font-weight:600;font-size:13.5px;position:relative;z-index:1;text-shadow:0 1px 6px rgba(0,0,0,0.65);}
+.theme-opt::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(0,0,0,0.55) 100%);z-index:0;pointer-events:none;}
 .msg-note{font-size:12px;color:var(--muted);text-align:center;margin-top:10px;}
 .toast{
   position:fixed;top:16px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 18px;
@@ -565,6 +594,19 @@ body.theme-ocean{
       </div>
       <p class="msg-note" id="excel-upload-status"></p>
     </div>
+
+    <div class="admin-pay-settings" id="admin-themes">
+      <h4>Visual themes</h4>
+      <p class="pay-opt-hint" style="margin:-2px 0 12px;">Upload a background scene (no numbers/path baked in) and, optionally, a few character icons — these get cycled through as level markers. Students pick from whatever themes exist here, plus the built-in Classic look.</p>
+      <div class="field"><label>Theme key</label><input id="new-theme-key" placeholder="e.g. race-track (lowercase, no spaces)"></div>
+      <div class="field"><label>Display name</label><input id="new-theme-name" placeholder="e.g. Race Track"></div>
+      <div class="field"><label>Background image</label><input type="file" id="new-theme-bg" accept="image/*"></div>
+      <div class="field"><label>Character icons (optional, select multiple)</label><input type="file" id="new-theme-icons" accept="image/*" multiple></div>
+      <button class="btn-primary" onclick="uploadTheme()">Upload theme</button>
+      <p class="msg-note" id="theme-upload-status"></p>
+      <div id="admin-theme-list" style="margin-top:14px;"></div>
+    </div>
+
     <div class="admin-subjrow" id="admin-subjrow"></div>
     <div class="admin-section" id="admin-section"></div>
     <button class="fab" onclick="openAddModal()">+ Add new question</button>
@@ -681,6 +723,13 @@ function levelMeta(lvl){
   const cycled = LEVEL_META[((lvl - 1) % 5) + 1];
   return {label:`Level ${lvl}`, diff:cycled.diff};
 }
+function currentThemeIconInfo(){
+  const key = (STATE.user && STATE.user.theme) || 'classic';
+  if(key === 'classic') return null;
+  const t = DYNAMIC_THEMES.find(t=>t.key===key);
+  if(!t || !t.icon_count) return null;
+  return {key, count: t.icon_count};
+}
 const AVATARS = ['🦊','🐼','🦉','🐯','🐸','🐨','🦁','🐵','🐢','🦄'];
 
 /* =========================================================
@@ -707,10 +756,12 @@ function subjMeta(key){ return SUBJECTS.find(s=>s.key===key); }
 function goto(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
-  // The admin console gets a wider, multi-column layout on desktop widths
-  // (see the body.admin-active rules in <style>) since it's content-dense
-  // dashboard-style work, unlike the phone-shell student screens.
+  // The admin console and level map both get wider layouts on desktop
+  // widths — admin because it's dense dashboard content, map because an
+  // immersive themed background deserves real screen space. Home/quiz/login
+  // intentionally stay phone-shell width at any viewport size.
   document.body.classList.toggle('admin-active', id === 'screen-admin');
+  document.body.classList.toggle('map-active', id === 'screen-map');
   window.scrollTo(0,0);
 }
 function toast(msg){
@@ -768,7 +819,7 @@ async function loginUser(){
       toast('This is an admin account — use "Admin / teacher login" instead');
       return;
     }
-    onLoginSuccess(data);
+    await onLoginSuccess(data);
     document.getElementById('login-password').value = '';
     if(data.must_reset_password){
       goto('screen-force-reset');
@@ -807,7 +858,7 @@ async function adminLogin(){
       toast('That account is not an admin account');
       return;
     }
-    onLoginSuccess(data);
+    await onLoginSuccess(data);
     STATE.isAdmin = true;
     document.getElementById('admin-pw').value = '';
     await renderAdminSubjRow();
@@ -819,33 +870,62 @@ async function adminLogin(){
     toast(err.message || 'Incorrect admin user ID or password');
   }
 }
-function onLoginSuccess(data){
+async function onLoginSuccess(data){
   STATE.token = data.access_token;
   STATE.user = {userid:data.userid, name:data.name, role:data.role, avatar:data.avatar, grade:data.grade, board:data.board, theme:data.theme || 'classic'};
   localStorage.setItem('sq_token', STATE.token);
+  await loadThemes();
   applyTheme(STATE.user.theme);
 }
 
 /* ---------- theme picker ---------- */
-const THEMES = [
-  {key:'classic',   icon:'⭐', name:'Classic'},
-  {key:'garden',    icon:'🌸', name:'Garden'},
-  {key:'racetrack', icon:'🏁', name:'Race Track'},
-  {key:'space',     icon:'🚀', name:'Space'},
-  {key:'ocean',     icon:'🌊', name:'Ocean'},
-];
-function applyTheme(theme){
-  document.body.classList.remove(...THEMES.map(t=>`theme-${t.key}`));
-  if(theme && theme !== 'classic') document.body.classList.add(`theme-${theme}`);
+// Dynamic themes fetched from the backend (admin-uploaded) plus the
+// permanent built-in Classic look, which needs no image at all.
+let DYNAMIC_THEMES = []; // [{key, name, icon_count}, ...] — refreshed each time the picker opens
+const LEGACY_GRADIENT_KEYS = ['garden','racetrack','space','ocean']; // built-in fallback look, used until/unless a real image is uploaded for that key
+
+async function loadThemes(){
+  try{ DYNAMIC_THEMES = await api('/api/themes', {auth:false}); }
+  catch(err){ DYNAMIC_THEMES = []; }
 }
-function openThemeModal(){
+function applyTheme(theme){
+  document.body.classList.remove(...LEGACY_GRADIENT_KEYS.map(k=>`theme-${k}`));
+  document.body.style.removeProperty('--theme-outer-bg');
+  document.body.style.removeProperty('--theme-home-bg');
+  if(!theme || theme === 'classic') return;
+
+  // Fallback gradient look for the 4 original keys, shown until a real
+  // image exists for them (or forever, for any brand-new custom key that
+  // doesn't match one of these — in which case there's just no fallback and
+  // the background stays blank until an image is uploaded for it).
+  if(LEGACY_GRADIENT_KEYS.includes(theme)) document.body.classList.add(`theme-${theme}`);
+
+  // A real uploaded image (a row that actually exists in DYNAMIC_THEMES,
+  // fetched fresh via loadThemes() before this runs) wins over the gradient
+  // fallback. Themes with no upload yet — e.g. a legacy key nobody has
+  // uploaded art for — correctly keep showing just the gradient instead of
+  // pointing at an image URL that would 404.
+  const hasRealUpload = DYNAMIC_THEMES.some(t => t.key === theme);
+  if(!hasRealUpload) return;
+
+  const bgUrl = `${API_BASE}/api/themes/${encodeURIComponent(theme)}/background`;
+  document.body.style.setProperty('--theme-outer-bg', `url('${bgUrl}') center/cover no-repeat`);
+  document.body.style.setProperty('--theme-home-bg', `url('${bgUrl}') center/cover no-repeat`);
+}
+async function openThemeModal(){
+  await loadThemes();
   const grid = document.getElementById('theme-grid');
   const current = (STATE.user && STATE.user.theme) || 'classic';
-  grid.innerHTML = THEMES.map(t=>`
-    <button class="theme-opt t-${t.key} ${t.key===current?'selected':''}" onclick="selectTheme('${t.key}')">
-      <span class="t-icon">${t.icon}</span>
+  const options = [{key:'classic', name:'Classic'}, ...DYNAMIC_THEMES];
+  grid.innerHTML = options.map(t=>{
+    const thumb = t.key === 'classic'
+      ? `<span class="t-icon">⭐</span>`
+      : `<img class="t-thumb" src="${API_BASE}/api/themes/${encodeURIComponent(t.key)}/background" alt="">`;
+    return `<button class="theme-opt ${t.key===current?'selected':''}" onclick="selectTheme('${t.key}')">
+      ${thumb}
       <span class="t-name">${t.name}</span>
-    </button>`).join('');
+    </button>`;
+  }).join('');
   document.getElementById('theme-modal').classList.add('active');
 }
 function closeThemeModal(){ document.getElementById('theme-modal').classList.remove('active'); }
@@ -924,6 +1004,10 @@ async function loadMyProgress(){
   // Ensure every known subject has an entry even if the backend hasn't created one yet
   SUBJECTS.forEach(s => { if(!map[s.key]) map[s.key] = {unlocked_level:1, max_level:5, xp:0, stars:{}}; });
   STATE.progress = map;
+  // Needed so renderPath() knows the current theme's icon_count before the
+  // student ever opens the theme picker (e.g. resuming a session that
+  // already had a theme picked).
+  await loadThemes();
 }
 function totalXp(){
   return Object.values(STATE.progress).reduce((sum,s)=>sum+(s.xp||0), 0);
@@ -965,7 +1049,15 @@ function openSubject(key){
   document.getElementById('map-title').textContent = s.name;
   document.getElementById('map-sub').textContent = `${s.icon} ${prog.max_level} levels · Level ${prog.unlocked_level} unlocked`;
   document.getElementById('map-xp').textContent = prog.xp;
-  document.getElementById('screen-map').style.background = `linear-gradient(180deg, var(${s.c}), var(${s.cd}) 60%, #1a1440)`;
+  const mapScreen = document.getElementById('screen-map');
+  const theme = (STATE.user && STATE.user.theme) || 'classic';
+  if(theme === 'classic'){
+    // No theme artwork to show on Classic — keep the subject's own color identity, as before.
+    mapScreen.style.background = `linear-gradient(180deg, var(${s.c}), var(${s.cd}) 60%, #1a1440)`;
+  } else {
+    // Let the CSS rule (background:var(--theme-outer-bg), set by applyTheme()) show through instead.
+    mapScreen.style.background = '';
+  }
   renderPath(key);
   goto('screen-map');
 }
@@ -973,20 +1065,31 @@ function renderPath(key){
   const s = subjMeta(key);
   const prog = STATE.progress[key];
   const wrap = document.getElementById('path-wrap');
+  const iconInfo = currentThemeIconInfo();
   let html = '';
   for(let lvl=prog.max_level; lvl>=1; lvl--){
     const meta = levelMeta(lvl);
     const state = lvl < prog.unlocked_level ? 'done' : (lvl === prog.unlocked_level ? 'unlocked' : 'locked');
     const stars = prog.stars[lvl] || 0;
-    let bg = state==='locked' ? '' : `background:linear-gradient(155deg, var(${s.c}), var(${s.cd}));`;
-    let inner = state==='locked'
-      ? `<span class="lock">🔒</span>`
-      : `<span class="num">${lvl}</span><span class="tag">${meta.diff}</span>`;
+    const hasIcon = iconInfo && state !== 'locked';
+    let bg = '';
+    let inner;
+    if(hasIcon){
+      const iconIdx = (lvl - 1) % iconInfo.count;
+      const iconUrl = `${API_BASE}/api/themes/${encodeURIComponent(iconInfo.key)}/icons/${iconIdx}`;
+      bg = `background-image:url('${iconUrl}');background-size:cover;background-position:center;`;
+      inner = `<span class="node-badge">${lvl}</span>`;
+    } else {
+      bg = state==='locked' ? '' : `background:linear-gradient(155deg, var(${s.c}), var(${s.cd}));`;
+      inner = state==='locked'
+        ? `<span class="lock">🔒</span>`
+        : `<span class="num">${lvl}</span><span class="tag">${meta.diff}</span>`;
+    }
     let starsHtml = state!=='locked' && (state==='done' || stars>0)
       ? `<div class="stars-row">${[1,2,3].map(i=>`<span>${i<=stars?'⭐':'☆'}</span>`).join('')}</div>` : '';
     html += `<div class="level-node-wrap">
       <span class="level-label">${meta.label}</span>
-      <button class="level-node ${state} ${state==='unlocked'?'pulse':''}" style="${bg}" onclick="${state!=='locked'?`startLevel('${key}',${lvl})`:`toast('Complete Level ${lvl-1} first')`}">
+      <button class="level-node ${state} ${state==='unlocked'?'pulse':''} ${hasIcon?'has-icon':''}" style="${bg}" onclick="${state!=='locked'?`startLevel('${key}',${lvl})`:`toast('Complete Level ${lvl-1} first')`}">
         ${inner}
       </button>
       ${starsHtml}
@@ -1278,6 +1381,7 @@ renderAvatarPicker();
   try{
     const me = await api('/api/auth/me');
     STATE.user = {userid:me.userid, name:me.name, role:me.role, avatar:me.avatar, grade:me.grade, board:me.board, theme:me.theme || 'classic'};
+    await loadThemes();
     applyTheme(STATE.user.theme);
     if(me.role === 'admin'){
       STATE.isAdmin = true;

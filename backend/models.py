@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import (
-    Column, String, Integer, Boolean, ForeignKey, DateTime, JSON, Enum, UniqueConstraint
+    Column, String, Integer, Boolean, ForeignKey, DateTime, JSON, Enum, UniqueConstraint, LargeBinary
 )
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID
@@ -88,3 +88,36 @@ class PasswordResetToken(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     user = relationship("User", back_populates="reset_tokens")
+
+
+class Theme(Base):
+    """An admin-uploaded visual theme: one background image plus zero or more
+    character icons for level nodes. Images are stored as bytes directly in
+    Postgres (not on local disk) since Render's free web service filesystem
+    is wiped on every redeploy/restart — the database is the only durable
+    storage available without adding a separate file-hosting service."""
+    __tablename__ = "themes"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    key = Column(String(32), unique=True, nullable=False, index=True)  # slug, e.g. "ocean"
+    name = Column(String(64), nullable=False)  # display name, e.g. "Ocean"
+    background_image = Column(LargeBinary, nullable=False)
+    background_mime = Column(String(64), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    icons = relationship("ThemeIcon", back_populates="theme", cascade="all, delete-orphan",
+                          order_by="ThemeIcon.sort_order")
+
+
+class ThemeIcon(Base):
+    """One character icon belonging to a Theme, used to decorate level nodes
+    on the map (cycled through in order as levels go up)."""
+    __tablename__ = "theme_icons"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    theme_id = Column(Integer, ForeignKey("themes.id", ondelete="CASCADE"), nullable=False)
+    image = Column(LargeBinary, nullable=False)
+    mime = Column(String(64), nullable=False)
+    sort_order = Column(Integer, nullable=False, default=0)
+
+    theme = relationship("Theme", back_populates="icons")

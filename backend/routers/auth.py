@@ -56,9 +56,13 @@ def set_email(payload: schemas.SetEmailRequest, db: Session = Depends(get_db),
 @router.post("/set-theme")
 def set_theme(payload: schemas.SetThemeRequest, db: Session = Depends(get_db),
               user: models.User = Depends(get_current_user)):
-    """Lets a logged-in student pick their own visual theme (Garden, Race
-    Track, Space, Ocean, or the original Classic look). Validated against
-    schemas.VALID_THEMES so a bad value never gets stored."""
+    """Lets a logged-in student pick their own visual theme. "classic" is
+    always valid (the built-in, no-image default); anything else must exist
+    in the admin-uploaded themes table."""
+    if payload.theme != "classic":
+        exists = db.query(models.Theme).filter(models.Theme.key == payload.theme).first()
+        if not exists:
+            raise HTTPException(status_code=400, detail=f"Unknown theme '{payload.theme}'")
     user.theme = payload.theme
     db.commit()
     return {"message": "Theme updated.", "theme": user.theme}
