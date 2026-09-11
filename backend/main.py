@@ -8,7 +8,7 @@ from config import settings
 import models  # noqa: F401  (ensures models are registered on Base before create_all)
 import seed
 from rate_limit import limiter
-from routers import auth, students, questions, progress, themes
+from routers import auth, students, questions, progress, themes, subjects
 
 app = FastAPI(title="SyllabusQuest API", version="1.0.0")
 
@@ -45,6 +45,7 @@ app.include_router(students.router)
 app.include_router(questions.router)
 app.include_router(progress.router)
 app.include_router(themes.router)
+app.include_router(subjects.router)
 
 
 @app.on_event("startup")

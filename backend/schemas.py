@@ -19,6 +19,7 @@ class TokenResponse(BaseModel):
     board: Optional[str] = None
     must_reset_password: bool = False
     theme: str = "classic"
+    account_tier: str = "silver"
 
 
 class ForgotPasswordRequest(BaseModel):
@@ -48,6 +49,19 @@ class StudentCreate(BaseModel):
     grade: str
     board: str
     avatar: str = "🦊"
+    require_password_reset: bool = True
+    account_tier: str = Field(default="silver", pattern="^(silver|premium)$")  # admins never create guests directly
+
+
+class UpgradeGuestRequest(BaseModel):
+    """Admin converts a guest account to a paying one — sets a real password
+    and tier, keeping the student's existing progress untouched."""
+    password: str = Field(min_length=6)
+    account_tier: str = Field(pattern="^(silver|premium)$")
+    email: Optional[EmailStr] = None
+    name: Optional[str] = None
+    grade: Optional[str] = None
+    board: Optional[str] = None
     require_password_reset: bool = True
 
 
@@ -82,9 +96,39 @@ class StudentOut(BaseModel):
     grade: Optional[str]
     board: Optional[str]
     avatar: Optional[str]
+    account_tier: str
 
     class Config:
         from_attributes = True
+
+
+# ---------- subjects ----------
+class SubjectOut(BaseModel):
+    key: str
+    name: str
+    icon: Optional[str]
+    demo_level_cap: int
+
+    class Config:
+        from_attributes = True
+
+
+class SubjectUpdate(BaseModel):
+    demo_level_cap: int = Field(ge=1, le=1000)
+
+
+class EnrollmentItem(BaseModel):
+    subject: str
+    name: str
+    icon: Optional[str]
+    enrolled: bool
+
+
+class EnrollmentUpdate(BaseModel):
+    """The full set of subject keys this student should be enrolled in —
+    anything not listed here gets un-enrolled, so send the complete set
+    each time, not just what changed."""
+    enrolled_subjects: List[str]
 
 
 # ---------- questions ----------
@@ -141,6 +185,7 @@ class SubjectProgress(BaseModel):
     subject: str
     unlocked_level: int
     max_level: int  # highest level with any questions uploaded — drives the level map, no longer hardcoded
+    demo_level_cap: int  # guest-tier ceiling for this subject; irrelevant for silver/premium
     xp: int
     stars: Dict[str, int]
 

@@ -105,6 +105,30 @@ def main():
         seed_theme("garden", "Garden", "garden_background.jpg")
         seed_theme("ocean", "Ocean", "ocean_background.jpg", icon_dir="ocean_icons")
 
+        # ---- subject config (demo level caps, admin-editable) ----
+        SUBJECTS_SEED = [
+            ("chemistry", "Chemistry", "🧪"),
+            ("physics", "Physics", "⚛️"),
+            ("botany", "Botany", "🌿"),
+            ("zoology", "Zoology", "🐾"),
+            ("commerce", "Commerce", "💼"),
+            ("accounts", "Accounts", "📒"),
+            ("mathematics", "Mathematics", "📐"),
+            ("nutrition", "Nutrition", "🍎"),
+        ]
+        existing_subject_keys = {s.key for s in db.query(models.Subject).all()}
+        added = 0
+        for key, name, icon in SUBJECTS_SEED:
+            if key in existing_subject_keys:
+                continue
+            db.add(models.Subject(key=key, name=name, icon=icon, demo_level_cap=5))
+            added += 1
+        if added:
+            db.commit()
+            print(f"Seeded {added} subject config row(s) (demo_level_cap=5 each).")
+        else:
+            print("Subject config already present, skipping.")
+
     finally:
         db.close()
 

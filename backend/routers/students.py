@@ -36,6 +36,7 @@ def create_student(payload: schemas.StudentCreate, db: Session = Depends(get_db)
         hashed_password=hash_password(payload.password),
         name=payload.name,
         role=models.Role.student,
+        account_tier=models.AccountTier(payload.account_tier),
         grade=payload.grade,
         board=payload.board,
         avatar=payload.avatar,
@@ -48,6 +49,75 @@ def create_student(payload: schemas.StudentCreate, db: Session = Depends(get_db)
     db.commit()
     db.refresh(user)
     return user
+
+
+@router.put("/{student_id}/upgrade", response_model=schemas.StudentOut)
+def upgrade_guest(student_id: str, payload: schemas.UpgradeGuestRequest, db: Session = Depends(get_db),
+                   _admin: models.User = Depends(require_admin)):
+    """Converts a guest account to Silver/Premium — sets a real password and
+    tier while leaving their existing progress (levels, XP, stars) untouched,
+    since it's the same underlying account, not a new one."""
+    user = db.query(models.User).filter(models.User.id == student_id, models.User.role == models.Role.student).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Student not found")
+    if user.account_tier != models.AccountTier.guest:
+        raise HTTPException(status_code=400, detail="This account is not a guest account")
+
+    user.hashed_password = hash_password(payload.password)
+    user.account_tier = models.AccountTier(payload.account_tier)
+    user.must_reset_password = payload.require_password_reset
+    if payload.email:
+        user.email = payload.email
+    if payload.name:
+        user.name = payload.name
+    if payload.grade:
+        user.grade = payload.grade
+    if payload.board:
+        user.board = payload.board
+
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+def _enrollment_response(db: Session, student_id: str) -> List[schemas.EnrollmentItem]:
+    progress_by_subject = {p.subject: p for p in
+                            db.query(models.Progress).filter(models.Progress.user_id == student_id).all()}
+    subjects = db.query(models.Subject).order_by(models.Subject.name).all()
+    return [
+        schemas.EnrollmentItem(
+            subject=s.key, name=s.name, icon=s.icon,
+            # A subject with no Progress row at all (shouldn't normally
+            # happen, since every subject gets one at student creation) is
+            # treated as enrolled — same safe default as the column itself.
+            enrolled=progress_by_subject[s.key].enrolled if s.key in progress_by_subject else True,
+        )
+        for s in subjects
+    ]
+
+
+@router.get("/{student_id}/enrollment", response_model=List[schemas.EnrollmentItem])
+def get_enrollment(student_id: str, db: Session = Depends(get_db), _admin: models.User = Depends(require_admin)):
+    user = db.query(models.User).filter(models.User.id == student_id, models.User.role == models.Role.student).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Student not found")
+    return _enrollment_response(db, student_id)
+
+
+@router.put("/{student_id}/enrollment", response_model=List[schemas.EnrollmentItem])
+def update_enrollment(student_id: str, payload: schemas.EnrollmentUpdate, db: Session = Depends(get_db),
+                       _admin: models.User = Depends(require_admin)):
+    user = db.query(models.User).filter(models.User.id == student_id, models.User.role == models.Role.student).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Student not found")
+
+    enrolled_set = set(payload.enrolled_subjects)
+    rows = db.query(models.Progress).filter(models.Progress.user_id == student_id).all()
+    for row in rows:
+        row.enrolled = row.subject in enrolled_set
+    db.commit()
+
+    return _enrollment_response(db, student_id)
 
 
 @router.delete("/{student_id}", status_code=status.HTTP_204_NO_CONTENT)

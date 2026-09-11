@@ -124,7 +124,8 @@ body.theme-ocean{
   }
   body.admin-active #screen-admin #admin-students,
   body.admin-active #screen-admin #admin-upload,
-  body.admin-active #screen-admin #admin-themes{
+  body.admin-active #screen-admin #admin-themes,
+  body.admin-active #screen-admin #admin-subjects{
     grid-column:1;
   }
   body.admin-active #screen-admin .admin-subjrow{
@@ -473,6 +474,7 @@ body.theme-ocean{
       <button class="btn-primary" onclick="loginUser()">Log in</button>
       <p class="empty-note" id="no-users-note" style="display:none;">No accounts have been created yet. Ask your admin/teacher to set one up for you.</p>
     </div>
+    <button class="admin-link" onclick="startGuestSession()">Try it free — no account needed →</button>
     <button class="admin-link" onclick="openForgotModal()">Forgot password?</button>
     <button class="admin-link" onclick="goto('screen-admin-login')">Admin / teacher login</button>
   </div>
@@ -489,6 +491,10 @@ body.theme-ocean{
         <button class="topbar-btn" onclick="openThemeModal()" aria-label="Change theme">🎨</button>
         <button class="topbar-btn" onclick="logout()">Switch</button>
       </div>
+    </div>
+    <div id="guest-banner" style="display:none;margin:0 20px 14px;padding:12px 14px;border-radius:14px;background:#fff6e0;border:1.5px solid #f0d78c;font-size:13px;color:#4a4326;">
+      <b>Free demo</b> — your guest ID is <b id="guest-banner-id"></b>.
+      <button class="admin-link" style="display:inline;padding:0;margin-left:4px;color:#a5820f;text-decoration:underline;" onclick="openRegistrationCta()">Register to unlock more →</button>
     </div>
     <div class="section-title">Choose a subject</div>
     <div class="subject-grid" id="subject-grid"></div>
@@ -577,6 +583,9 @@ body.theme-ocean{
       <div class="field"><label>Avatar</label>
         <div class="avatar-row" id="admin-avatar-row"></div>
       </div>
+      <div class="field"><label>Account tier</label>
+        <select id="new-stu-tier"><option value="silver">Silver</option><option value="premium">Premium</option></select>
+      </div>
       <div class="field" style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
         <input type="checkbox" id="new-stu-force-reset" checked style="width:auto;">
         <label style="margin:0;text-transform:none;font-weight:600;font-size:12.5px;color:var(--ink);letter-spacing:normal;">Require password reset on first login</label>
@@ -605,6 +614,12 @@ body.theme-ocean{
       <button class="btn-primary" onclick="uploadTheme()">Upload theme</button>
       <p class="msg-note" id="theme-upload-status"></p>
       <div id="admin-theme-list" style="margin-top:14px;"></div>
+    </div>
+
+    <div class="admin-pay-settings" id="admin-subjects">
+      <h4>Free-demo level caps</h4>
+      <p class="pay-opt-hint" style="margin:-2px 0 12px;">How many levels a guest (no account) can play per subject before being asked to register. Silver and Premium accounts always have full access.</p>
+      <div id="admin-subject-cap-list"></div>
     </div>
 
     <div class="admin-subjrow" id="admin-subjrow"></div>
@@ -685,6 +700,19 @@ body.theme-ocean{
   </div>
 </div>
 
+<!-- REGISTRATION CTA MODAL (shown when a guest hits their demo cap) -->
+<div class="modal" id="registration-modal">
+  <div class="modal-card" style="position:relative;text-align:center;">
+    <button class="close-x" onclick="closeRegistrationCta()">✕</button>
+    <div style="font-size:40px;margin-bottom:6px;">🚀</div>
+    <h3>You're on a roll!</h3>
+    <p class="msg-note" style="margin-bottom:6px;">You've reached the end of the free demo. Register to unlock the rest of this subject and track your full progress.</p>
+    <p class="msg-note">Your guest ID: <b id="registration-guest-id"></b> — mention this when you register so we can carry over your progress.</p>
+    <button class="btn-primary" onclick="goToRegistrationForm()">Register now</button>
+    <button class="admin-link" onclick="closeRegistrationCta()">Maybe later</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -693,7 +721,8 @@ body.theme-ocean{
    Point this at your FastAPI backend. Override by setting
    window.SQ_API_BASE before this script runs, if needed.
    ========================================================= */
-const API_BASE = window.SQ_API_BASE || 'https://sq-git.onrender.com';
+const API_BASE = window.SQ_API_BASE || 'http://localhost:8000';
+const REGISTRATION_FORM_URL = window.SQ_REGISTRATION_URL || 'https://aztutmind.com/student_registration_form.html';
 
 /* =========================================================
    SUBJECT / LEVEL META (static, matches backend's VALID_SUBJECTS)
@@ -713,11 +742,8 @@ const LEVEL_META = {
   2:{label:'Building',   diff:'Easy-Med'},
   3:{label:'Application',diff:'Medium'},
   4:{label:'Challenge',  diff:'Hard'},
-  5:{label:'Mastery ',    diff:'Expert'},
-  6:{label:'Mastery',    diff:'Expert'},
-  7:{label:'Mastery',    diff:'Expert'},
-  8:{label:'Mastery',    diff:'Expert'},
-}
+  5:{label:'Mastery',    diff:'Expert'},
+};
 // Levels beyond 5 have no named tier — fall back to a plain "Level N" label,
 // cycling through the same 5 difficulty tags so the UI still shows *some*
 // sense of escalating difficulty without needing new admin-side config.
@@ -869,6 +895,7 @@ async function adminLogin(){
     renderAvatarPicker();
     await renderAdminStudentList();
     await renderAdminThemeList();
+    await renderAdminSubjectCaps();
     goto('screen-admin');
   }catch(err){
     toast(err.message || 'Incorrect admin user ID or password');
@@ -876,10 +903,32 @@ async function adminLogin(){
 }
 async function onLoginSuccess(data){
   STATE.token = data.access_token;
-  STATE.user = {userid:data.userid, name:data.name, role:data.role, avatar:data.avatar, grade:data.grade, board:data.board, theme:data.theme || 'classic'};
+  STATE.user = {userid:data.userid, name:data.name, role:data.role, avatar:data.avatar, grade:data.grade, board:data.board, theme:data.theme || 'classic', account_tier:data.account_tier || 'silver'};
   localStorage.setItem('sq_token', STATE.token);
   await loadThemes();
   applyTheme(STATE.user.theme);
+}
+async function startGuestSession(){
+  try{
+    const data = await api('/api/auth/guest', {method:'POST', auth:false});
+    await onLoginSuccess(data);
+    await loadMyProgress();
+    enterHome();
+    toast(`Welcome! Your guest ID is ${data.userid} — save it to mention when you register.`);
+  }catch(err){
+    toast(err.message || 'Could not start a demo session — please try again.');
+  }
+}
+function openRegistrationCta(){
+  document.getElementById('registration-guest-id').textContent = STATE.user.userid;
+  document.getElementById('registration-modal').classList.add('active');
+}
+function closeRegistrationCta(){
+  document.getElementById('registration-modal').classList.remove('active');
+}
+function goToRegistrationForm(){
+  window.open(REGISTRATION_FORM_URL, '_blank');
+  closeRegistrationCta();
 }
 
 /* ---------- theme picker ---------- */
@@ -1004,9 +1053,10 @@ async function submitPasswordReset(){
 async function loadMyProgress(){
   const rows = await api('/api/progress');
   const map = {};
-  rows.forEach(r => map[r.subject] = {unlocked_level:r.unlocked_level, max_level:r.max_level, xp:r.xp, stars:r.stars || {}});
-  // Ensure every known subject has an entry even if the backend hasn't created one yet
-  SUBJECTS.forEach(s => { if(!map[s.key]) map[s.key] = {unlocked_level:1, max_level:5, xp:0, stars:{}}; });
+  rows.forEach(r => map[r.subject] = {unlocked_level:r.unlocked_level, max_level:r.max_level, demo_level_cap:r.demo_level_cap, xp:r.xp, stars:r.stars || {}});
+  // Only subjects the backend actually returns show up — for a silver/
+  // premium student that's whatever they're enrolled in; for a guest it's
+  // always all 8 (enrollment doesn't apply to guests).
   STATE.progress = map;
   // Needed so renderPath() knows the current theme's icon_count before the
   // student ever opens the theme picker (e.g. resuming a session that
@@ -1022,13 +1072,25 @@ function enterHome(){
   document.getElementById('home-name').textContent = u.name;
   document.getElementById('home-sub').textContent = `Grade ${u.grade || '—'} · ${u.board || '—'}`;
   document.getElementById('home-xp').textContent = totalXp();
+  const banner = document.getElementById('guest-banner');
+  if(u.account_tier === 'guest'){
+    banner.style.display = 'block';
+    document.getElementById('guest-banner-id').textContent = u.userid;
+  } else {
+    banner.style.display = 'none';
+  }
   renderSubjectGrid();
   goto('screen-home');
 }
 function renderSubjectGrid(){
   const grid = document.getElementById('subject-grid');
-  grid.innerHTML = SUBJECTS.map(s=>{
-    const sp = STATE.progress[s.key] || {unlocked_level:1, max_level:5, stars:{}};
+  const enrolledSubjects = SUBJECTS.filter(s => STATE.progress[s.key]);
+  if(enrolledSubjects.length === 0){
+    grid.innerHTML = '<p class="empty-note">You\'re not enrolled in any subjects yet — ask your admin/teacher to add some.</p>';
+    return;
+  }
+  grid.innerHTML = enrolledSubjects.map(s=>{
+    const sp = STATE.progress[s.key];
     const totalLevels = sp.max_level || 5;
     const doneLevels = Object.keys(sp.stars).length;
     const pct = Math.round((doneLevels/totalLevels)*100);
@@ -1073,12 +1135,16 @@ function renderPath(key){
   let html = '';
   for(let lvl=prog.max_level; lvl>=1; lvl--){
     const meta = levelMeta(lvl);
+    const isGuestBeyondCap = STATE.user.account_tier === 'guest' && lvl > prog.demo_level_cap;
     const state = lvl < prog.unlocked_level ? 'done' : (lvl === prog.unlocked_level ? 'unlocked' : 'locked');
     const stars = prog.stars[lvl] || 0;
     const hasIcon = iconInfo && state !== 'locked';
     let bg = '';
     let inner;
-    if(hasIcon){
+    if(isGuestBeyondCap){
+      bg = '';
+      inner = `<span class="lock">🔒</span>`;
+    } else if(hasIcon){
       const iconIdx = (lvl - 1) % iconInfo.count;
       const iconUrl = `${API_BASE}/api/themes/${encodeURIComponent(iconInfo.key)}/icons/${iconIdx}`;
       bg = `background-image:url('${iconUrl}');background-size:cover;background-position:center;`;
@@ -1091,9 +1157,13 @@ function renderPath(key){
     }
     let starsHtml = state!=='locked' && (state==='done' || stars>0)
       ? `<div class="stars-row">${[1,2,3].map(i=>`<span>${i<=stars?'⭐':'☆'}</span>`).join('')}</div>` : '';
+    const label = isGuestBeyondCap ? '🔒 Register to unlock' : meta.label;
+    const clickAction = isGuestBeyondCap
+      ? 'openRegistrationCta()'
+      : (state!=='locked' ? `startLevel('${key}',${lvl})` : `toast('Complete Level ${lvl-1} first')`);
     html += `<div class="level-node-wrap">
-      <span class="level-label">${meta.label}</span>
-      <button class="level-node ${state} ${state==='unlocked'?'pulse':''} ${hasIcon?'has-icon':''}" style="${bg}" onclick="${state!=='locked'?`startLevel('${key}',${lvl})`:`toast('Complete Level ${lvl-1} first')`}">
+      <span class="level-label">${label}</span>
+      <button class="level-node ${isGuestBeyondCap?'locked':state} ${state==='unlocked'&&!isGuestBeyondCap?'pulse':''} ${hasIcon&&!isGuestBeyondCap?'has-icon':''}" style="${bg}" onclick="${clickAction}">
         ${inner}
       </button>
       ${starsHtml}
@@ -1110,6 +1180,7 @@ async function startLevel(subject, level){
   try{
     qs = await api(`/api/questions?subject=${encodeURIComponent(subject)}&level=${level}`);
   }catch(err){
+    if(err.message === 'REGISTRATION_REQUIRED'){ openRegistrationCta(); return; }
     toast(err.message || 'Could not load questions'); return;
   }
   if(!qs.length){ toast('No questions have been added for this level yet'); return; }
@@ -1226,13 +1297,14 @@ async function addStudent(){
   const name = document.getElementById('new-stu-name').value.trim();
   const grade = document.getElementById('new-stu-grade').value;
   const board = document.getElementById('new-stu-board').value;
+  const accountTier = document.getElementById('new-stu-tier').value;
   const requireReset = document.getElementById('new-stu-force-reset').checked;
   if(!userid || !email || !password || !name){ toast('Fill in user ID, email, password and name'); return; }
   if(password.length < 6){ toast('Password must be at least 6 characters'); return; }
   try{
     await api('/api/admin/students', {method:'POST', body:{
       userid, email, password, name, grade, board, avatar: STATE.selectedAvatar,
-      require_password_reset: requireReset,
+      account_tier: accountTier, require_password_reset: requireReset,
     }});
     ['new-stu-userid','new-stu-email','new-stu-password','new-stu-name'].forEach(i=>document.getElementById(i).value='');
     await renderAdminStudentList();
@@ -1250,6 +1322,10 @@ async function deleteStudent(id){
     toast(err.message || 'Could not remove student');
   }
 }
+let EXPANDED_GUEST_IDS = new Set();
+let EXPANDED_ENROLLMENT_IDS = new Set();
+let ENROLLMENT_CACHE = {}; // student id -> [{subject,name,icon,enrolled}, ...], fetched on demand
+
 async function renderAdminStudentList(){
   const wrap = document.getElementById('admin-student-list');
   if(!wrap) return;
@@ -1257,12 +1333,98 @@ async function renderAdminStudentList(){
   try{ students = await api('/api/admin/students'); }
   catch(err){ toast(err.message || 'Could not load students'); return; }
   if(students.length===0){ wrap.innerHTML = '<p class="empty-note">No student accounts yet — add one above.</p>'; return; }
-  wrap.innerHTML = students.map(u=>`
-    <div class="user-row">
+
+  const tierColors = {guest:'#948c68', silver:'#7a7a8c', premium:'#C98A0A'};
+  wrap.innerHTML = students.map(u=>{
+    const isGuest = u.account_tier === 'guest';
+    const isOpen = EXPANDED_GUEST_IDS.has(u.id);
+    const enrollOpen = EXPANDED_ENROLLMENT_IDS.has(u.id);
+    const tierBadge = `<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:#fff;background:${tierColors[u.account_tier]||'#888'};margin-left:6px;">${escapeHtml(u.account_tier||'—')}</span>`;
+    const enrollmentList = ENROLLMENT_CACHE[u.id];
+    const enrollmentPanel = (!isGuest && enrollOpen) ? `
+      <div style="flex-basis:100%;margin-top:14px;padding-top:14px;border-top:1px solid var(--paper-line);">
+        <label style="display:block;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#948c68;margin-bottom:8px;">Enrolled subjects</label>
+        ${enrollmentList ? `
+        <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
+          ${enrollmentList.map(e => `
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;background:var(--paper-line);padding:6px 10px;border-radius:20px;cursor:pointer;">
+              <input type="checkbox" class="enroll-check-${u.id}" value="${e.subject}" ${e.enrolled?'checked':''} style="width:auto;">
+              ${e.icon||''} ${escapeHtml(e.name)}
+            </label>`).join('')}
+        </div>
+        <button class="btn-primary" onclick="saveEnrollment('${u.id}')">Save enrollment</button>
+        <p class="msg-note" id="enroll-status-${u.id}"></p>
+        ` : '<p class="empty-note">Loading…</p>'}
+      </div>` : '';
+    return `
+    <div class="user-row" style="flex-wrap:wrap;">
       <div class="av">${u.avatar || '🦊'}</div>
-      <div class="meta"><b>${escapeHtml(u.name)}</b><span>${escapeHtml(u.userid)}${u.email ? ' · '+escapeHtml(u.email) : ''} · Grade ${u.grade} · ${u.board}</span></div>
+      <div class="meta"><b>${escapeHtml(u.name)}</b>${tierBadge}<span>${escapeHtml(u.userid)}${u.email ? ' · '+escapeHtml(u.email) : ''}${u.grade ? ' · Grade '+u.grade : ''}${u.board ? ' · '+u.board : ''}</span></div>
+      ${isGuest ? `<button onclick="toggleGuestUpgrade('${u.id}')">${isOpen?'Close':'Upgrade'}</button>` : `<button onclick="toggleEnrollmentPanel('${u.id}')">${enrollOpen?'Close':'Subjects'}</button>`}
       <button onclick="deleteStudent('${u.id}')">Remove</button>
-    </div>`).join('');
+      ${isGuest && isOpen ? `
+      <div style="flex-basis:100%;margin-top:14px;padding-top:14px;border-top:1px solid var(--paper-line);">
+        <div class="field"><label>Set password</label><input type="password" id="upgrade-pw-${u.id}" placeholder="At least 6 characters"></div>
+        <div class="field"><label>Email</label><input type="email" id="upgrade-email-${u.id}" placeholder="e.g. student@gmail.com"></div>
+        <div class="field"><label>Account tier</label>
+          <select id="upgrade-tier-${u.id}"><option value="silver">Silver</option><option value="premium">Premium</option></select>
+        </div>
+        <button class="btn-primary" onclick="submitGuestUpgrade('${u.id}')">Confirm upgrade</button>
+        <p class="msg-note" id="upgrade-status-${u.id}"></p>
+      </div>` : ''}
+      ${enrollmentPanel}
+    </div>`;
+  }).join('');
+}
+async function toggleEnrollmentPanel(id){
+  if(EXPANDED_ENROLLMENT_IDS.has(id)){
+    EXPANDED_ENROLLMENT_IDS.delete(id);
+    renderAdminStudentList();
+    return;
+  }
+  EXPANDED_ENROLLMENT_IDS.add(id);
+  delete ENROLLMENT_CACHE[id];
+  renderAdminStudentList(); // show "Loading…" immediately
+  try{
+    ENROLLMENT_CACHE[id] = await api(`/api/admin/students/${id}/enrollment`);
+  }catch(err){
+    toast(err.message || 'Could not load enrollment');
+    EXPANDED_ENROLLMENT_IDS.delete(id);
+  }
+  renderAdminStudentList();
+}
+async function saveEnrollment(id){
+  const statusEl = document.getElementById(`enroll-status-${id}`);
+  const checked = Array.from(document.querySelectorAll(`.enroll-check-${id}:checked`)).map(el => el.value);
+  try{
+    ENROLLMENT_CACHE[id] = await api(`/api/admin/students/${id}/enrollment`, {method:'PUT', body:{enrolled_subjects: checked}});
+    statusEl.textContent = 'Saved.';
+    toast('Enrollment updated');
+  }catch(err){
+    statusEl.textContent = err.message || 'Could not save enrollment';
+  }
+}
+function toggleGuestUpgrade(id){
+  if(EXPANDED_GUEST_IDS.has(id)) EXPANDED_GUEST_IDS.delete(id);
+  else EXPANDED_GUEST_IDS.add(id);
+  renderAdminStudentList();
+}
+async function submitGuestUpgrade(id){
+  const statusEl = document.getElementById(`upgrade-status-${id}`);
+  const password = document.getElementById(`upgrade-pw-${id}`).value;
+  const email = document.getElementById(`upgrade-email-${id}`).value.trim();
+  const accountTier = document.getElementById(`upgrade-tier-${id}`).value;
+  if(!password || password.length < 6){ statusEl.textContent = 'Password must be at least 6 characters.'; return; }
+  try{
+    await api(`/api/admin/students/${id}/upgrade`, {method:'PUT', body:{
+      password, account_tier: accountTier, email: email || undefined, require_password_reset: true,
+    }});
+    toast('Guest upgraded successfully');
+    EXPANDED_GUEST_IDS.delete(id);
+    await renderAdminStudentList();
+  }catch(err){
+    statusEl.textContent = err.message || 'Could not upgrade this account.';
+  }
 }
 
 /* =========================================================
@@ -1297,6 +1459,36 @@ async function handleExcelUpload(evt){
     statusEl.textContent = err.message || 'Could not read that file — please check it is a valid Excel file.';
   }
   document.getElementById('admin-excel-file').value = '';
+}
+
+/* =========================================================
+   ADMIN — free-demo level caps per subject
+   ========================================================= */
+async function renderAdminSubjectCaps(){
+  const wrap = document.getElementById('admin-subject-cap-list');
+  if(!wrap) return;
+  let subjects;
+  try{ subjects = await api('/api/admin/subjects'); }
+  catch(err){ wrap.innerHTML = `<p class="empty-note">${err.message || 'Could not load subjects'}</p>`; return; }
+  wrap.innerHTML = subjects.map(s => `
+    <div class="user-row">
+      <div class="av">${s.icon || '📘'}</div>
+      <div class="meta"><b>${escapeHtml(s.name)}</b><span>${escapeHtml(s.key)}</span></div>
+      <input type="number" min="1" max="1000" id="subj-cap-${s.key}" value="${s.demo_level_cap}"
+             style="width:64px;padding:8px;border-radius:8px;border:1.5px solid var(--paper-line);text-align:center;">
+      <button onclick="saveSubjectCap('${s.key}')">Save</button>
+    </div>`).join('');
+}
+async function saveSubjectCap(key){
+  const input = document.getElementById(`subj-cap-${key}`);
+  const cap = parseInt(input.value, 10);
+  if(!cap || cap < 1){ toast('Enter a valid level number'); return; }
+  try{
+    await api(`/api/admin/subjects/${encodeURIComponent(key)}`, {method:'PUT', body:{demo_level_cap: cap}});
+    toast(`${key} demo cap set to ${cap}`);
+  }catch(err){
+    toast(err.message || 'Could not save that cap');
+  }
 }
 
 /* =========================================================
@@ -1528,7 +1720,7 @@ renderAvatarPicker();
   if(!STATE.token) return;
   try{
     const me = await api('/api/auth/me');
-    STATE.user = {userid:me.userid, name:me.name, role:me.role, avatar:me.avatar, grade:me.grade, board:me.board, theme:me.theme || 'classic'};
+    STATE.user = {userid:me.userid, name:me.name, role:me.role, avatar:me.avatar, grade:me.grade, board:me.board, theme:me.theme || 'classic', account_tier:me.account_tier || 'silver'};
     await loadThemes();
     applyTheme(STATE.user.theme);
     if(me.role === 'admin'){
@@ -1537,6 +1729,8 @@ renderAvatarPicker();
       await renderAdminSection();
       renderAvatarPicker();
       await renderAdminStudentList();
+      await renderAdminThemeList();
+      await renderAdminSubjectCaps();
       goto('screen-admin');
     } else {
       await loadMyProgress();

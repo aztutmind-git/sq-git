@@ -20,10 +20,33 @@ LETTER_MAP = {"A": 0, "B": 1, "C": 2, "D": 3, "1": 0, "2": 1, "3": 2, "4": 3}
 @router.get("/questions", response_model=List[schemas.QuestionForQuiz])
 def get_questions_for_quiz(
     subject: str, level: int,
-    db: Session = Depends(get_db), _user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db), user: models.User = Depends(get_current_user),
 ):
     if subject not in VALID_SUBJECTS:
         raise HTTPException(status_code=400, detail="Unknown subject")
+
+    prog = db.query(models.Progress).filter(
+        models.Progress.user_id == user.id, models.Progress.subject == subject
+    ).first()
+
+    if user.account_tier != models.AccountTier.guest and prog and not prog.enrolled:
+        raise HTTPException(status_code=403, detail="NOT_ENROLLED")
+
+    if user.account_tier == models.AccountTier.guest:
+        subj_row = db.query(models.Subject).filter(models.Subject.key == subject).first()
+        demo_cap = subj_row.demo_level_cap if subj_row else 5
+        if level > demo_cap:
+            # Exact string the frontend matches on to show the registration
+            # card instead of a generic "locked" toast. Checked before the
+            # generic unlocked-level check below, since a guest's
+            # unlocked_level is itself capped at demo_cap — meaning the
+            # generic check would otherwise always fire first and mask this
+            # more specific, actionable reason.
+            raise HTTPException(status_code=403, detail="REGISTRATION_REQUIRED")
+
+    if prog and level > prog.unlocked_level:
+        raise HTTPException(status_code=403, detail="That level is still locked")
+
     rows = db.query(models.Question).filter(
         models.Question.subject == subject, models.Question.level == level
     ).all()

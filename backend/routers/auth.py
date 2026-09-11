@@ -1,3 +1,5 @@
+import random
+import string
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -17,6 +19,8 @@ from email_utils import send_password_reset_email
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
+SUBJECT_KEYS = ["chemistry", "physics", "botany", "zoology", "commerce", "accounts", "mathematics", "nutrition"]
+
 
 @router.get("/me", response_model=schemas.TokenResponse)
 def whoami(user: models.User = Depends(get_current_user)):
@@ -26,6 +30,46 @@ def whoami(user: models.User = Depends(get_current_user)):
         access_token="", role=user.role.value, name=user.name, userid=user.userid,
         avatar=user.avatar, grade=user.grade, board=user.board,
         must_reset_password=user.must_reset_password, theme=user.theme,
+        account_tier=user.account_tier.value,
+    )
+
+
+@router.post("/guest", response_model=schemas.TokenResponse)
+@limiter.limit("10/minute")
+def create_guest(request: Request, db: Session = Depends(get_db)):
+    """Auto-creates a no-password guest account so a visitor can start
+    playing immediately. Their progress persists (same account, same browser
+    token) but every subject is capped at that subject's demo_level_cap."""
+    # Generate a short, memorable, unique guest ID — retry on the rare collision.
+    for _ in range(10):
+        suffix = "".join(random.choices(string.ascii_lowercase + string.digits, k=6))
+        candidate = f"guest-{suffix}"
+        if not db.query(models.User).filter(models.User.userid == candidate).first():
+            userid = candidate
+            break
+    else:
+        raise HTTPException(status_code=500, detail="Could not generate a guest ID, please try again")
+
+    guest = models.User(
+        userid=userid,
+        hashed_password=None,
+        name="Guest Explorer",
+        role=models.Role.student,
+        account_tier=models.AccountTier.guest,
+        must_reset_password=False,
+    )
+    db.add(guest)
+    db.flush()  # get guest.id
+    for subject in SUBJECT_KEYS:
+        db.add(models.Progress(user_id=guest.id, subject=subject, unlocked_level=1, xp=0, stars={}))
+    db.commit()
+    db.refresh(guest)
+
+    token = create_access_token(guest.id, guest.userid, guest.role.value, expire_minutes=settings.GUEST_TOKEN_EXPIRE_MINUTES)
+    return schemas.TokenResponse(
+        access_token=token, role=guest.role.value, name=guest.name, userid=guest.userid,
+        avatar=guest.avatar, grade=guest.grade, board=guest.board,
+        must_reset_password=False, theme=guest.theme, account_tier=guest.account_tier.value,
     )
 
 
@@ -88,6 +132,7 @@ def login(request: Request, payload: schemas.LoginRequest, db: Session = Depends
         board=user.board,
         must_reset_password=user.must_reset_password,
         theme=user.theme,
+        account_tier=user.account_tier.value,
     )
 
 

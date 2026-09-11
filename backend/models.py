@@ -20,6 +20,12 @@ class Role(str, enum.Enum):
     admin = "admin"
 
 
+class AccountTier(str, enum.Enum):
+    guest = "guest"       # auto-created via "Try Demo" — no password, capped levels per subject
+    silver = "silver"     # registered/paid — full concept-level access, unlimited levels
+    premium = "premium"   # everything Silver has, plus the analytics dashboard (future)
+
+
 class User(Base):
     """Both students and admins live here, distinguished by `role`."""
     __tablename__ = "users"
@@ -27,9 +33,10 @@ class User(Base):
     id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
     userid = Column(String(64), unique=True, nullable=False, index=True)
     email = Column(String(255), nullable=True, index=True)  # real address (Gmail/Yahoo/etc.) for password-reset emails
-    hashed_password = Column(String(255), nullable=False)
+    hashed_password = Column(String(255), nullable=True)  # null for guest accounts — they never log in with a password
     name = Column(String(120), nullable=False)
     role = Column(Enum(Role), nullable=False, default=Role.student)
+    account_tier = Column(Enum(AccountTier), nullable=False, default=AccountTier.silver)
 
     # student-only profile fields (nullable for admins)
     grade = Column(String(8), nullable=True)
@@ -43,6 +50,19 @@ class User(Base):
 
     progress = relationship("Progress", back_populates="user", cascade="all, delete-orphan")
     reset_tokens = relationship("PasswordResetToken", back_populates="user", cascade="all, delete-orphan")
+
+
+class Subject(Base):
+    """Config for each of the 8 subjects — mainly the guest-tier demo level
+    cap, which the admin can set per subject. Subjects themselves are still
+    a fixed set of 8 keys (not admin-creatable) for this phase."""
+    __tablename__ = "subjects"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    key = Column(String(32), unique=True, nullable=False, index=True)
+    name = Column(String(64), nullable=False)
+    icon = Column(String(8), nullable=True)
+    demo_level_cap = Column(Integer, nullable=False, default=5)
 
 
 class Question(Base):
@@ -73,6 +93,12 @@ class Progress(Base):
     unlocked_level = Column(Integer, nullable=False, default=1)
     xp = Column(Integer, nullable=False, default=0)
     stars = Column(JSON, nullable=False, default=dict)  # {"1": 3, "2": 2, ...}
+    # Whether this subject shows up for the student at all. Every student
+    # gets a Progress row per subject at creation time (so their stats are
+    # ready to go the moment they're enrolled) — this flag is what actually
+    # controls visibility. Defaults True so nothing changes for any student
+    # created before this feature existed.
+    enrolled = Column(Boolean, nullable=False, default=True)
 
     user = relationship("User", back_populates="progress")
 

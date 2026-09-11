@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "change-this-to-a-long-random-string"  # openssl rand -hex 32
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 12  # 12 hours
+    GUEST_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 365  # 1 year — guests resume where they left off without logging in
 
     # ---- Password reset ----
     RESET_TOKEN_EXPIRE_MINUTES: int = 30

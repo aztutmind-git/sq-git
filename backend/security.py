@@ -14,13 +14,17 @@ def hash_password(plain: str) -> str:
     return hashed.decode("utf-8")
 
 
-def verify_password(plain: str, hashed: str) -> bool:
+def verify_password(plain: str, hashed: str | None) -> bool:
+    if not hashed:
+        # Guest accounts have no password at all — they never log in this way.
+        return False
     return bcrypt.checkpw(plain.encode("utf-8"), hashed.encode("utf-8"))
 
 
 # ---------------- JWT access tokens ----------------
-def create_access_token(user_id: str, userid: str, role: str) -> str:
-    expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+def create_access_token(user_id: str, userid: str, role: str, expire_minutes: int | None = None) -> str:
+    minutes = expire_minutes if expire_minutes is not None else settings.ACCESS_TOKEN_EXPIRE_MINUTES
+    expire = datetime.now(timezone.utc) + timedelta(minutes=minutes)
     payload = {"sub": user_id, "userid": userid, "role": role, "exp": expire}
     return jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
