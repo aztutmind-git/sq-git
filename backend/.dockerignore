@@ -1,9 +1,0 @@
-venv/
-.env
-__pycache__/
-**/__pycache__/
-*.pyc
-*.db
-.git/
-.gitignore
-test_*.py
