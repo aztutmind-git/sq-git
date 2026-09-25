@@ -1,0 +1,40 @@
+{
+  "themes": [
+    {
+      "id": "mountain",
+      "name": "Mountain Journey",
+      "icon": "🏔️",
+      "description": "Climb through your learning journey."
+    },
+    {
+      "id": "space",
+      "name": "Space Mission",
+      "icon": "🚀",
+      "description": "Explore and unlock new learning worlds."
+    },
+    {
+      "id": "ocean",
+      "name": "Ocean Journey",
+      "icon": "🐠",
+      "description": "Dive deeper as your understanding grows."
+    },
+    {
+      "id": "garden",
+      "name": "Learning Garden",
+      "icon": "🌱",
+      "description": "Grow your knowledge one stage at a time."
+    },
+    {
+      "id": "race",
+      "name": "Learning Race",
+      "icon": "🏎️",
+      "description": "Build momentum through every level."
+    },
+    {
+      "id": "classic",
+      "name": "Classic",
+      "icon": "⭐",
+      "description": "A clean, focused learning journey."
+    }
+  ]
+}
