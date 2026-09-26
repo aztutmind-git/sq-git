@@ -298,45 +298,49 @@ body.theme-ocean{
 .toc-unit-main{flex:1;}
 .toc-unit-main b{display:block;font-family:'Fredoka';font-size:16px;color:var(--ink);}
 .toc-unit-main span{font-size:10.5px;color:#8b8264;}
-.toc-chapter{padding:13px 14px;border-bottom:1px solid #eee8d9;}
-.toc-chapter:last-child{border-bottom:0;}
-.toc-chapter-title{display:flex;align-items:center;gap:8px;margin-bottom:9px;}
-.toc-chapter-title b{font-size:14px;flex:1;}
-.toc-chapter-title span{font-size:10px;color:#9a916a;font-weight:700;}
-.toc-topic-list{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:11px;}
-.toc-topic{
-  padding:5px 8px;border-radius:999px;background:#f6f1e4;
-  color:#756d56;font-size:10.5px;border:1px solid #ece3ce;
+/* ---------- STUDENT QUIZ BOARD TOC ---------- */
+.toc-wrap{padding:16px 18px 42px;max-width:1180px;margin:0 auto;width:100%;box-sizing:border-box;}
+.toc-hero{padding:18px 20px;margin-bottom:14px;border:1px solid #e8dfc9;border-radius:18px;background:linear-gradient(135deg,#fffaf0,#eef8ff);box-shadow:0 8px 22px rgba(24,38,77,.07);}
+.toc-hero .eyebrow{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;color:#b18416;}
+.toc-hero h2{margin:5px 0 4px;font-size:23px;color:var(--ink);}
+.toc-hero p{margin:0;color:#6f684f;font-size:12px;line-height:1.5;}
+.toc-controls{margin-bottom:14px;padding:14px;border:1px solid #e5dfd0;border-radius:16px;background:#fff;box-shadow:0 6px 18px rgba(24,38,77,.06);}
+.toc-control-row{display:flex;gap:10px;align-items:end;flex-wrap:wrap;}
+.toc-control{flex:1;min-width:150px;}
+.toc-control label{display:block;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.06em;color:#82775b;margin-bottom:5px;}
+.toc-control select{width:100%;padding:10px 11px;border:1px solid #d9d1bd;border-radius:10px;background:#fff;color:var(--ink);font-weight:700;font-size:12px;}
+.toc-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px;}
+.toc-action-btn{border:0;border-radius:10px;padding:10px 13px;font-weight:800;font-size:12px;cursor:pointer;}
+.toc-action-primary{background:linear-gradient(135deg,var(--gold),#d79a16);color:#fff;box-shadow:0 3px 0 #a8750d;}
+.toc-action-secondary{background:#edf5fb;color:#16466a;border:1px solid #d7e8f4;}
+.toc-selection-note{font-size:11px;color:#746b57;margin-left:auto;}
+.toc-table-card{overflow:hidden;border:1px solid #e5dfd0;border-radius:16px;background:#fff;box-shadow:0 8px 24px rgba(24,38,77,.07);}
+.toc-table{width:100%;border-collapse:collapse;table-layout:fixed;}
+.toc-table th{padding:11px 10px;background:#102f4d;color:#fff;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.05em;}
+.toc-table td{padding:11px 10px;border-top:1px solid #eee8dc;vertical-align:middle;font-size:12px;color:#33405a;}
+.toc-table tbody tr:hover{background:#fffaf0;}
+.toc-check{width:34px;text-align:center;}
+.toc-check input{width:17px;height:17px;accent-color:#d79a16;cursor:pointer;}
+.toc-unit-cell{width:18%;font-weight:800;color:#243b59;}
+.toc-chapter-cell{width:27%;font-weight:800;color:#172d49;}
+.toc-topic-count{display:block;font-size:10px;color:#968b70;font-weight:600;margin-top:3px;}
+.toc-level-cell{width:27%;}
+.toc-level-select{width:100%;padding:8px;border:1px solid #d8d1c0;border-radius:9px;background:#fff;font-size:11px;font-weight:800;color:#183553;}
+.toc-level-badges{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;}
+.toc-level-badge{padding:3px 6px;border-radius:999px;background:#eef5fa;color:#24567c;font-size:9px;font-weight:900;border:1px solid #d8e8f2;}
+.toc-level-badge.empty{background:#f7f4ec;color:#9a9075;border-color:#e9e2d3;}
+.toc-start-cell{width:13%;text-align:right;}
+.toc-start-btn{border:0;border-radius:9px;padding:9px 11px;background:linear-gradient(135deg,#0d5276,#123653);color:#fff;font-weight:900;font-size:11px;cursor:pointer;white-space:nowrap;}
+.toc-start-btn:hover{filter:brightness(1.08);transform:translateY(-1px);}
+.toc-unit-row td{background:#f8f4e8;color:#806f43;font-weight:900;font-size:10px;text-transform:uppercase;letter-spacing:.04em;padding:8px 10px;}
+.toc-status{padding:12px;text-align:center;color:#81765c;font-size:11px;}
+.toc-map-btn{width:100%;margin-top:12px;padding:12px;border-radius:12px;background:#efe8d4;color:#6d6349;font-weight:700;font-size:12px;border:0;cursor:pointer;}
+.quiz-timer{min-width:58px;padding:5px 8px;border-radius:999px;background:#fff3cf;color:#7a5b12;font-size:11px;font-weight:900;text-align:center;}
+@media(max-width:760px){
+  .toc-table-card{overflow-x:auto;}
+  .toc-table{min-width:850px;}
+  .toc-selection-note{margin-left:0;width:100%;}
 }
-.toc-level-title{
-  font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;
-  color:#9a916a;margin-bottom:7px;
-}
-.toc-levels{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;}
-.toc-level-btn{
-  min-height:62px;border-radius:13px;color:#fff;
-  background:linear-gradient(155deg,var(--ink),var(--ink-2));
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:2px;box-shadow:0 4px 0 rgba(23,19,53,.18);
-  transition:transform .12s ease,filter .12s ease;
-}
-.toc-level-btn:hover{filter:brightness(1.06);transform:translateY(-1px);}
-.toc-level-btn:active{transform:translateY(2px);box-shadow:0 2px 0 rgba(23,19,53,.18);}
-.toc-level-btn .ico{font-size:19px;line-height:1;}
-.toc-level-btn .lv{font-family:'Fredoka';font-size:11px;}
-.toc-level-btn .nm{font-size:8.5px;font-weight:700;opacity:.9;text-align:center;line-height:1.1;}
-.toc-map-btn{
-  width:100%;margin-top:2px;padding:12px;border-radius:12px;
-  background:#efe8d4;color:#6d6349;font-weight:700;font-size:12px;
-}
-.toc-empty{padding:18px;background:#fff;border:1px solid var(--paper-line);border-radius:16px;color:var(--muted);font-size:12px;}
-@media(max-width:420px){
-  .toc-levels{gap:5px;}
-  .toc-level-btn{min-height:58px;padding:3px 2px;}
-  .toc-level-btn .ico{font-size:17px;}
-  .toc-level-btn .nm{font-size:7.5px;}
-}
-
 /* ---------- PERFORMANCE DASHBOARD ---------- */
 #screen-performance{background:var(--paper);color:var(--ink);min-height:100vh;}
 .perf-top{background:var(--ink);color:#fff;padding:16px 20px 20px;display:flex;align-items:center;gap:12px;}
@@ -705,7 +709,7 @@ body.theme-ocean{
     <div class="quiz-top">
       <button class="icon-btn" onclick="exitQuiz()">✕</button>
       <div class="progress-track"><i id="quiz-progress" style="width:0%"></i></div>
-      <div class="hearts" id="quiz-hearts"></div>
+      <div class="quiz-timer" id="quiz-timer">20:00</div><div class="hearts" id="quiz-hearts"></div>
     </div>
     <div class="quiz-body">
       <div class="q-meta">
@@ -1032,7 +1036,7 @@ let STATE = {
   progress: {},        // subjectKey -> {unlocked_level, xp, stars:{level:n}}
   isAdmin: false,
   selectedAvatar: AVATARS[0],
-  quiz: null,           // {subject, level, chapter, questions, idx, correct, hearts, failed}
+  quiz: null,           // active timed quiz session
   currentSubject: null,
   currentToc: null,
   adminSubject: 'chemistry',
@@ -1617,91 +1621,215 @@ async function loadTableContent(board, grade, subject){
   throw new Error(`Table of Content file not found: ${path}`);
 }
 
-function tocLevelButton(level){
-  const icons = {1:'🌱',2:'📘',3:'🚀',4:'🧠',5:'🏆'};
-  return `<button class="toc-level-btn" onclick="startChapterLevel('mathematics',${level},this.dataset.chapter)" data-chapter="">
-    <span class="ico">${icons[level] || '⭐'}</span>
-    <span class="lv">Level ${level}</span>
-    <span class="nm"></span>
-  </button>`;
+function tocStageMeta(level, toc){
+  const fallback = {1:{stage:'Foundation',icon:'🌱'},2:{stage:'Intermediate',icon:'📘'},3:{stage:'Advanced',icon:'🚀'},4:{stage:'Application',icon:'🧠'},5:{stage:'Mastery',icon:'🏆'}};
+  const found = (toc?.levels || []).find(x => Number(x.level) === Number(level));
+  return found || {level:Number(level), ...(fallback[level] || {stage:`Level ${level}`,icon:'⭐'})};
+}
+
+async function loadQuestionAvailability(subject, toc){
+  STATE.tocQuestionCache = {};
+  const levels = (toc.levels || []).map(x => Number(x.level)).filter(Boolean);
+  const results = await Promise.all(levels.map(async level => {
+    try{
+      const qs = await api(`/api/questions?subject=${encodeURIComponent(subject)}&level=${level}`);
+      return {level, qs:Array.isArray(qs) ? qs : []};
+    }catch(err){
+      return {level, qs:[]};
+    }
+  }));
+  results.forEach(({level,qs}) => {
+    qs.forEach(q => {
+      const chapter = String(q.chapter || '').trim().toLowerCase();
+      if(!chapter) return;
+      if(!STATE.tocQuestionCache[chapter]) STATE.tocQuestionCache[chapter] = {};
+      STATE.tocQuestionCache[chapter][level] = (STATE.tocQuestionCache[chapter][level] || []).concat(q);
+    });
+  });
+  return STATE.tocQuestionCache;
+}
+
+function getAvailableLevels(chapterName){
+  const row = STATE.tocQuestionCache?.[String(chapterName).trim().toLowerCase()] || {};
+  return Object.keys(row).map(Number).filter(Boolean).sort((a,b)=>a-b);
+}
+
+function renderChapterQuizTable(toc){
+  const rows = [];
+  (toc.units || []).forEach(unit => {
+    (unit.chapters || []).forEach(chapter => {
+      const levels = getAvailableLevels(chapter.name);
+      const options = levels.length
+        ? levels.map(l => {
+            const meta = tocStageMeta(l,toc);
+            const count = STATE.tocQuestionCache[chapter.name.trim().toLowerCase()][l]?.length || 0;
+            return `<option value="${l}">${meta.icon} Level ${l} · ${escapeHtml(meta.stage)} (${count})</option>`;
+          }).join('')
+        : '<option value="">No questions available</option>';
+      const badges = levels.length
+        ? levels.map(l => {
+            const meta=tocStageMeta(l,toc); const count=STATE.tocQuestionCache[chapter.name.trim().toLowerCase()][l]?.length || 0;
+            return `<span class="toc-level-badge">${meta.icon} L${l} · ${count}</span>`;
+          }).join('')
+        : '<span class="toc-level-badge empty">No question data</span>';
+      rows.push(`<tr>
+        <td class="toc-check"><input type="checkbox" class="toc-chapter-check" data-chapter="${escapeHtml(chapter.name)}" ${levels.length?'':'disabled'}></td>
+        <td class="toc-unit-cell">${escapeHtml(unit.name || '')}</td>
+        <td class="toc-chapter-cell">${escapeHtml(chapter.name || '')}<span class="toc-topic-count">${(chapter.topics||[]).length} topics in JSON</span></td>
+        <td class="toc-level-cell">
+          <select class="toc-level-select" data-chapter="${escapeHtml(chapter.name)}" ${levels.length?'':'disabled'}>
+            ${options}
+          </select>
+          <div class="toc-level-badges">${badges}</div>
+        </td>
+        <td class="toc-start-cell"><button class="toc-start-btn" ${levels.length?'':'disabled'} onclick='startSingleChapterFromRow(this)'>Start</button></td>
+      </tr>`);
+    });
+  });
+  return rows.join('');
+}
+
+function collectSelectedChapters(){
+  return [...document.querySelectorAll('.toc-chapter-check:checked')].map(x=>x.dataset.chapter).filter(Boolean);
+}
+
+function updateTocSelectionUI(){
+  const selected = collectSelectedChapters();
+  const note = document.getElementById('toc-selection-note');
+  if(note) note.textContent = selected.length ? `${selected.length} chapter${selected.length===1?'':'s'} selected` : 'No chapters selected';
+}
+
+function toggleAllTocChapters(checked){
+  document.querySelectorAll('.toc-chapter-check:not(:disabled)').forEach(x=>x.checked=checked);
+  updateTocSelectionUI();
+}
+
+function getSelectedLevel(){
+  const value = document.getElementById('toc-global-level')?.value || '';
+  return value ? Number(value) : null;
+}
+
+function refreshGlobalLevelOptions(){
+  const selected = collectSelectedChapters();
+  const select = document.getElementById('toc-global-level');
+  if(!select) return;
+  const source = selected.length ? selected : Object.keys(STATE.tocQuestionCache || {});
+  const levels = [...new Set(source.flatMap(ch => getAvailableLevels(ch)))].sort((a,b)=>a-b);
+  select.innerHTML = levels.length
+    ? levels.map(l=>{const m=tocStageMeta(l,STATE.currentToc); return `<option value="${l}">${m.icon} Level ${l} · ${escapeHtml(m.stage)}</option>`;}).join('')
+    : '<option value="">No levels available</option>';
+}
+
+function onTocChapterSelectionChanged(){
+  refreshGlobalLevelOptions();
+  updateTocSelectionUI();
+}
+
+function startSingleChapterFromRow(button){
+  const row = button.closest('tr');
+  const chapter = row.querySelector('.toc-level-select')?.dataset.chapter;
+  const level = Number(row.querySelector('.toc-level-select')?.value || 0);
+  if(!chapter || !level){ toast('No question level is available for this chapter'); return; }
+  startConfiguredQuiz([chapter], level);
+}
+
+function getQuizMinutes(){
+  return Number(document.getElementById('toc-time-limit')?.value || 20);
+}
+
+function buildTimedQuestionSet(chapters, level, minutes){
+  const pool = [];
+  chapters.forEach(chapter => {
+    const byLevel = STATE.tocQuestionCache?.[String(chapter).trim().toLowerCase()]?.[level] || [];
+    byLevel.forEach(q => pool.push({...q, __chapter:chapter, __level:level}));
+  });
+  const shuffled = [...pool].sort(()=>Math.random()-0.5);
+  const budgetSeconds = Math.min(60, Math.max(5, minutes)) * 60;
+  let used = 0;
+  const selected = [];
+  for(const q of shuffled){
+    const seconds = Math.max(15, Number(q.time_limit || 60));
+    if(selected.length && used + seconds > budgetSeconds) continue;
+    selected.push(q); used += seconds;
+    if(used >= budgetSeconds) break;
+  }
+  return {selected, usedSeconds:used, available:pool.length};
+}
+
+async function startConfiguredQuiz(chapters, level){
+  chapters = [...new Set(chapters)].filter(Boolean);
+  if(!chapters.length){ toast('Select at least one chapter'); return; }
+  if(!level){ toast('Choose a quiz level'); return; }
+  const minutes = getQuizMinutes();
+  const pack = buildTimedQuestionSet(chapters, Number(level), minutes);
+  if(!pack.selected.length){ toast('No questions are available for the selected chapter(s) and level'); return; }
+
+  STATE.quiz = {
+    subject:'mathematics', level:Number(level), chapter:null, chapters,
+    questions:pack.selected, idx:0, correct:0, hearts:5, failed:false,
+    durationMinutes:minutes, plannedSeconds:Math.min(60,minutes)*60,
+    usedSeconds:pack.usedSeconds, startedAt:Date.now(), deadline:null, timerId:null, finished:false
+  };
+  startQuizTimer(minutes);
+  renderQuestion();
+  goto('screen-quiz');
+}
+
+function startSelectedTocQuiz(){
+  const chapters = collectSelectedChapters();
+  if(!chapters.length){ toast('Select one or more chapters first'); return; }
+  const level = getSelectedLevel();
+  startConfiguredQuiz(chapters, level);
+}
+
+function selectTocTime(minutes){
+  const select=document.getElementById('toc-time-limit');
+  if(select) select.value=String(minutes);
 }
 
 async function openTableOfContent(board, grade, subject){
   const wrap = document.getElementById('toc-wrap');
-  wrap.innerHTML = '<div class="toc-empty">Loading Table of Content…</div>';
+  wrap.innerHTML = '<div class="toc-empty">Loading chapter availability…</div>';
   try{
     const toc = await loadTableContent(board, grade, subject);
     STATE.currentToc = toc;
+    await loadQuestionAvailability(subject, toc);
     document.getElementById('toc-title').textContent = toc.subject || 'Table of Content';
-    document.getElementById('toc-subtitle').textContent =
-      `${toc.board || board.toUpperCase()} · Grade ${toc.grade || grade}${toc.academic_session ? ` · ${toc.academic_session}` : ''}`;
+    document.getElementById('toc-subtitle').textContent = `${toc.board || board.toUpperCase()} · Grade ${toc.grade || grade}${toc.academic_session ? ` · ${toc.academic_session}` : ''}`;
     document.getElementById('toc-xp').textContent = totalXp();
 
-    const levels = toc.levels || [];
-    const levelButtons = levels.length ? levels : [
-      {level:1,name:'Foundation',icon:'🌱'},
-      {level:2,name:'Intermediate',icon:'📘'},
-      {level:3,name:'Advanced',icon:'🚀'},
-      {level:4,name:'Application',icon:'🧠'},
-      {level:5,name:'Mastery',icon:'🏆'}
-    ];
+    const table = renderChapterQuizTable(toc);
+    const allLevels = [...new Set(Object.values(STATE.tocQuestionCache).flatMap(by => Object.keys(by).map(Number)))].sort((a,b)=>a-b);
+    const levelOptions = allLevels.length ? allLevels.map(l=>{const m=tocStageMeta(l,toc);return `<option value="${l}">${m.icon} Level ${l} · ${escapeHtml(m.stage)}</option>`;}).join('') : '<option value="">No levels available</option>';
 
-    let html = `
+    wrap.innerHTML = `
       <div class="toc-hero">
-        <div class="eyebrow">📚 Table of Content</div>
+        <div class="eyebrow">📚 Student Quiz Board · Table of Content</div>
         <h2>${escapeHtml(toc.subject || subject)}</h2>
-        <p>Select a chapter and then tap any level icon to open the questions for that chapter and level.</p>
-      </div>`;
+        <p>Choose one or more chapters. Levels shown below come only from questions currently available in the question table.</p>
+      </div>
+      <div class="toc-controls">
+        <div class="toc-control-row">
+          <div class="toc-control"><label>Quiz level</label><select id="toc-global-level">${levelOptions}</select></div>
+          <div class="toc-control"><label>Quiz time</label><select id="toc-time-limit"><option value="5">5 minutes</option><option value="20" selected>20 minutes</option><option value="30">30 minutes</option><option value="45">45 minutes</option><option value="60">60 minutes (max)</option></select></div>
+        </div>
+        <div class="toc-actions">
+          <button class="toc-action-btn toc-action-secondary" onclick="toggleAllTocChapters(true)">Select all</button>
+          <button class="toc-action-btn toc-action-secondary" onclick="toggleAllTocChapters(false)">Clear</button>
+          <button class="toc-action-btn toc-action-primary" onclick="startSelectedTocQuiz()">▶ Start selected chapters</button>
+          <span class="toc-selection-note" id="toc-selection-note">No chapters selected</span>
+        </div>
+      </div>
+      <div class="toc-table-card">
+        <table class="toc-table">
+          <thead><tr><th class="toc-check">✓</th><th>Unit</th><th>Chapter</th><th>Available quiz levels · questions</th><th class="toc-start-cell">Start</th></tr></thead>
+          <tbody>${table || '<tr><td colspan="5"><div class="toc-status">No chapters are defined in the uploaded JSON.</div></td></tr>'}</tbody>
+        </table>
+      </div>
+      <button class="toc-map-btn" onclick="openSubjectLevelMap('mathematics')">🗺️ Open classic level map</button>`;
 
-    (toc.units || []).forEach(unit=>{
-      html += `
-        <section class="toc-unit">
-          <div class="toc-unit-head">
-            <div class="toc-unit-num">${unit.order || ''}</div>
-            <div class="toc-unit-main">
-              <b>${escapeHtml(unit.name || '')}</b>
-              <span>${unit.marks ? `${escapeHtml(unit.marks)} marks` : 'Syllabus unit'}</span>
-            </div>
-          </div>`;
-
-      (unit.chapters || []).forEach(chapter=>{
-        const chapterName = chapter.name || '';
-        const chapterTopics = chapter.topics || [];
-        html += `
-          <div class="toc-chapter">
-            <div class="toc-chapter-title">
-              <b>📖 ${escapeHtml(chapterName)}</b>
-              <span>${chapterTopics.length} topic${chapterTopics.length===1?'':'s'}</span>
-            </div>
-            ${chapterTopics.length ? `<div class="toc-topic-list">${chapterTopics.map(t=>`<span class="toc-topic">${escapeHtml(t)}</span>`).join('')}</div>` : ''}
-            <div class="toc-level-title">Choose level</div>
-            <div class="toc-levels">`;
-
-        levelButtons.forEach(l=>{
-          const lv=Number(l.level);
-          const icon=l.icon || ({1:'🌱',2:'📘',3:'🚀',4:'🧠',5:'🏆'}[lv] || '⭐');
-          const name=l.name || `Level ${lv}`;
-          html += `<button class="toc-level-btn"
-                    data-chapter="${escapeHtml(chapterName)}"
-                    onclick="startChapterLevel('mathematics',${lv},this.dataset.chapter)">
-                    <span class="ico">${icon}</span>
-                    <span class="lv">Level ${lv}</span>
-                    <span class="nm">${escapeHtml(name)}</span>
-                  </button>`;
-        });
-
-        html += `</div></div>`;
-      });
-
-      html += `</section>`;
-    });
-
-    if(!(toc.units || []).length){
-      html += '<div class="toc-empty">No units have been defined in this Table of Content yet.</div>';
-    }
-
-    html += `<button class="toc-map-btn" onclick="openSubjectLevelMap('mathematics')">🗺️ Open classic level map</button>`;
-    wrap.innerHTML = html;
+    document.querySelectorAll('.toc-chapter-check').forEach(x=>x.addEventListener('change',onTocChapterSelectionChanged));
+    refreshGlobalLevelOptions();
     goto('screen-toc');
   }catch(err){
     wrap.innerHTML = `<div class="toc-empty">Could not load this Table of Content. ${escapeHtml(err.message || '')}</div>`;
@@ -1788,29 +1916,8 @@ function renderPath(key){
    QUIZ FLOW
    ========================================================= */
 async function startChapterLevel(subject, level, chapter){
-  let qs;
-  try{
-    qs = await api(`/api/questions?subject=${encodeURIComponent(subject)}&level=${level}`);
-  }catch(err){
-    if(err.message === 'REGISTRATION_REQUIRED'){ openRegistrationCta(); return; }
-    toast(err.message || 'Could not load questions'); return;
-  }
-
-  const wanted = String(chapter || '').trim().toLowerCase();
-  const filtered = qs.filter(q => String(q.chapter || '').trim().toLowerCase() === wanted);
-
-  if(!filtered.length){
-    toast(`No Level ${level} questions tagged for "${chapter}" yet`);
-    return;
-  }
-
-  const shuffled = [...filtered].sort(()=>Math.random()-0.5);
-  STATE.quiz = {
-    subject, level, chapter,
-    questions: shuffled, idx:0, correct:0, hearts:5, failed:false
-  };
-  renderQuestion();
-  goto('screen-quiz');
+  // Compatibility entry point for any existing button handlers.
+  await startConfiguredQuiz([chapter], Number(level));
 }
 
 async function startLevel(subject, level){
@@ -1829,13 +1936,46 @@ async function startLevel(subject, level){
 }
 function exitQuiz(){
   if(confirm('Leave this level? Your progress on this attempt will be lost.')){
-    if(STATE.quiz && STATE.quiz.chapter){
+    stopQuizTimer();
+    if(STATE.quiz && (STATE.quiz.chapter || STATE.quiz.chapters?.length)){
       openTableOfContent('cbse', STATE.user.grade, 'mathematics');
     }else{
       goto('screen-map');
     }
   }
 }
+function stopQuizTimer(){
+  if(STATE.quiz?.timerId){
+    clearInterval(STATE.quiz.timerId);
+    STATE.quiz.timerId = null;
+  }
+}
+function updateQuizTimer(){
+  const quiz = STATE.quiz;
+  const el = document.getElementById('quiz-timer');
+  if(!quiz || !el || !quiz.deadline) return;
+  const remaining = Math.max(0, quiz.deadline - Date.now());
+  const totalSeconds = Math.ceil(remaining / 1000);
+  const mins = Math.floor(totalSeconds / 60);
+  const secs = totalSeconds % 60;
+  el.textContent = `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+  el.style.background = remaining <= 60000 ? '#ffe0df' : '#fff3cf';
+  el.style.color = remaining <= 60000 ? '#a62d2d' : '#7a5b12';
+  if(remaining <= 0 && !quiz.finished){
+    quiz.finished = true;
+    stopQuizTimer();
+    finishLevel(false, true);
+  }
+}
+function startQuizTimer(minutes){
+  stopQuizTimer();
+  if(!STATE.quiz) return;
+  STATE.quiz.deadline = Date.now() + Math.min(60, Math.max(5, Number(minutes)||20))*60*1000;
+  STATE.quiz.finished = false;
+  updateQuizTimer();
+  STATE.quiz.timerId = setInterval(updateQuizTimer, 1000);
+}
+
 function renderHearts(){
   const h = document.getElementById('quiz-hearts');
   h.innerHTML = Array.from({length:5}).map((_,i)=> i < STATE.quiz.hearts ? '❤️' : '🤍').join('');
@@ -1847,6 +1987,7 @@ function renderQuestion(){
   document.getElementById('screen-quiz').style.background = '#FBF7EC';
   document.getElementById('quiz-progress').style.width = `${(quiz.idx/quiz.questions.length)*100}%`;
   renderHearts();
+  updateQuizTimer();
   document.getElementById('q-difficulty').textContent = levelMeta(quiz.level).diff;
   document.getElementById('q-difficulty').style.background = `var(${s.c})`;
   document.getElementById('q-difficulty').style.color = '#fff';
@@ -1903,8 +2044,11 @@ function nextQuestion(){
   if(quiz.idx >= quiz.questions.length){ finishLevel(false); return; }
   renderQuestion();
 }
-async function finishLevel(outOfHearts){
+async function finishLevel(outOfHearts, timeUp=false){
   const quiz = STATE.quiz;
+  if(quiz?.finished && !timeUp && !outOfHearts) return;
+  quiz.finished = true;
+  stopQuizTimer();
   const total = quiz.questions.length;
 
   let result;
@@ -1922,10 +2066,12 @@ async function finishLevel(outOfHearts){
   const stars = result.stars, passed = result.passed, xpGained = result.xp_gained;
 
   document.getElementById('result-emoji').textContent = outOfHearts ? '💔' : (passed ? (stars===3?'🏆':'🎉') : '📘');
-  document.getElementById('result-title').textContent = outOfHearts ? 'Out of hearts' : (passed ? 'Level complete!' : 'So close — try again');
-  document.getElementById('result-sub').textContent = outOfHearts
+  document.getElementById('result-title').textContent = timeUp ? "Time's up!" : (outOfHearts ? 'Out of hearts' : (passed ? 'Level complete!' : 'So close — try again'));
+  document.getElementById('result-sub').textContent = timeUp
+    ? `Your ${quiz.durationMinutes}-minute quiz time has ended.`
+    : (outOfHearts
     ? 'You ran out of hearts. Give it another shot.'
-    : (passed ? `You cleared Level ${quiz.level} · ${levelMeta(quiz.level).diff}` : 'You need at least 50% correct to unlock the next level.');
+    : (passed ? `You cleared Level ${quiz.level} · ${levelMeta(quiz.level).diff}` : 'You need at least 50% correct to unlock the next level.'));
   document.getElementById('result-stars').textContent = passed ? '⭐'.repeat(stars) + '☆'.repeat(3-stars) : '☆☆☆';
   document.getElementById('result-correct').textContent = `${quiz.correct}/${total}`;
   document.getElementById('result-xp').textContent = `+${xpGained}`;
@@ -1935,6 +2081,10 @@ async function finishLevel(outOfHearts){
 function closeResult(){
   const chapterQuiz = !!(STATE.quiz && STATE.quiz.chapter);
   document.getElementById('result-overlay').classList.remove('active');
+  if(STATE.quiz && (STATE.quiz.chapter || STATE.quiz.chapters?.length)){
+    openTableOfContent('cbse', STATE.user.grade, 'mathematics');
+    return;
+  }
   renderPath(STATE.currentSubject);
   const p = STATE.progress[STATE.currentSubject];
   document.getElementById('map-xp').textContent = p.xp;
