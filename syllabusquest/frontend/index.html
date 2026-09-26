@@ -1628,12 +1628,23 @@ async function loadQuestionTableForSubject(subject){
   // No syllabus/TOC JSON is used here — the question table is the source of truth.
   const levels = [1,2,3,4,5];
   const results = await Promise.all(levels.map(async level => {
-    const qs = await api(`/api/questions?subject=${encodeURIComponent(subject)}&level=${level}`);
-    return Array.isArray(qs) ? qs : [];
+    try {
+      const qs = await api(`/api/questions?subject=${encodeURIComponent(subject)}&level=${level}`);
+      return { level, questions: Array.isArray(qs) ? qs : [], locked: false };
+    } catch (err) {
+      // The student API may intentionally reject levels above the student's
+      // current unlock/demo cap. That must not prevent the rest of the
+      // question-table roadmap from loading.
+      const message = String(err?.message || '').toLowerCase();
+      const locked = message.includes('locked') || message.includes('level') && message.includes('unlock');
+      if (locked) return { level, questions: [], locked: true };
+      console.warn(`Could not load level ${level}:`, err);
+      return { level, questions: [], locked: false };
+    }
   }));
   const seen = new Set();
   const merged = [];
-  results.flat().forEach(q => {
+  results.flatMap(r => r.questions || []).forEach(q => {
     const key = q.question_id ?? q.id ?? `${q.subject}|${q.chapter}|${q.topic}|${q.question}`;
     if(seen.has(String(key))) return;
     seen.add(String(key));
