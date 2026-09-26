@@ -590,6 +590,121 @@ body.theme-ocean{
 #screen-toc .toc-level-cell{width:20%;vertical-align:top;}
 #screen-toc .toc-start-cell{width:9%;vertical-align:top;text-align:center;}
 @media(max-width:900px){#screen-toc .toc-wrap{padding:12px 10px 35px;}#screen-toc .toc-table-card{overflow-x:auto;}#screen-toc .toc-table{min-width:1050px;}}
+
+
+/* =========================================================
+   WEBPAGE / DESKTOP LAYOUT
+   Keeps the compact mobile experience below 768px, while turning
+   larger screens into a proper full-width Student Quiz Board webpage.
+   ========================================================= */
+@media (min-width:768px){
+  html,body{min-width:100%;}
+  body{display:block;padding:0;background:var(--theme-outer-bg);}
+  .app{
+    width:100%;
+    max-width:none;
+    min-height:100vh;
+    margin:0;
+    border-radius:0;
+    box-shadow:none;
+    overflow-x:hidden;
+  }
+
+  .screen{width:100%;min-height:100vh;}
+
+  /* Auth: webpage composition instead of a phone-width form */
+  #screen-auth{
+    padding:56px clamp(32px,6vw,96px) 60px;
+  }
+  #screen-auth .brand,
+  #screen-auth .hero-line,
+  #screen-auth .subject-strip,
+  #screen-auth .auth-card,
+  #screen-auth .admin-link{
+    width:min(1180px,100%);
+    margin-left:auto;
+    margin-right:auto;
+  }
+  #screen-auth .hero-line{margin-top:42px;}
+  #screen-auth .hero-line h1{font-size:clamp(40px,4.2vw,62px);max-width:760px;}
+  #screen-auth .hero-line p{font-size:16px;max-width:700px;}
+  #screen-auth .subject-strip{margin-top:28px;gap:10px;}
+  #screen-auth .chip{font-size:13px;padding:8px 14px;}
+  #screen-auth .auth-card{
+    margin-top:32px;
+    max-width:760px;
+    padding:30px 32px 34px;
+    border-radius:24px;
+  }
+
+  /* Home becomes a real dashboard/content page. */
+  #screen-home{padding-bottom:48px;}
+  #screen-home .topbar{
+    border-radius:0;
+    padding:18px clamp(28px,5vw,72px) 22px;
+  }
+  #screen-home .section-title{
+    width:min(1320px,100%);
+    margin:0 auto;
+    padding:30px 24px 10px;
+  }
+  #screen-home .subject-grid{
+    width:min(1320px,100%);
+    margin:0 auto;
+    padding:8px 24px 36px;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:16px;
+  }
+  #screen-home .subj-card{min-height:145px;padding:20px;}
+  #screen-home .toc-home-btn{
+    display:block;
+    width:min(1320px,calc(100% - 48px));
+    margin:4px auto 30px;
+  }
+
+  /* Performance / profile content gets breathing room on wide screens. */
+  #screen-performance .perf-wrap,
+  #screen-profile .profile-wrap,
+  #screen-settings .settings-wrap{
+    width:min(1200px,100%);
+    margin:0 auto;
+  }
+
+  /* Question-bank / TOC is already data-driven; make it feel like the
+     primary desktop workspace rather than a phone page. */
+  #screen-toc .toc-wrap{
+    max-width:1440px;
+    padding:28px clamp(24px,4vw,64px) 64px;
+    margin:0 auto;
+  }
+  #screen-toc .toc-hero{padding:24px 26px;border-radius:20px;}
+  #screen-toc .toc-hero h2{font-size:30px;}
+  #screen-toc .toc-hero p{font-size:13px;max-width:900px;}
+  #screen-toc .toc-controls{padding:18px 20px;}
+  #screen-toc .toc-table-card{border-radius:18px;}
+  #screen-toc .toc-table th{padding:13px 14px;font-size:11px;}
+  #screen-toc .toc-table td{padding:13px 14px;font-size:13px;}
+
+  /* Quiz workspace: readable central content with wide-screen controls. */
+  #screen-quiz{padding:0 clamp(24px,5vw,80px) 60px;}
+  #screen-quiz > *{width:min(1100px,100%);margin-left:auto;margin-right:auto;}
+
+  /* Map / roadmap uses the available width rather than a 480px shell. */
+  body.map-active .app{max-width:none;}
+  body.map-active .path-wrap{width:min(1100px,100%);margin:0 auto;}
+  body.map-active .level-node-wrap:nth-child(4n+1){padding-left:20%;}
+  body.map-active .level-node-wrap:nth-child(4n+3){padding-right:20%;}
+
+  /* Admin keeps its existing desktop dashboard behavior, now without the
+     outer phone shell. */
+  body.admin-active .app{max-width:none;}
+}
+
+@media (min-width:1100px){
+  #screen-home .subject-grid{grid-template-columns:repeat(4,minmax(0,1fr));}
+  #screen-auth .auth-card{max-width:820px;}
+}
+
 </style>
 </head>
 <body>
