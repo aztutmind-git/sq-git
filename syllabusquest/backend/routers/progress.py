@@ -152,13 +152,23 @@ def get_performance_dashboard(
             buckets[key]["count"] += 1
             buckets[key]["points"] += (star_count / 3.0) * 100.0
 
-        chapter_map = defaultdict(lambda: {
-            "count": 0, "points": 0.0,
-            "children": defaultdict(lambda: {
-                "count": 0, "points": 0.0,
-                "children": defaultdict(lambda: {"count": 0, "points": 0.0})
-            })
-        })
+        chapter_map = defaultdict(
+		lambda: {
+            		"count": 0, 
+			"points": 0.0,
+            		"children": defaultdict(
+				lambda: {
+                			"count": 0, "points": 0.0,
+                			"children": defaultdict(
+						lambda: {
+							"count": 0, 
+							"points": 0.0
+							}
+								)
+            				}
+						)
+        		}
+				)
         for (chapter, topic, stage), b in buckets.items():
             cm = chapter_map[chapter]
             cm["count"] += b["count"]
