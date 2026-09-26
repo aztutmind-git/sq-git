@@ -571,6 +571,25 @@ body.theme-ocean{
 }
 .toast.show{opacity:1;top:26px;}
 .hidden{display:none !important;}
+
+/* Full-screen question-bank roadmap */
+#screen-toc{width:100%;min-height:100vh;}
+#screen-toc .toc-top{border-radius:0;}
+#screen-toc .toc-wrap{max-width:none;width:100%;padding:18px 24px 48px;box-sizing:border-box;}
+#screen-toc .toc-table-card{width:100%;border-radius:14px;}
+#screen-toc .toc-table{table-layout:auto;min-width:100%;}
+#screen-toc .toc-table th,#screen-toc .toc-table td{white-space:normal;}
+#screen-toc .toc-subject-cell,#screen-toc .toc-world-cell,#screen-toc .toc-chapter-cell{vertical-align:top;font-weight:900;}
+#screen-toc .toc-subject-cell{width:12%;background:#f4f8fb;color:#123653;font-size:13px;}
+#screen-toc .toc-world-cell{width:16%;background:#fbf7ec;color:#725b20;}
+#screen-toc .toc-chapter-cell{width:20%;background:#fffdf7;color:#173a58;}
+#screen-toc .toc-topic-cell{width:30%;font-weight:700;color:#42506a;}
+#screen-toc .toc-topic-cell span{display:block;margin-top:3px;font-size:10px;color:#958b75;font-weight:600;}
+#screen-toc .toc-chapter-name{margin-bottom:9px;}
+#screen-toc .toc-chapter-cell input{width:17px;height:17px;accent-color:#d79a16;}
+#screen-toc .toc-level-cell{width:20%;vertical-align:top;}
+#screen-toc .toc-start-cell{width:9%;vertical-align:top;text-align:center;}
+@media(max-width:900px){#screen-toc .toc-wrap{padding:12px 10px 35px;}#screen-toc .toc-table-card{overflow-x:auto;}#screen-toc .toc-table{min-width:1050px;}}
 </style>
 </head>
 <body>
@@ -1582,9 +1601,7 @@ async function openSubject(key){
   const board = String(STATE.user?.board || '').toLowerCase();
   const tocSubject = String(key || '').toLowerCase();
 
-  // Mathematics Grade 11 CBSE is backed by the first Table of Content file.
-  // Other subjects keep the existing level-map experience until their TOC
-  // files are added.
+  // The Student Quiz Board roadmap is generated from the question table.
   if(board === 'cbse' && grade === '11' && tocSubject === 'mathematics'){
     await openTableOfContent('cbse', 11, 'mathematics');
     return;
@@ -1605,20 +1622,159 @@ async function openSubject(key){
   goto('screen-map');
 }
 
-const EMBEDDED_MATH_TOC = {"board":"CBSE","board_code":"CBSE","grade":11,"subject":"Mathematics","subject_code":"041","academic_session":"2026-27","title":"CBSE Grade 11 Mathematics","source":"CBSE Mathematics Subject Code 041, Classes XI-XII, 2026-27","source_url":"https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Maths_SecP2_2026-27.pdf","levels":[{"level":1,"stage":"Foundation","icon":"🌱","path_template":"/questions?board=CBSE&grade=11&subject=Mathematics&level=1"},{"level":2,"stage":"Intermediate","icon":"📘","path_template":"/questions?board=CBSE&grade=11&subject=Mathematics&level=2"},{"level":3,"stage":"Advanced","icon":"🚀","path_template":"/questions?board=CBSE&grade=11&subject=Mathematics&level=3"},{"level":4,"stage":"Application","icon":"🧠","path_template":"/questions?board=CBSE&grade=11&subject=Mathematics&level=4"},{"level":5,"stage":"Mastery","icon":"🏆","path_template":"/questions?board=CBSE&grade=11&subject=Mathematics&level=5"}],"units":[{"id":"sets-and-functions","name":"Sets and Functions","order":1,"marks":23,"chapters":[{"id":"sets","name":"Sets","order":1,"topics":["Sets and their representations","Empty set","Finite and infinite sets","Equal sets","Subsets","Subsets of real numbers and intervals","Universal set","Venn diagrams","Union and intersection of sets","Difference of sets","Complement of a set","Properties of complement"],"formative_only_topics":["Practical problems on union and intersection of two sets"]},{"id":"relations-and-functions","name":"Relations and Functions","order":2,"topics":["Ordered pairs","Cartesian product of sets","Number of elements in the Cartesian product of two finite sets","Cartesian product of R with itself up to R × R × R","Relations","Pictorial diagrams","Domain, co-domain and range of a relation","Functions as a special type of relation","Pictorial representation of a function","Domain, co-domain and range of a function","Real-valued functions","Constant functions","Identity functions","Polynomial functions","Rational functions","Modulus function","Signum function","Exponential function","Logarithmic function","Greatest integer function","Graphs of real-valued functions","Sum, difference, product and quotient of functions"],"formative_only_topics":["Composition of functions"]},{"id":"trigonometric-functions","name":"Trigonometric Functions","order":3,"topics":["Positive and negative angles","Measuring angles in radians and degrees","Conversion between radians and degrees","Trigonometric functions using the unit circle","sin²x + cos²x = 1","Signs of trigonometric functions","Domain and range of trigonometric functions","Graphs of trigonometric functions","sin(x ± y) and cos(x ± y)","tan(x ± y)","cot(x ± y)","Sum-to-product identities","Identities involving sin 2x, cos 2x and tan 2x","Identities involving sin 3x, cos 3x and tan 3x"],"formative_only_topics":["General solution of trigonometric equations"]}]},{"id":"algebra","name":"Algebra","order":2,"marks":25,"chapters":[{"id":"complex-numbers-and-quadratic-equations","name":"Complex Numbers and Quadratic Equations","order":1,"topics":["Need for complex numbers","Imaginary unit √−1","Algebraic properties of complex numbers","Argand plane"],"formative_only_topics":["Polar representation of complex numbers","Fundamental Theorem of Algebra","Solution of quadratic equations with real coefficients in the complex number system"]},{"id":"linear-inequalities","name":"Linear Inequalities","order":2,"topics":["Linear inequalities","Algebraic solutions of linear inequalities in one variable","Representation of solutions on the number line"],"formative_only_topics":["Graphical solution of linear inequalities in two variables","Graphical solution of systems of linear inequalities in two variables"]},{"id":"permutations-and-combinations","name":"Permutations and Combinations","order":3,"topics":["Fundamental principle of counting","Factorial n!","Permutations","Combinations","Formula for nPr","Formula for nCr","Relationship between permutations and combinations","Simple applications"]},{"id":"binomial-theorem","name":"Binomial Theorem","order":4,"topics":["Historical perspective","Binomial theorem for positive integral indices","Proof of the binomial theorem","Pascal's triangle","Simple applications"],"formative_only_topics":["General term in a binomial expansion","Middle term in a binomial expansion"]},{"id":"sequence-and-series","name":"Sequence and Series","order":5,"topics":["Sequences and series","Arithmetic mean","Geometric progression","General term of a G.P.","Sum of n terms of a G.P.","Infinite G.P. and its sum","Geometric mean","Relation between A.M. and G.M."],"formative_only_topics":["Special sums of natural numbers, squares and cubes"]}]},{"id":"coordinate-geometry","name":"Coordinate Geometry","order":3,"marks":12,"chapters":[{"id":"straight-lines","name":"Straight Lines","order":1,"topics":["Revision of two-dimensional geometry","Slope of a line","Angle between two lines","Equation of a line parallel to an axis","Point-slope form","Slope-intercept form","Two-point form","Intercept form","Distance of a point from a line"],"formative_only_topics":["Normal form","General equation of a line"]},{"id":"conic-sections","name":"Conic Sections","order":2,"topics":["Sections of a cone","Circle","Ellipse","Parabola","Hyperbola","Degenerate conic sections","Standard equation of a circle","Standard equation and properties of a parabola","Standard equation and properties of an ellipse","Standard equation and properties of a hyperbola"]},{"id":"introduction-to-three-dimensional-geometry","name":"Introduction to Three-dimensional Geometry","order":3,"topics":["Coordinate axes in three dimensions","Coordinate planes in three dimensions","Coordinates of a point","Distance between two points"],"formative_only_topics":["Section formula"]}]},{"id":"calculus","name":"Calculus","order":4,"marks":8,"chapters":[{"id":"limits-and-derivatives","name":"Limits and Derivatives","order":1,"topics":["Derivative as a rate of change","Derivative of a distance function","Geometrical interpretation of derivative","Intuitive idea of limit","Limits of polynomials","Limits of rational functions","Limits of trigonometric functions","Limits of exponential functions","Limits of logarithmic functions","Definition of derivative","Derivative as slope of tangent to a curve","Derivative of sum of functions","Derivative of difference of functions","Derivative of product of functions","Derivative of quotient of functions","Derivatives of polynomial functions","Derivatives of trigonometric functions"],"formative_only_topics":["Derivatives of composite functions using the chain rule"]}]},{"id":"statistics-and-probability","name":"Statistics and Probability","order":5,"marks":12,"chapters":[{"id":"statistics","name":"Statistics","order":1,"topics":["Range","Mean deviation","Variance","Standard deviation","Measures of dispersion for ungrouped data","Measures of dispersion for grouped data"]},{"id":"probability","name":"Probability","order":2,"topics":["Events","Occurrence of events","Not events","And events","Or events","Exhaustive events","Mutually exclusive events","Axiomatic probability","Set-theoretic interpretation of probability","Probability of an event","Probability of not an event","Probability of and events","Probability of or events"],"formative_only_topics":["Random experiments","Outcomes","Sample space using set representation"]}]}]};
+async function loadQuestionTableForSubject(subject){
+  const qs = await api(`/api/questions?subject=${encodeURIComponent(subject)}`);
+  return Array.isArray(qs) ? qs : [];
+}
 
-async function loadTableContent(board, grade, subject){
-  const path = `table_content/${encodeURIComponent(board.toLowerCase())}/grade_${encodeURIComponent(grade)}/${encodeURIComponent(subject.toLowerCase().replace(/\\s+/g,'_'))}.json`;
+function normalizeQuestionLevel(q){
+  const direct = Number(q.level);
+  if(Number.isFinite(direct) && direct > 0) return direct;
+  const stage = String(q.stage || '').trim().toLowerCase();
+  const map = {foundation:1,beginner:1,intermediate:2,advanced:3,application:4,mastery:5,expert:5};
+  return map[stage] || null;
+}
+
+function buildQuestionToc(subject, questions, board, grade){
+  const groups = new Map();
+  questions.forEach(q => {
+    const qSubject = String(q.subject || subject).trim() || subject;
+    const world = String(q.world || q.unit || 'General').trim() || 'General';
+    const chapter = String(q.chapter || 'Uncategorized').trim() || 'Uncategorized';
+    const topic = String(q.topic || 'General').trim() || 'General';
+    const level = normalizeQuestionLevel(q);
+    if(!groups.has(qSubject)) groups.set(qSubject, new Map());
+    const worlds = groups.get(qSubject);
+    if(!worlds.has(world)) worlds.set(world, new Map());
+    const chapters = worlds.get(world);
+    if(!chapters.has(chapter)) chapters.set(chapter, new Map());
+    const topics = chapters.get(chapter);
+    if(!topics.has(topic)) topics.set(topic, []);
+    if(level) topics.get(topic).push({...q, __level:level});
+  });
+  const subjects = [...groups.entries()].map(([subjectName, worlds]) => ({
+    subject: subjectName,
+    worlds: [...worlds.entries()].map(([world, chapters]) => ({
+      world,
+      chapters: [...chapters.entries()].map(([chapter, topics]) => ({
+        chapter,
+        topics: [...topics.entries()].map(([topic, qs]) => ({topic, questions: qs}))
+      }))
+    }))
+  }));
+  return {board, grade, subject, subjects};
+}
+
+function tocStageMeta(level){
+  const fallback = {1:{stage:'Foundation',icon:'🌱'},2:{stage:'Intermediate',icon:'📘'},3:{stage:'Advanced',icon:'🚀'},4:{stage:'Application',icon:'🧠'},5:{stage:'Mastery',icon:'🏆'}};
+  return fallback[Number(level)] || {stage:`Level ${level}`,icon:'⭐'};
+}
+
+function loadQuestionAvailability(questions){
+  STATE.tocQuestionCache = {};
+  questions.forEach(q => {
+    const chapter = String(q.chapter || 'Uncategorized').trim().toLowerCase();
+    const level = normalizeQuestionLevel(q);
+    if(!level) return;
+    if(!STATE.tocQuestionCache[chapter]) STATE.tocQuestionCache[chapter] = {};
+    (STATE.tocQuestionCache[chapter][level] ||= []).push({...q, __level:level});
+  });
+  return STATE.tocQuestionCache;
+}
+
+function getAvailableLevels(chapterName){
+  const row = STATE.tocQuestionCache?.[String(chapterName).trim().toLowerCase()] || {};
+  return Object.keys(row).map(Number).filter(Boolean).sort((a,b)=>a-b);
+}
+
+function renderQuestionGroupedTable(toc){
+  const rows=[];
+  toc.subjects.forEach(subjectGroup=>{
+    const subjectRows = subjectGroup.worlds.reduce((n,w)=>n+w.chapters.reduce((m,c)=>m+Math.max(1,c.topics.length),0),0);
+    let subjectFirst=true;
+    subjectGroup.worlds.forEach(worldGroup=>{
+      const worldRows = worldGroup.chapters.reduce((n,c)=>n+Math.max(1,c.topics.length),0);
+      let worldFirst=true;
+      worldGroup.chapters.forEach(chapterGroup=>{
+        const chapterRows=Math.max(1,chapterGroup.topics.length);
+        const chapterLevels=[...new Set(chapterGroup.topics.flatMap(t=>t.questions.map(q=>q.__level)))].sort((a,b)=>a-b);
+        const chapterOptions=chapterLevels.length ? chapterLevels.map(l=>{const m=tocStageMeta(l); const count=chapterGroup.topics.reduce((n,t)=>n+t.questions.filter(q=>q.__level===l).length,0); return `<option value="${l}">${m.icon} Level ${l} · ${m.stage} (${count})</option>`}).join('') : '<option value="">No questions</option>';
+        const chapterBadges=chapterLevels.map(l=>{const m=tocStageMeta(l);const count=chapterGroup.topics.reduce((n,t)=>n+t.questions.filter(q=>q.__level===l).length,0);return `<span class="toc-level-badge">${m.icon} L${l} · ${count}</span>`}).join('');
+        let chapterFirst=true;
+        chapterGroup.topics.forEach(topicGroup=>{
+          rows.push(`<tr>
+            ${subjectFirst?`<td class="toc-subject-cell" rowspan="${subjectRows}">${escapeHtml(subjectGroup.subject)}</td>`:''}
+            ${worldFirst?`<td class="toc-world-cell" rowspan="${worldRows}">${escapeHtml(worldGroup.world)}</td>`:''}
+            ${chapterFirst?`<td class="toc-chapter-cell" rowspan="${chapterRows}"><div class="toc-chapter-name">${escapeHtml(chapterGroup.chapter)}</div><input type="checkbox" class="toc-chapter-check" data-chapter="${escapeHtml(chapterGroup.chapter)}" ${chapterLevels.length?'':'disabled'}></td>`:''}
+            <td class="toc-topic-cell">${escapeHtml(topicGroup.topic)}<span>${topicGroup.questions.length} question${topicGroup.questions.length===1?'':'s'}</span></td>
+            ${chapterFirst?`<td class="toc-level-cell" rowspan="${chapterRows}"><select class="toc-level-select" data-chapter="${escapeHtml(chapterGroup.chapter)}" ${chapterLevels.length?'':'disabled'}>${chapterOptions}</select><div class="toc-level-badges">${chapterBadges||'<span class="toc-level-badge empty">No question data</span>'}</div></td><td class="toc-start-cell" rowspan="${chapterRows}"><button class="toc-start-btn" ${chapterLevels.length?'':'disabled'} onclick="startSingleChapterFromRow(this)">Start</button></td>`:''}
+          </tr>`);
+          subjectFirst=false; worldFirst=false; chapterFirst=false;
+        });
+      });
+    });
+  });
+  return rows.join('');
+}
+
+function collectSelectedChapters(){
+  return [...document.querySelectorAll('.toc-chapter-check:checked')].map(x=>x.dataset.chapter).filter(Boolean);
+}
+
+function updateTocSelectionUI(){
+  const selected=collectSelectedChapters(); const note=document.getElementById('toc-selection-note');
+  if(note) note.textContent=selected.length?`${selected.length} chapter${selected.length===1?'':'s'} selected`:'No chapters selected';
+}
+
+function toggleAllTocChapters(checked){
+  document.querySelectorAll('.toc-chapter-check:not(:disabled)').forEach(x=>x.checked=checked);
+  refreshGlobalLevelOptions(); updateTocSelectionUI();
+}
+
+function getSelectedLevel(){ const value=document.getElementById('toc-global-level')?.value||''; return value?Number(value):null; }
+
+function refreshGlobalLevelOptions(){
+  const selected=collectSelectedChapters(); const select=document.getElementById('toc-global-level'); if(!select) return;
+  const source=selected.length?selected:Object.keys(STATE.tocQuestionCache||{});
+  const levels=[...new Set(source.flatMap(ch=>getAvailableLevels(ch)))].sort((a,b)=>a-b);
+  select.innerHTML=levels.length?levels.map(l=>{const m=tocStageMeta(l);return `<option value="${l}">${m.icon} Level ${l} · ${escapeHtml(m.stage)}</option>`}).join(''):'<option value="">No levels available</option>';
+}
+
+function onTocChapterSelectionChanged(){refreshGlobalLevelOptions();updateTocSelectionUI();}
+
+function startSingleChapterFromRow(button){
+  const row=button.closest('tr'); const chapter=row.querySelector('.toc-level-select')?.dataset.chapter; const level=Number(row.querySelector('.toc-level-select')?.value||0);
+  if(!chapter||!level){toast('No question level is available for this chapter');return;} startConfiguredQuiz([chapter],level);
+}
+
+function getQuizMinutes(){return Number(document.getElementById('toc-time-limit')?.value||20);}
+
+function buildTimedQuestionSet(chapters,level,minutes){
+  const pool=[]; chapters.forEach(chapter=>{const qs=STATE.tocQuestionCache?.[String(chapter).trim().toLowerCase()]?.[level]||[];qs.forEach(q=>pool.push({...q,__chapter:chapter,__level:level}));});
+  const shuffled=[...pool].sort(()=>Math.random()-0.5); const budgetSeconds=Math.min(60,Math.max(5,minutes))*60; let used=0; const selected=[];
+  for(const q of shuffled){const seconds=Math.max(15,Number(q.time_limit||60));if(selected.length&&used+seconds>budgetSeconds)continue;selected.push(q);used+=seconds;if(used>=budgetSeconds)break;}
+  return {selected,usedSeconds:used,available:pool.length};
+}
+
+function startConfiguredQuiz(chapters,level){
+  chapters=[...new Set(chapters)].filter(Boolean); if(!chapters.length){toast('Select at least one chapter');return;} if(!level){toast('Choose a quiz level');return;}
+  const minutes=getQuizMinutes(); const pack=buildTimedQuestionSet(chapters,Number(level),minutes); if(!pack.selected.length){toast('No questions are available for the selected chapter(s) and level');return;}
+  STATE.quiz={subject:STATE.currentSubject||'mathematics',level:Number(level),chapter:null,chapters,questions:pack.selected,idx:0,correct:0,hearts:5,failed:false,durationMinutes:minutes,plannedSeconds:Math.min(60,minutes)*60,usedSeconds:pack.usedSeconds,startedAt:Date.now(),deadline:null,timerId:null,finished:false};
+  startQuizTimer(minutes);renderQuestion();goto('screen-quiz');
+}
+
+function startSelectedTocQuiz(){const chapters=collectSelectedChapters();if(!chapters.length){toast('Select one or more chapters first');return;}const level=getSelectedLevel();startConfiguredQuiz(chapters,level);}
+
+async function openTableOfContent(board,grade,subject){
+  const wrap=document.getElementById('toc-wrap'); wrap.innerHTML='<div class="toc-empty">Loading questions…</div>';
   try{
-    const res = await fetch(path, {cache:'no-store'});
-    if(res.ok) return await res.json();
-  }catch(err){
-    // Opening index.html directly via file:// blocks fetch() in some browsers.
-  }
-  if(String(board).toLowerCase()==='cbse' && String(grade)==='11' && String(subject).toLowerCase()==='mathematics'){
-    return EMBEDDED_MATH_TOC;
-  }
-  throw new Error(`Table of Content file not found: ${path}`);
+    const questions=await loadQuestionTableForSubject(subject); loadQuestionAvailability(questions); const toc=buildQuestionToc(subject,questions,board,grade); STATE.currentToc=toc;
+    document.getElementById('toc-title').textContent=subject||'Table of Content'; document.getElementById('toc-subtitle').textContent=`${String(board||'').toUpperCase()} · Grade ${grade} · Question Bank`; document.getElementById('toc-xp').textContent=totalXp();
+    const table=renderQuestionGroupedTable(toc); const allLevels=[...new Set(questions.map(normalizeQuestionLevel).filter(Boolean))].sort((a,b)=>a-b);
+    const levelOptions=allLevels.length?allLevels.map(l=>{const m=tocStageMeta(l);return `<option value="${l}">${m.icon} Level ${l} · ${escapeHtml(m.stage)}</option>`}).join(''):'<option value="">No levels available</option>';
+    wrap.innerHTML=`<div class="toc-hero"><div class="eyebrow">📚 Student Quiz Board · Question Bank</div><h2>${escapeHtml(subject)}</h2><p>This learning roadmap is generated only from published question data: subject, world/unit, chapter and topic are grouped directly from the questions table.</p></div><div class="toc-controls"><div class="toc-control-row"><div class="toc-control"><label>Quiz level</label><select id="toc-global-level">${levelOptions}</select></div><div class="toc-control"><label>Quiz time</label><select id="toc-time-limit"><option value="5">5 minutes</option><option value="20" selected>20 minutes</option><option value="30">30 minutes</option><option value="60">60 minutes (max)</option></select></div></div><div class="toc-actions"><button class="toc-action-btn toc-action-secondary" onclick="toggleAllTocChapters(true)">Select all</button><button class="toc-action-btn toc-action-secondary" onclick="toggleAllTocChapters(false)">Clear</button><button class="toc-action-btn toc-action-primary" onclick="startSelectedTocQuiz()">▶ Start selected chapters</button><span class="toc-selection-note" id="toc-selection-note">No chapters selected</span></div></div><div class="toc-table-card"><table class="toc-table"><thead><tr><th>Subject</th><th>World / Unit</th><th>Chapter</th><th>Topic</th><th>Available levels · questions</th><th class="toc-start-cell">Start</th></tr></thead><tbody>${table||'<tr><td colspan="6"><div class="toc-status">No questions are available for this subject.</div></td></tr>'}</tbody></table></div>`;
+    document.querySelectorAll('.toc-chapter-check').forEach(x=>x.addEventListener('change',onTocChapterSelectionChanged)); refreshGlobalLevelOptions(); goto('screen-toc');
+  }catch(err){wrap.innerHTML=`<div class="toc-empty">Could not load questions. ${escapeHtml(err.message||'')}</div>`;goto('screen-toc');}
 }
 
 function tocStageMeta(level, toc){
@@ -1652,85 +1808,6 @@ async function loadQuestionAvailability(subject, toc){
 function getAvailableLevels(chapterName){
   const row = STATE.tocQuestionCache?.[String(chapterName).trim().toLowerCase()] || {};
   return Object.keys(row).map(Number).filter(Boolean).sort((a,b)=>a-b);
-}
-
-function renderChapterQuizTable(toc){
-  const rows = [];
-  (toc.units || []).forEach(unit => {
-    (unit.chapters || []).forEach(chapter => {
-      const levels = getAvailableLevels(chapter.name);
-      const options = levels.length
-        ? levels.map(l => {
-            const meta = tocStageMeta(l,toc);
-            const count = STATE.tocQuestionCache[chapter.name.trim().toLowerCase()][l]?.length || 0;
-            return `<option value="${l}">${meta.icon} Level ${l} · ${escapeHtml(meta.stage)} (${count})</option>`;
-          }).join('')
-        : '<option value="">No questions available</option>';
-      const badges = levels.length
-        ? levels.map(l => {
-            const meta=tocStageMeta(l,toc); const count=STATE.tocQuestionCache[chapter.name.trim().toLowerCase()][l]?.length || 0;
-            return `<span class="toc-level-badge">${meta.icon} L${l} · ${count}</span>`;
-          }).join('')
-        : '<span class="toc-level-badge empty">No question data</span>';
-      rows.push(`<tr>
-        <td class="toc-check"><input type="checkbox" class="toc-chapter-check" data-chapter="${escapeHtml(chapter.name)}" ${levels.length?'':'disabled'}></td>
-        <td class="toc-unit-cell">${escapeHtml(unit.name || '')}</td>
-        <td class="toc-chapter-cell">${escapeHtml(chapter.name || '')}<span class="toc-topic-count">${(chapter.topics||[]).length} topics in JSON</span></td>
-        <td class="toc-level-cell">
-          <select class="toc-level-select" data-chapter="${escapeHtml(chapter.name)}" ${levels.length?'':'disabled'}>
-            ${options}
-          </select>
-          <div class="toc-level-badges">${badges}</div>
-        </td>
-        <td class="toc-start-cell"><button class="toc-start-btn" ${levels.length?'':'disabled'} onclick='startSingleChapterFromRow(this)'>Start</button></td>
-      </tr>`);
-    });
-  });
-  return rows.join('');
-}
-
-function collectSelectedChapters(){
-  return [...document.querySelectorAll('.toc-chapter-check:checked')].map(x=>x.dataset.chapter).filter(Boolean);
-}
-
-function updateTocSelectionUI(){
-  const selected = collectSelectedChapters();
-  const note = document.getElementById('toc-selection-note');
-  if(note) note.textContent = selected.length ? `${selected.length} chapter${selected.length===1?'':'s'} selected` : 'No chapters selected';
-}
-
-function toggleAllTocChapters(checked){
-  document.querySelectorAll('.toc-chapter-check:not(:disabled)').forEach(x=>x.checked=checked);
-  updateTocSelectionUI();
-}
-
-function getSelectedLevel(){
-  const value = document.getElementById('toc-global-level')?.value || '';
-  return value ? Number(value) : null;
-}
-
-function refreshGlobalLevelOptions(){
-  const selected = collectSelectedChapters();
-  const select = document.getElementById('toc-global-level');
-  if(!select) return;
-  const source = selected.length ? selected : Object.keys(STATE.tocQuestionCache || {});
-  const levels = [...new Set(source.flatMap(ch => getAvailableLevels(ch)))].sort((a,b)=>a-b);
-  select.innerHTML = levels.length
-    ? levels.map(l=>{const m=tocStageMeta(l,STATE.currentToc); return `<option value="${l}">${m.icon} Level ${l} · ${escapeHtml(m.stage)}</option>`;}).join('')
-    : '<option value="">No levels available</option>';
-}
-
-function onTocChapterSelectionChanged(){
-  refreshGlobalLevelOptions();
-  updateTocSelectionUI();
-}
-
-function startSingleChapterFromRow(button){
-  const row = button.closest('tr');
-  const chapter = row.querySelector('.toc-level-select')?.dataset.chapter;
-  const level = Number(row.querySelector('.toc-level-select')?.value || 0);
-  if(!chapter || !level){ toast('No question level is available for this chapter'); return; }
-  startConfiguredQuiz([chapter], level);
 }
 
 function getQuizMinutes(){
@@ -1785,56 +1862,6 @@ function startSelectedTocQuiz(){
 function selectTocTime(minutes){
   const select=document.getElementById('toc-time-limit');
   if(select) select.value=String(minutes);
-}
-
-async function openTableOfContent(board, grade, subject){
-  const wrap = document.getElementById('toc-wrap');
-  wrap.innerHTML = '<div class="toc-empty">Loading chapter availability…</div>';
-  try{
-    const toc = await loadTableContent(board, grade, subject);
-    STATE.currentToc = toc;
-    await loadQuestionAvailability(subject, toc);
-    document.getElementById('toc-title').textContent = toc.subject || 'Table of Content';
-    document.getElementById('toc-subtitle').textContent = `${toc.board || board.toUpperCase()} · Grade ${toc.grade || grade}${toc.academic_session ? ` · ${toc.academic_session}` : ''}`;
-    document.getElementById('toc-xp').textContent = totalXp();
-
-    const table = renderChapterQuizTable(toc);
-    const allLevels = [...new Set(Object.values(STATE.tocQuestionCache).flatMap(by => Object.keys(by).map(Number)))].sort((a,b)=>a-b);
-    const levelOptions = allLevels.length ? allLevels.map(l=>{const m=tocStageMeta(l,toc);return `<option value="${l}">${m.icon} Level ${l} · ${escapeHtml(m.stage)}</option>`;}).join('') : '<option value="">No levels available</option>';
-
-    wrap.innerHTML = `
-      <div class="toc-hero">
-        <div class="eyebrow">📚 Student Quiz Board · Table of Content</div>
-        <h2>${escapeHtml(toc.subject || subject)}</h2>
-        <p>Choose one or more chapters. Levels shown below come only from questions currently available in the question table.</p>
-      </div>
-      <div class="toc-controls">
-        <div class="toc-control-row">
-          <div class="toc-control"><label>Quiz level</label><select id="toc-global-level">${levelOptions}</select></div>
-          <div class="toc-control"><label>Quiz time</label><select id="toc-time-limit"><option value="5">5 minutes</option><option value="20" selected>20 minutes</option><option value="30">30 minutes</option><option value="45">45 minutes</option><option value="60">60 minutes (max)</option></select></div>
-        </div>
-        <div class="toc-actions">
-          <button class="toc-action-btn toc-action-secondary" onclick="toggleAllTocChapters(true)">Select all</button>
-          <button class="toc-action-btn toc-action-secondary" onclick="toggleAllTocChapters(false)">Clear</button>
-          <button class="toc-action-btn toc-action-primary" onclick="startSelectedTocQuiz()">▶ Start selected chapters</button>
-          <span class="toc-selection-note" id="toc-selection-note">No chapters selected</span>
-        </div>
-      </div>
-      <div class="toc-table-card">
-        <table class="toc-table">
-          <thead><tr><th class="toc-check">✓</th><th>Unit</th><th>Chapter</th><th>Available quiz levels · questions</th><th class="toc-start-cell">Start</th></tr></thead>
-          <tbody>${table || '<tr><td colspan="5"><div class="toc-status">No chapters are defined in the uploaded JSON.</div></td></tr>'}</tbody>
-        </table>
-      </div>
-      <button class="toc-map-btn" onclick="openSubjectLevelMap('mathematics')">🗺️ Open classic level map</button>`;
-
-    document.querySelectorAll('.toc-chapter-check').forEach(x=>x.addEventListener('change',onTocChapterSelectionChanged));
-    refreshGlobalLevelOptions();
-    goto('screen-toc');
-  }catch(err){
-    wrap.innerHTML = `<div class="toc-empty">Could not load this Table of Content. ${escapeHtml(err.message || '')}</div>`;
-    goto('screen-toc');
-  }
 }
 
 function openSubjectLevelMap(key){
