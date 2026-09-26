@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<title>SyllabusQuest — Grade 6 to 12 Exam Trainer</title>
+<title>SyllabusQuest — Grade 11 & 12 Exam Trainer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -150,6 +150,11 @@ body.theme-ocean{
   .two-col{flex-direction:column;}
   .hero-line h1{font-size:26px;}
 }
+
+/* Student Quiz Board — visible Table of Content entry */
+.toc-home-btn{margin:14px 20px 24px;padding:14px 18px;border:1px solid rgba(240,180,41,.55);border-radius:16px;background:linear-gradient(135deg,#fff7df,#eef7ff);color:#18264d;font-weight:800;font-size:14px;cursor:pointer;box-shadow:0 8px 24px rgba(24,38,77,.10);text-align:left;}
+.toc-home-btn:hover{transform:translateY(-1px);box-shadow:0 10px 28px rgba(24,38,77,.14);}
+
 .screen{display:none;min-height:100vh;flex-direction:column;}
 .screen.active{display:flex;}
 
@@ -573,7 +578,7 @@ body.theme-ocean{
       <div class="brand-mark">🎓</div>
       <div>
         <div class="brand-name">SyllabusQuest</div>
-        <div class="brand-tag">Grade 6–12 · CBSE · IB · IGCSE</div>
+        <div class="brand-tag">Grade 11–12 · CBSE · IB · IGCSE</div>
       </div>
     </div>
     <div class="hero-line">
@@ -622,6 +627,7 @@ body.theme-ocean{
     </div>
     <div class="section-title">Choose a subject</div>
     <div class="subject-grid" id="subject-grid"></div>
+    <button id="math-toc-home-btn" class="toc-home-btn" style="display:none;" onclick="openTableOfContent('cbse',11,'mathematics')">📚 Open Mathematics Learning Roadmap</button>
   </div>
 
 
@@ -1396,6 +1402,15 @@ async function loadMyProgress(){
 function totalXp(){
   return Object.values(STATE.progress).reduce((sum,s)=>sum+(s.xp||0), 0);
 }
+function updateMathTocHomeButton(){
+  const btn = document.getElementById('math-toc-home-btn');
+  if(!btn) return;
+  const board = String(STATE.user?.board || '').toLowerCase();
+  const grade = String(STATE.user?.grade || '');
+  const hasMath = !!(STATE.progress && STATE.progress.mathematics);
+  btn.style.display = (board === 'cbse' && grade === '11' && hasMath) ? 'block' : 'none';
+}
+
 function enterHome(){
   const u = STATE.user;
   document.getElementById('home-avatar').textContent = u.avatar || '🦊';
@@ -1410,6 +1425,7 @@ function enterHome(){
     banner.style.display = 'none';
   }
   renderSubjectGrid();
+  updateMathTocHomeButton();
   goto('screen-home');
 }
 function renderSubjectGrid(){
@@ -1585,11 +1601,20 @@ async function openSubject(key){
   goto('screen-map');
 }
 
+const EMBEDDED_MATH_TOC = {"board":"CBSE","board_code":"CBSE","grade":11,"subject":"Mathematics","subject_code":"041","academic_session":"2026-27","title":"CBSE Grade 11 Mathematics","source":"CBSE Mathematics Subject Code 041, Classes XI-XII, 2026-27","source_url":"https://cbseacademic.nic.in/web_material/CurriculumMain27/SecPart2/Maths_SecP2_2026-27.pdf","levels":[{"level":1,"stage":"Foundation","icon":"🌱","path_template":"/questions?board=CBSE&grade=11&subject=Mathematics&level=1"},{"level":2,"stage":"Intermediate","icon":"📘","path_template":"/questions?board=CBSE&grade=11&subject=Mathematics&level=2"},{"level":3,"stage":"Advanced","icon":"🚀","path_template":"/questions?board=CBSE&grade=11&subject=Mathematics&level=3"},{"level":4,"stage":"Application","icon":"🧠","path_template":"/questions?board=CBSE&grade=11&subject=Mathematics&level=4"},{"level":5,"stage":"Mastery","icon":"🏆","path_template":"/questions?board=CBSE&grade=11&subject=Mathematics&level=5"}],"units":[{"id":"sets-and-functions","name":"Sets and Functions","order":1,"marks":23,"chapters":[{"id":"sets","name":"Sets","order":1,"topics":["Sets and their representations","Empty set","Finite and infinite sets","Equal sets","Subsets","Subsets of real numbers and intervals","Universal set","Venn diagrams","Union and intersection of sets","Difference of sets","Complement of a set","Properties of complement"],"formative_only_topics":["Practical problems on union and intersection of two sets"]},{"id":"relations-and-functions","name":"Relations and Functions","order":2,"topics":["Ordered pairs","Cartesian product of sets","Number of elements in the Cartesian product of two finite sets","Cartesian product of R with itself up to R × R × R","Relations","Pictorial diagrams","Domain, co-domain and range of a relation","Functions as a special type of relation","Pictorial representation of a function","Domain, co-domain and range of a function","Real-valued functions","Constant functions","Identity functions","Polynomial functions","Rational functions","Modulus function","Signum function","Exponential function","Logarithmic function","Greatest integer function","Graphs of real-valued functions","Sum, difference, product and quotient of functions"],"formative_only_topics":["Composition of functions"]},{"id":"trigonometric-functions","name":"Trigonometric Functions","order":3,"topics":["Positive and negative angles","Measuring angles in radians and degrees","Conversion between radians and degrees","Trigonometric functions using the unit circle","sin²x + cos²x = 1","Signs of trigonometric functions","Domain and range of trigonometric functions","Graphs of trigonometric functions","sin(x ± y) and cos(x ± y)","tan(x ± y)","cot(x ± y)","Sum-to-product identities","Identities involving sin 2x, cos 2x and tan 2x","Identities involving sin 3x, cos 3x and tan 3x"],"formative_only_topics":["General solution of trigonometric equations"]}]},{"id":"algebra","name":"Algebra","order":2,"marks":25,"chapters":[{"id":"complex-numbers-and-quadratic-equations","name":"Complex Numbers and Quadratic Equations","order":1,"topics":["Need for complex numbers","Imaginary unit √−1","Algebraic properties of complex numbers","Argand plane"],"formative_only_topics":["Polar representation of complex numbers","Fundamental Theorem of Algebra","Solution of quadratic equations with real coefficients in the complex number system"]},{"id":"linear-inequalities","name":"Linear Inequalities","order":2,"topics":["Linear inequalities","Algebraic solutions of linear inequalities in one variable","Representation of solutions on the number line"],"formative_only_topics":["Graphical solution of linear inequalities in two variables","Graphical solution of systems of linear inequalities in two variables"]},{"id":"permutations-and-combinations","name":"Permutations and Combinations","order":3,"topics":["Fundamental principle of counting","Factorial n!","Permutations","Combinations","Formula for nPr","Formula for nCr","Relationship between permutations and combinations","Simple applications"]},{"id":"binomial-theorem","name":"Binomial Theorem","order":4,"topics":["Historical perspective","Binomial theorem for positive integral indices","Proof of the binomial theorem","Pascal's triangle","Simple applications"],"formative_only_topics":["General term in a binomial expansion","Middle term in a binomial expansion"]},{"id":"sequence-and-series","name":"Sequence and Series","order":5,"topics":["Sequences and series","Arithmetic mean","Geometric progression","General term of a G.P.","Sum of n terms of a G.P.","Infinite G.P. and its sum","Geometric mean","Relation between A.M. and G.M."],"formative_only_topics":["Special sums of natural numbers, squares and cubes"]}]},{"id":"coordinate-geometry","name":"Coordinate Geometry","order":3,"marks":12,"chapters":[{"id":"straight-lines","name":"Straight Lines","order":1,"topics":["Revision of two-dimensional geometry","Slope of a line","Angle between two lines","Equation of a line parallel to an axis","Point-slope form","Slope-intercept form","Two-point form","Intercept form","Distance of a point from a line"],"formative_only_topics":["Normal form","General equation of a line"]},{"id":"conic-sections","name":"Conic Sections","order":2,"topics":["Sections of a cone","Circle","Ellipse","Parabola","Hyperbola","Degenerate conic sections","Standard equation of a circle","Standard equation and properties of a parabola","Standard equation and properties of an ellipse","Standard equation and properties of a hyperbola"]},{"id":"introduction-to-three-dimensional-geometry","name":"Introduction to Three-dimensional Geometry","order":3,"topics":["Coordinate axes in three dimensions","Coordinate planes in three dimensions","Coordinates of a point","Distance between two points"],"formative_only_topics":["Section formula"]}]},{"id":"calculus","name":"Calculus","order":4,"marks":8,"chapters":[{"id":"limits-and-derivatives","name":"Limits and Derivatives","order":1,"topics":["Derivative as a rate of change","Derivative of a distance function","Geometrical interpretation of derivative","Intuitive idea of limit","Limits of polynomials","Limits of rational functions","Limits of trigonometric functions","Limits of exponential functions","Limits of logarithmic functions","Definition of derivative","Derivative as slope of tangent to a curve","Derivative of sum of functions","Derivative of difference of functions","Derivative of product of functions","Derivative of quotient of functions","Derivatives of polynomial functions","Derivatives of trigonometric functions"],"formative_only_topics":["Derivatives of composite functions using the chain rule"]}]},{"id":"statistics-and-probability","name":"Statistics and Probability","order":5,"marks":12,"chapters":[{"id":"statistics","name":"Statistics","order":1,"topics":["Range","Mean deviation","Variance","Standard deviation","Measures of dispersion for ungrouped data","Measures of dispersion for grouped data"]},{"id":"probability","name":"Probability","order":2,"topics":["Events","Occurrence of events","Not events","And events","Or events","Exhaustive events","Mutually exclusive events","Axiomatic probability","Set-theoretic interpretation of probability","Probability of an event","Probability of not an event","Probability of and events","Probability of or events"],"formative_only_topics":["Random experiments","Outcomes","Sample space using set representation"]}]}]};
+
 async function loadTableContent(board, grade, subject){
-  const path = `TOC/${encodeURIComponent(board.toLowerCase())}/grade_${encodeURIComponent(grade)}/${encodeURIComponent(subject.toLowerCase().replace(/\\s+/g,'_'))}.json`;
-  const res = await fetch(path, {cache:'no-store'});
-  if(!res.ok) throw new Error(`Table of Content file not found: ${path}`);
-  return await res.json();
+  const path = `table_content/${encodeURIComponent(board.toLowerCase())}/grade_${encodeURIComponent(grade)}/${encodeURIComponent(subject.toLowerCase().replace(/\\s+/g,'_'))}.json`;
+  try{
+    const res = await fetch(path, {cache:'no-store'});
+    if(res.ok) return await res.json();
+  }catch(err){
+    // Opening index.html directly via file:// blocks fetch() in some browsers.
+  }
+  if(String(board).toLowerCase()==='cbse' && String(grade)==='11' && String(subject).toLowerCase()==='mathematics'){
+    return EMBEDDED_MATH_TOC;
+  }
+  throw new Error(`Table of Content file not found: ${path}`);
 }
 
 function tocLevelButton(level){
