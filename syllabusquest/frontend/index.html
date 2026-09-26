@@ -1586,7 +1586,7 @@ async function openSubject(key){
 }
 
 async function loadTableContent(board, grade, subject){
-  const path = `table_content/${encodeURIComponent(board.toLowerCase())}/grade_${encodeURIComponent(grade)}/${encodeURIComponent(subject.toLowerCase().replace(/\\s+/g,'_'))}.json`;
+  const path = `TOC/${encodeURIComponent(board.toLowerCase())}/grade_${encodeURIComponent(grade)}/${encodeURIComponent(subject.toLowerCase().replace(/\\s+/g,'_'))}.json`;
   const res = await fetch(path, {cache:'no-store'});
   if(!res.ok) throw new Error(`Table of Content file not found: ${path}`);
   return await res.json();
