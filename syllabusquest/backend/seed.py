@@ -854,7 +854,8 @@ def seed_subjects(db: Session):
 
     Modify this list to match your ERP.
     """
-	subjects = [ 
+	subjects = 
+	[ 
 		{
 		 	"key": "chemistry", 
 			"name": "Chemistry", 
@@ -915,7 +916,7 @@ def seed_subjects(db: Session):
 			"name": "Computer Science", 
 			"icon": "A", 
 		}, 
-		]
+	]
 		print() 
 		print("=" * 70) 
 		print("CHECKING SUBJECTS") 
