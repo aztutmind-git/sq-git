@@ -1623,8 +1623,23 @@ async function openSubject(key){
 }
 
 async function loadQuestionTableForSubject(subject){
-  const qs = await api(`/api/questions?subject=${encodeURIComponent(subject)}`);
-  return Array.isArray(qs) ? qs : [];
+  // The backend requires `level` on /api/questions, so build the roadmap by
+  // reading every supported quiz level and merging the returned question rows.
+  // No syllabus/TOC JSON is used here — the question table is the source of truth.
+  const levels = [1,2,3,4,5];
+  const results = await Promise.all(levels.map(async level => {
+    const qs = await api(`/api/questions?subject=${encodeURIComponent(subject)}&level=${level}`);
+    return Array.isArray(qs) ? qs : [];
+  }));
+  const seen = new Set();
+  const merged = [];
+  results.flat().forEach(q => {
+    const key = q.question_id ?? q.id ?? `${q.subject}|${q.chapter}|${q.topic}|${q.question}`;
+    if(seen.has(String(key))) return;
+    seen.add(String(key));
+    merged.push(q);
+  });
+  return merged;
 }
 
 function normalizeQuestionLevel(q){
@@ -1781,28 +1796,6 @@ function tocStageMeta(level, toc){
   const fallback = {1:{stage:'Foundation',icon:'🌱'},2:{stage:'Intermediate',icon:'📘'},3:{stage:'Advanced',icon:'🚀'},4:{stage:'Application',icon:'🧠'},5:{stage:'Mastery',icon:'🏆'}};
   const found = (toc?.levels || []).find(x => Number(x.level) === Number(level));
   return found || {level:Number(level), ...(fallback[level] || {stage:`Level ${level}`,icon:'⭐'})};
-}
-
-async function loadQuestionAvailability(subject, toc){
-  STATE.tocQuestionCache = {};
-  const levels = (toc.levels || []).map(x => Number(x.level)).filter(Boolean);
-  const results = await Promise.all(levels.map(async level => {
-    try{
-      const qs = await api(`/api/questions?subject=${encodeURIComponent(subject)}&level=${level}`);
-      return {level, qs:Array.isArray(qs) ? qs : []};
-    }catch(err){
-      return {level, qs:[]};
-    }
-  }));
-  results.forEach(({level,qs}) => {
-    qs.forEach(q => {
-      const chapter = String(q.chapter || '').trim().toLowerCase();
-      if(!chapter) return;
-      if(!STATE.tocQuestionCache[chapter]) STATE.tocQuestionCache[chapter] = {};
-      STATE.tocQuestionCache[chapter][level] = (STATE.tocQuestionCache[chapter][level] || []).concat(q);
-    });
-  });
-  return STATE.tocQuestionCache;
 }
 
 function getAvailableLevels(chapterName){
