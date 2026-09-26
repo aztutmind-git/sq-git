@@ -848,119 +848,126 @@ def seed_admin(db: Session):
 # SUBJECTS
 # ============================================================
 
-def seed_subjects(db: Session):
+def seed_subjects(db):
     """
-    Add standard subjects if they don't already exist.
+    Create the ERP's standard subjects if they don't already exist.
 
-    Modify this list to match your ERP.
+    Safe for:
+    - New database
+    - Existing database
+    - Re-running the seeder
     """
-	subjects = 
-	[ 
-		{
-		 	"key": "chemistry", 
-			"name": "Chemistry", 
-			"icon": "🧪", 
-		}, 
-		{ 	
-			"key": "physics", 
-			"name": "Physics", 
-			"icon": "⚛️", 
-		}, 
-		{ 
-			"key": "botany", 
-			"name": "Botany", 
-			"icon": "🌿", 
-		}, 
-		{ 
-			"key": "zoology", 
-			"name": "Zoology", 
-			"icon": "🐾", 
-		},
-		{ 
-			"key": "commerce", 
-			"name": "Commerce", 
-			"icon": "💼", 
-		}, 
-		{ 	
-			"key": "accounts", 
-			"name": "Accounts", 
-			"icon": "📒", 
-		}, 
-		{ 
-			"key": "mathematics", 
-			"name": "Mathematics", 
-			"icon": "📐", 
-		}, 
-		{ 
-			"key": "nutrition", 
-			"name": "Nutrition", 
-			"icon": "🍎", 
-		}, 
-		{ 
-			"key": "science", 
-			"name": "Science", 
-			"icon": "🧪", 
-		}, 
-		{ 
-			"key": "social", 
-			"name": "Social Studies", 
-			"icon": "📒", 
-		}, 
-		{ 
-			"key": "english", 
-			"name": "English", 
-			"icon": "A", 
-		}, 
-		{ 
-			"key": "computer_science", 
-			"name": "Computer Science", 
-			"icon": "A", 
-		}, 
-	]
-		print() 
-		print("=" * 70) 
-		print("CHECKING SUBJECTS") 
-		print("=" * 70)
+
+    subjects = [
+        {
+            "key": "chemistry",
+            "name": "Chemistry",
+            "icon": "🧪",
+        },
+        {
+            "key": "physics",
+            "name": "Physics",
+            "icon": "⚛️",
+        },
+        {
+            "key": "botany",
+            "name": "Botany",
+            "icon": "🌿",
+        },
+        {
+            "key": "zoology",
+            "name": "Zoology",
+            "icon": "🐾",
+        },
+        {
+            "key": "commerce",
+            "name": "Commerce",
+            "icon": "💼",
+        },
+        {
+            "key": "accounts",
+            "name": "Accounts",
+            "icon": "📒",
+        },
+        {
+            "key": "mathematics",
+            "name": "Mathematics",
+            "icon": "📐",
+        },
+        {
+            "key": "nutrition",
+            "name": "Nutrition",
+            "icon": "🍎",
+        },
+        {
+            "key": "science",
+            "name": "Science",
+            "icon": "🧪",
+        },
+        {
+            "key": "social",
+            "name": "Social Studies",
+            "icon": "📒",
+        },
+        {
+            "key": "english",
+            "name": "English",
+            "icon": "A",
+        },
+        {
+            "key": "computer_science",
+            "name": "Computer Science",
+            "icon": "A",
+        },
+    ]
+
+    print()
+    print("=" * 70)
+    print("CHECKING SUBJECTS")
+    print("=" * 70)
 
     for item in subjects:
-
         existing = (
             db.query(models.Subject)
             .filter(
-                models.Subject.key
-                == item["key"]
+                models.Subject.key == item["key"]
             )
             .first()
         )
 
         if existing:
-		print( f" EXISTS: {item['name']} " f"(id={existing.id})" )
-		continue
-	try:
-        	subject = models.Subject(
-            	key=item["key"],
-            	name=item["name"],
-            	icon=item["icon"],
-       	        demo_level_cap=5,
-        	)
+            print(
+                f"  EXISTS: {item['name']} "
+                f"(id={existing.id})"
+            )
+            continue
 
-        db.add(subject)
+        try:
+            subject = models.Subject(
+                key=item["key"],
+                name=item["name"],
+                icon=item["icon"],
+                demo_level_cap=5,
+            )
 
-    try:
+            db.add(subject)
+            db.commit()
 
-        db.commit()
+            print(
+                f"  CREATED: {item['name']} "
+                f"(id={subject.id})"
+            )
 
-        print(
-            "Subjects seeded."
-        )
+        except Exception as exc:
+            db.rollback()
 
-    except Exception as exc:
+            print(
+                f"  ERROR: Could not create "
+                f"{item['name']}: {exc}"
+            )
 
-        db.rollback()
-
-        print(
-            f"ERROR seeding subjects: {exc}"
-        )
+    print()
+    print("Subject check complete.")
 
 def repair_sequences(db):
     """
