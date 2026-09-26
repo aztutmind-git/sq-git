@@ -854,34 +854,72 @@ def seed_subjects(db: Session):
 
     Modify this list to match your ERP.
     """
-
-    subjects = [
-        {
-            "key": "mathematics",
-            "name": "Mathematics",
-            "icon": "📐",
-        },
-        {
-            "key": "physics",
-            "name": "Physics",
-            "icon": "⚛️",
-        },
-        {
-            "key": "chemistry",
-            "name": "Chemistry",
-            "icon": "🧪",
-        },
-        {
-            "key": "biology",
-            "name": "Biology",
-            "icon": "🧬",
-        },
-        {
-            "key": "english",
-            "name": "English",
-            "icon": "📚",
-        },
-    ]
+	subjects = [ 
+		{
+		 	"key": "chemistry", 
+			"name": "Chemistry", 
+			"icon": "🧪", 
+		}, 
+		{ 	
+			"key": "physics", 
+			"name": "Physics", 
+			"icon": "⚛️", 
+		}, 
+		{ 
+			"key": "botany", 
+			"name": "Botany", 
+			"icon": "🌿", 
+		}, 
+		{ 
+			"key": "zoology", 
+			"name": "Zoology", 
+			"icon": "🐾", 
+		},
+		{ 
+			"key": "commerce", 
+			"name": "Commerce", 
+			"icon": "💼", 
+		}, 
+		{ 	
+			"key": "accounts", 
+			"name": "Accounts", 
+			"icon": "📒", 
+		}, 
+		{ 
+			"key": "mathematics", 
+			"name": "Mathematics", 
+			"icon": "📐", 
+		}, 
+		{ 
+			"key": "nutrition", 
+			"name": "Nutrition", 
+			"icon": "🍎", 
+		}, 
+		{ 
+			"key": "science", 
+			"name": "Science", 
+			"icon": "🧪", 
+		}, 
+		{ 
+			"key": "social", 
+			"name": "Social Studies", 
+			"icon": "📒", 
+		}, 
+		{ 
+			"key": "english", 
+			"name": "English", 
+			"icon": "A", 
+		}, 
+		{ 
+			"key": "computer_science", 
+			"name": "Computer Science", 
+			"icon": "A", 
+		}, 
+		]
+		print() 
+		print("=" * 70) 
+		print("CHECKING SUBJECTS") 
+		print("=" * 70)
 
     for item in subjects:
 
@@ -895,14 +933,15 @@ def seed_subjects(db: Session):
         )
 
         if existing:
-            continue
-
-        subject = models.Subject(
-            key=item["key"],
-            name=item["name"],
-            icon=item["icon"],
-            demo_level_cap=5,
-        )
+		print( f" EXISTS: {item['name']} " f"(id={existing.id})" )
+		continue
+	try:
+        	subject = models.Subject(
+            	key=item["key"],
+            	name=item["name"],
+            	icon=item["icon"],
+       	        demo_level_cap=5,
+        	)
 
         db.add(subject)
 
@@ -922,7 +961,54 @@ def seed_subjects(db: Session):
             f"ERROR seeding subjects: {exc}"
         )
 
+def repair_sequences(db):
+    """
+    Synchronize PostgreSQL sequences with MAX(id).
+    """
 
+    tables = [
+        ("subjects", "id"),
+        ("grade_subjects", "id"),
+        ("questions", "id"),
+        ("progress", "id"),
+        ("password_reset_tokens", "id"),
+        ("themes", "id"),
+        ("theme_icons", "id"),
+    ]
+
+    from sqlalchemy import text
+
+    for table, column in tables:
+
+        try:
+            db.execute(
+                text(
+                    f"""
+                    SELECT setval(
+                        pg_get_serial_sequence(
+                            '{table}',
+                            '{column}'
+                        ),
+                        COALESCE(
+                            (SELECT MAX({column}) FROM {table}),
+                            1
+                        ),
+                        true
+                    )
+                    """
+                )
+            )
+
+        except Exception as exc:
+
+            print(
+                f"  WARNING: Could not repair "
+                f"{table}.{column}: {exc}"
+            )
+
+    db.commit()
+
+    print("Database sequences synchronized.")
 # ============================================================
 # MAIN
 # ============================================================
@@ -974,6 +1060,7 @@ def main():
 
         print()
         print("Checking subjects...")
+        repair_sequences(db)
 
         seed_subjects(
             db
