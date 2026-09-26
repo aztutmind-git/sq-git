@@ -1,366 +1,327 @@
-"""
-Seed the database with:
-
-1. Database tables
-2. Default admin account
-3. All question JSON files found recursively under:
-       questions/
-4. Starter themes
-5. Subject configuration
-
-Run:
-
-    python seed.py
-
-Question files can be organized however you like, for example:
-
-    questions/
-    ├── CBSE/
-    │   ├── grade10/
-    │   │   ├── mathematics/
-    │   │   │   ├── algebra.json
-    │   │   │   └── geometry.json
-    │   │   └── science/
-    │   │       └── physics.json
-    │   │
-    │   └── grade11/
-    │       └── mathematics/
-    │           └── sets.json
-    │
-    └── ICSE/
-        └── grade10/
-            └── mathematics.json
-
-Every *.json file under questions/ will be discovered automatically.
-
-Supported question format:
-
-{
-    "id": "11021",
-    "subject": "Mathematics",
-    "grade": 11,
-    "board": "CBSE",
-    "question": "If A = {2, 4, 6, 8} and B = {4, 6, 10, 12}, what is A ∩ B?",
-    "options": {
-        "A": "{2, 8}",
-        "B": "{4, 6}",
-        "C": "{10, 12}",
-        "D": "{2, 4, 6, 8, 10, 12}"
-    },
-    "correct": "B",
-    "explanation": "The elements common to both sets are 4 and 6.",
-    "world": "Sets and Functions",
-    "chapter": "Sets",
-    "topic": "Intersection of Sets",
-    "stage": "Foundation",
-    "cognitive_skill": "Understand",
-    "question_type": "MCQ",
-    "time_limit": 60,
-    "hint": "Find the elements appearing in both sets.",
-    "status": "published",
-    "version": 1
-}
-
-The script is safe to re-run:
-- Existing admin is not duplicated.
-- Existing subjects/themes are not duplicated.
-- Existing questions are skipped.
-- New JSON files/questions are imported.
-"""
-
-
-import json
 from pathlib import Path
+import json
+import logging
 
-from database import Base, engine, SessionLocal
+from sqlalchemy.orm import Session
+
 import models
-from config import settings
-from security import hash_password
+from database import Base, SessionLocal, engine
 
 
 # ============================================================
 # CONFIGURATION
 # ============================================================
 
-BASE_DIR = Path(__file__).parent
+BASE_DIR = Path(__file__).resolve().parent
 
 QUESTIONS_DIR = BASE_DIR / "questions"
 
-ASSETS_DIR = BASE_DIR / "seed_assets"
+# Optional: change these if your project uses different values.
+DEFAULT_ADMIN_USERID = "admin"
+DEFAULT_ADMIN_NAME = "Administrator"
+DEFAULT_ADMIN_EMAIL = "admin@example.com"
 
 
 # ============================================================
-# SUBJECTS
+# LOGGING
 # ============================================================
 
-SUBJECTS_SEED = [
-    ("chemistry", "Chemistry", "🧪"),
-    ("physics", "Physics", "⚛️"),
-    ("botany", "Botany", "🌿"),
-    ("zoology", "Zoology", "🐾"),
-    ("commerce", "Commerce", "💼"),
-    ("accounts", "Accounts", "📒"),
-    ("mathematics", "Mathematics", "📐"),
-    ("nutrition", "Nutrition", "🍎"),
-]
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(message)s"
+)
+
+logger = logging.getLogger(__name__)
+
+
+# ============================================================
+# LEVEL / STAGE MAPPING
+# ============================================================
+
+STAGE_TO_LEVEL = {
+    "foundation": 1,
+    "beginner": 1,
+
+    "intermediate": 2,
+
+    "advanced": 3,
+
+    "application": 4,
+
+    "mastery": 5,
+    "expert": 5,
+}
+
+
+def get_level(question):
+    """
+    Convert the JSON stage into the ERP numeric level.
+
+    Example:
+        Foundation   -> 1
+        Intermediate -> 2
+        Advanced     -> 3
+        Application  -> 4
+        Mastery      -> 5
+    """
+
+    stage = question.get("stage")
+
+    if stage:
+        stage_key = str(stage).strip().lower()
+
+        if stage_key in STAGE_TO_LEVEL:
+            return STAGE_TO_LEVEL[stage_key]
+
+    # If JSON already contains a numeric level, use it.
+    if question.get("level") is not None:
+        try:
+            level = int(question["level"])
+
+            if level >= 1:
+                return level
+
+        except (TypeError, ValueError):
+            pass
+
+    # Default
+    return 1
+
+
+# ============================================================
+# GRADE CONVERSION
+# ============================================================
+
+def normalize_grade(value):
+    """
+    Database Question.grade is String(8).
+
+    Therefore:
+        11    -> "11"
+        "11"  -> "11"
+        None  -> None
+    """
+
+    if value is None:
+        return None
+
+    return str(value).strip()
+
+
+# ============================================================
+# QUESTION ID
+# ============================================================
+
+def normalize_question_id(value):
+    """
+    JSON question ID such as:
+
+        11021
+
+    or:
+
+        "11021"
+
+    is stored as:
+
+        "11021"
+    """
+
+    if value is None:
+        return None
+
+    value = str(value).strip()
+
+    return value if value else None
+
+
+# ============================================================
+# CORRECT ANSWER CONVERSION
+# ============================================================
+
+CORRECT_MAP = {
+    "A": 0,
+    "B": 1,
+    "C": 2,
+    "D": 3,
+}
+
+
+def normalize_correct(value):
+    """
+    Convert:
+
+        A -> 0
+        B -> 1
+        C -> 2
+        D -> 3
+
+    Also accepts 0, 1, 2, 3.
+    """
+
+    if value is None:
+        raise ValueError("Missing correct answer")
+
+    # Already numeric
+    if isinstance(value, int):
+        if value in (0, 1, 2, 3):
+            return value
+
+        raise ValueError(
+            f"Invalid correct answer index: {value}"
+        )
+
+    value = str(value).strip().upper()
+
+    if value in CORRECT_MAP:
+        return CORRECT_MAP[value]
+
+    # Handle numeric strings
+    try:
+        numeric = int(value)
+
+        if numeric in (0, 1, 2, 3):
+            return numeric
+
+    except ValueError:
+        pass
+
+    raise ValueError(
+        f"Invalid correct answer: {value}. "
+        f"Expected A, B, C, D or 0, 1, 2, 3."
+    )
+
+
+# ============================================================
+# JSON FILE LOADER
+# ============================================================
+
+def load_json_file(path):
+    """
+    Supports either:
+
+    [
+        {...},
+        {...}
+    ]
+
+    OR:
+
+    {
+        "questions": [
+            {...},
+            {...}
+        ]
+    }
+    """
+
+    with path.open(
+        "r",
+        encoding="utf-8"
+    ) as file:
+        data = json.load(file)
+
+    if isinstance(data, list):
+        return data
+
+    if isinstance(data, dict):
+        questions = data.get("questions")
+
+        if isinstance(questions, list):
+            return questions
+
+    raise ValueError(
+        "JSON must contain either a list of questions "
+        "or an object with a 'questions' array."
+    )
 
 
 # ============================================================
 # QUESTION VALIDATION
 # ============================================================
 
-REQUIRED_QUESTION_FIELDS = [
+REQUIRED_FIELDS = [
     "subject",
-    "grade",
     "board",
+    "grade",
     "question",
     "options",
     "correct",
 ]
 
 
-def validate_question(q, filename, index):
+def validate_question(question):
     """
-    Validate the minimum required fields in a question.
-
-    Returns:
-        (True, None)
-        or
-        (False, error_message)
+    Validate the minimum structure required by Question.
     """
 
-    if not isinstance(q, dict):
-        return (
-            False,
-            f"Question #{index} is not a JSON object."
+    if not isinstance(question, dict):
+        raise ValueError(
+            "Question must be a JSON object."
         )
 
-    # --------------------------------------------------------
-    # Required fields
-    # --------------------------------------------------------
+    # Required top-level fields
+    for field in REQUIRED_FIELDS:
 
-    for field in REQUIRED_QUESTION_FIELDS:
-
-        if field not in q:
-
-            return (
-                False,
-                f"Missing required field '{field}'."
+        if field not in question:
+            raise ValueError(
+                f"Missing required field: {field}"
             )
 
-    # --------------------------------------------------------
-    # Basic fields
-    # --------------------------------------------------------
-
-    if not str(q["subject"]).strip():
-
-        return (
-            False,
-            "Subject cannot be empty."
-        )
-
-    if not str(q["board"]).strip():
-
-        return (
-            False,
-            "Board cannot be empty."
-        )
-
-    if not str(q["question"]).strip():
-
-        return (
-            False,
-            "Question cannot be empty."
-        )
-
-    # --------------------------------------------------------
-    # Grade
-    # --------------------------------------------------------
-
-    try:
-
-        grade = int(q["grade"])
-
-        if grade <= 0:
-
-            return (
-                False,
-                "Grade must be greater than zero."
-            )
-
-    except (TypeError, ValueError):
-
-        return (
-            False,
-            "Grade must be an integer."
-        )
-
-    # --------------------------------------------------------
     # Options
-    # --------------------------------------------------------
-
-    options = q["options"]
+    options = question.get("options")
 
     if not isinstance(options, dict):
-
-        return (
-            False,
-            "'options' must be an object containing A/B/C/D."
+        raise ValueError(
+            "'options' must be an object."
         )
 
-    required_options = ["A", "B", "C", "D"]
-
-    for option in required_options:
+    for option in ("A", "B", "C", "D"):
 
         if option not in options:
-
-            return (
-                False,
-                f"Missing option '{option}'."
+            raise ValueError(
+                f"Missing option: {option}"
             )
 
-        if not str(options[option]).strip():
-
-            return (
-                False,
-                f"Option '{option}' cannot be empty."
+        if options[option] is None:
+            raise ValueError(
+                f"Option {option} cannot be null."
             )
 
-    # --------------------------------------------------------
     # Correct answer
-    # --------------------------------------------------------
+    normalize_correct(
+        question.get("correct")
+    )
 
-    correct = str(q["correct"]).strip().upper()
-
-    if correct not in required_options:
-
-        return (
-            False,
-            "Correct answer must be A, B, C, or D."
+    # Question text
+    if not str(question.get("question", "")).strip():
+        raise ValueError(
+            "Question text cannot be empty."
         )
-
-    return True, None
-
-
-# ============================================================
-# NORMALIZE QUESTION
-# ============================================================
-
-def normalize_question(q):
-    """
-    Convert a JSON question into a consistent internal format.
-    """
-
-    options = q.get("options", {})
-
-    return {
-        "question_id": (
-            str(q["id"]).strip()
-            if q.get("id") is not None
-            else None
-        ),
-
-        "subject": str(
-            q.get("subject", "")
-        ).strip(),
-
-        "grade": int(
-            q.get("grade")
-        ),
-
-        "board": str(
-            q.get("board", "")
-        ).strip(),
-
-        "question": str(
-            q.get("question", "")
-        ).strip(),
-
-        "option_a": str(
-            options.get("A", "")
-        ).strip(),
-
-        "option_b": str(
-            options.get("B", "")
-        ).strip(),
-
-        "option_c": str(
-            options.get("C", "")
-        ).strip(),
-
-        "option_d": str(
-            options.get("D", "")
-        ).strip(),
-
-        "correct": str(
-            q.get("correct", "")
-        ).strip().upper(),
-
-        "explanation": str(
-            q.get("explanation", "")
-        ).strip(),
-
-        "world": str(
-            q.get("world", "")
-        ).strip(),
-
-        "chapter": str(
-            q.get("chapter", "")
-        ).strip(),
-
-        "topic": str(
-            q.get("topic", "")
-        ).strip(),
-
-        "stage": str(
-            q.get("stage", "Foundation")
-        ).strip(),
-
-        "cognitive_skill": str(
-            q.get("cognitive_skill", "Understand")
-        ).strip(),
-
-        "question_type": str(
-            q.get("question_type", "MCQ")
-        ).strip(),
-
-        "time_limit": int(
-            q.get("time_limit", 60)
-        ),
-
-        "hint": str(
-            q.get("hint", "")
-        ).strip(),
-
-        "status": str(
-            q.get("status", "published")
-        ).strip(),
-
-        "version": int(
-            q.get("version", 1)
-        ),
-    }
 
 
 # ============================================================
 # DUPLICATE CHECK
 # ============================================================
 
-def question_already_exists(db, question):
+def find_existing_question(db: Session, question):
     """
-    Determine whether this question is already in the database.
+    Check for duplicates using two strategies.
 
-    Primary check:
-        question_id
+    1. Generated question_id
+    2. subject + board + grade + question text
 
-    Fallback check:
-        subject + board + grade + question text
+    Returns:
+        Existing Question object
+        or None
     """
 
-    question_id = question.get("question_id")
+    question_id = normalize_question_id(
+        question.get("id")
+    )
 
     # --------------------------------------------------------
-    # Check generated question ID
+    # First: check question_id
     # --------------------------------------------------------
 
     if question_id:
@@ -368,283 +329,370 @@ def question_already_exists(db, question):
         existing = (
             db.query(models.Question)
             .filter(
-                models.Question.question_id
-                == question_id
+                models.Question.question_id == question_id
             )
             .first()
         )
 
         if existing:
-            return True
+            return existing
 
     # --------------------------------------------------------
-    # Check question text
+    # Second: check content identity
     # --------------------------------------------------------
+
+    subject = str(
+        question.get("subject", "")
+    ).strip()
+
+    board = str(
+        question.get("board", "")
+    ).strip()
+
+    grade = normalize_grade(
+        question.get("grade")
+    )
+
+    question_text = str(
+        question.get("question", "")
+    ).strip()
 
     existing = (
         db.query(models.Question)
         .filter(
-            models.Question.subject
-            == question["subject"],
-
-            models.Question.board
-            == question["board"],
-
-            models.Question.grade
-            == question["grade"],
-
-            models.Question.question
-            == question["question"],
+            models.Question.subject == subject,
+            models.Question.board == board,
+            models.Question.grade == grade,
+            models.Question.question == question_text,
         )
         .first()
     )
 
-    return existing is not None
+    return existing
 
 
 # ============================================================
-# IMPORT ONE JSON FILE
+# CREATE QUESTION OBJECT
 # ============================================================
 
-def import_question_file(db, json_path):
+def build_question_model(question):
     """
-    Import all questions from one JSON file.
+    Convert JSON question into models.Question.
+    """
 
-    Supports:
+    validate_question(question)
 
-        [
-            {...},
-            {...}
-        ]
+    options = question["options"]
 
-    OR:
+    # --------------------------------------------------------
+    # Normalize values
+    # --------------------------------------------------------
 
-        {
-            "questions": [
-                {...},
-                {...}
-            ]
-        }
+    question_id = normalize_question_id(
+        question.get("id")
+    )
+
+    subject = str(
+        question["subject"]
+    ).strip()
+
+    board = str(
+        question["board"]
+    ).strip()
+
+    # IMPORTANT:
+    # Question.grade is String(8)
+    grade = normalize_grade(
+        question["grade"]
+    )
+
+    question_text = str(
+        question["question"]
+    ).strip()
+
+    correct = normalize_correct(
+        question["correct"]
+    )
+
+    level = get_level(
+        question
+    )
+
+    # --------------------------------------------------------
+    # Create SQLAlchemy object
+    # --------------------------------------------------------
+
+    return models.Question(
+
+        # Generated question-bank ID
+        question_id=question_id,
+
+        # Curriculum
+        subject=subject,
+        board=board,
+        grade=grade,
+
+        # ERP level
+        level=level,
+
+        # Question
+        question=question_text,
+
+        option_a=str(
+            options["A"]
+        ),
+
+        option_b=str(
+            options["B"]
+        ),
+
+        option_c=str(
+            options["C"]
+        ),
+
+        option_d=str(
+            options["D"]
+        ),
+
+        # 0=A, 1=B, 2=C, 3=D
+        correct=correct,
+
+        explanation=str(
+            question.get(
+                "explanation",
+                ""
+            ) or ""
+        ),
+
+        # Metadata
+        world=question.get("world"),
+        chapter=question.get("chapter"),
+        topic=question.get("topic"),
+        stage=question.get("stage"),
+        cognitive_skill=question.get(
+            "cognitive_skill"
+        ),
+
+        question_type=str(
+            question.get(
+                "question_type",
+                "mcq"
+            )
+        ).strip().lower(),
+
+        # Timing
+        time_limit=(
+            int(question["time_limit"])
+            if question.get("time_limit") is not None
+            else None
+        ),
+
+        hint=question.get("hint"),
+
+        # Publishing
+        status=str(
+            question.get(
+                "status",
+                "published"
+            )
+        ).strip().lower(),
+
+        version=int(
+            question.get(
+                "version",
+                1
+            )
+        ),
+    )
+
+
+# ============================================================
+# SEED QUESTIONS FROM ONE FILE
+# ============================================================
+
+def seed_question_file(db: Session, json_path: Path):
+    """
+    Process one JSON file.
+
+    Returns:
+        (inserted, skipped, errors)
     """
 
     print()
-    print(f"Processing: {json_path.relative_to(BASE_DIR)}")
-
-    # --------------------------------------------------------
-    # Read JSON
-    # --------------------------------------------------------
+    print("=" * 70)
+    print(f"Processing: {json_path}")
+    print("=" * 70)
 
     try:
+        questions = load_json_file(
+            json_path
+        )
 
-        with open(
-            json_path,
-            "r",
-            encoding="utf-8"
-        ) as f:
-
-            data = json.load(f)
-
-    except json.JSONDecodeError as e:
-
+    except Exception as exc:
         print(
-            f"  ERROR: Invalid JSON: {e}"
+            f"  ERROR: Could not read JSON file: {exc}"
         )
 
         return 0, 0, 1
 
-    except OSError as e:
-
-        print(
-            f"  ERROR: Could not read file: {e}"
-        )
-
-        return 0, 0, 1
-
-    # --------------------------------------------------------
-    # Extract question list
-    # --------------------------------------------------------
-
-    if isinstance(data, dict):
-
-        data = data.get("questions", [])
-
-    if not isinstance(data, list):
-
-        print(
-            "  ERROR: JSON must contain a list "
-            "of questions."
-        )
-
-        return 0, 0, 1
-
-    # --------------------------------------------------------
-    # Process questions
-    # --------------------------------------------------------
-
-    loaded = 0
+    inserted = 0
     skipped = 0
     errors = 0
 
-    for index, q in enumerate(data, start=1):
+    print(
+        f"  Found {len(questions)} question(s)"
+    )
 
-        valid, error = validate_question(
-            q,
-            json_path.name,
-            index
-        )
-
-        if not valid:
-
-            print(
-                f"  WARNING: Question #{index}: "
-                f"{error}"
-            )
-
-            errors += 1
-            continue
+    for index, question in enumerate(
+        questions,
+        start=1
+    ):
 
         try:
 
-            normalized = normalize_question(q)
+            # ------------------------------------------------
+            # Validate
+            # ------------------------------------------------
+
+            validate_question(
+                question
+            )
 
             # ------------------------------------------------
             # Duplicate check
             # ------------------------------------------------
 
-            if question_already_exists(
+            existing = find_existing_question(
                 db,
-                normalized
-            ):
+                question
+            )
+
+            if existing:
+
+                question_id = normalize_question_id(
+                    question.get("id")
+                )
+
+                if question_id and existing.question_id == question_id:
+                    reason = (
+                        f"question_id '{question_id}' "
+                        f"already exists"
+                    )
+                else:
+                    reason = (
+                        "same subject + board + grade "
+                        "+ question already exists"
+                    )
+
+                print(
+                    f"  SKIP #{index}: {reason}"
+                )
 
                 skipped += 1
                 continue
 
             # ------------------------------------------------
-            # Create database record
+            # Build model
             # ------------------------------------------------
 
-            question_model = models.Question(
-                question_id=normalized["question_id"],
-
-                subject=normalized["subject"],
-
-                grade=normalized["grade"],
-
-                level=normalized["stage"],
-
-                board=normalized["board"],
-
-                question=normalized["question"],
-
-                option_a=normalized["option_a"],
-
-                option_b=normalized["option_b"],
-
-                option_c=normalized["option_c"],
-
-                option_d=normalized["option_d"],
-
-                correct=normalized["correct"],
-
-                explanation=normalized["explanation"],
-
-                world=normalized["world"],
-
-                chapter=normalized["chapter"],
-
-                topic=normalized["topic"],
-
-                stage=normalized["stage"],
-
-                cognitive_skill=normalized[
-                    "cognitive_skill"
-                ],
-
-                question_type=normalized[
-                    "question_type"
-                ],
-
-                time_limit=normalized[
-                    "time_limit"
-                ],
-
-                hint=normalized["hint"],
-
-                status=normalized["status"],
-
-                version=normalized["version"],
+            question_obj = build_question_model(
+                question
             )
 
-            db.add(question_model)
+            # ------------------------------------------------
+            # Insert
+            # ------------------------------------------------
 
-            loaded += 1
+            db.add(
+                question_obj
+            )
 
-        except Exception as e:
+            # Flush so PostgreSQL validates the record
+            # immediately and generates the DB ID.
+            db.flush()
 
             print(
-                f"  ERROR: Question #{index}: {e}"
+                f"  OK   #{index}: "
+                f"{question_obj.question_id or question_obj.id}"
+            )
+
+            inserted += 1
+
+        except Exception as exc:
+
+            # Roll back only this failed transaction state.
+            # Then continue processing remaining questions.
+            db.rollback()
+
+            print(
+                f"  ERROR #{index}: {exc}"
             )
 
             errors += 1
 
     # --------------------------------------------------------
-    # Commit this file
+    # Commit successfully added questions
     # --------------------------------------------------------
 
     try:
 
         db.commit()
 
-    except Exception as e:
+    except Exception as exc:
 
         db.rollback()
 
         print(
-            f"  ERROR committing file: {e}"
+            f"  ERROR: Commit failed: {exc}"
         )
 
-        return 0, 0, 1
-
-    print(
-        f"  Loaded: {loaded} | "
-        f"Skipped: {skipped} | "
-        f"Errors: {errors}"
-    )
-
-    return loaded, skipped, errors
-
-
-# ============================================================
-# IMPORT ALL QUESTION FILES
-# ============================================================
-
-def seed_questions(db):
-    """
-    Find and import every JSON file recursively under
-    the questions directory.
-    """
+        # The whole batch could not be committed.
+        errors += inserted
+        inserted = 0
 
     print()
-    print("=" * 60)
-    print("QUESTION BANK")
-    print("=" * 60)
+    print(
+        f"  Inserted : {inserted}"
+    )
+    print(
+        f"  Skipped  : {skipped}"
+    )
+    print(
+        f"  Errors   : {errors}"
+    )
+
+    return inserted, skipped, errors
+
+
+# ============================================================
+# SEED ALL QUESTION FILES
+# ============================================================
+
+def seed_all_questions(db: Session):
+    """
+    Recursively find and process every JSON file
+    under the questions directory.
+    """
 
     if not QUESTIONS_DIR.exists():
 
+        print()
         print(
-            f"Questions directory does not exist:\n"
+            f"Questions directory does not exist:"
+        )
+        print(
             f"  {QUESTIONS_DIR}"
         )
-
+        print()
         print(
-            "\nCreate the directory and put your "
-            "question JSON files inside it."
+            "Create the directory and put your JSON "
+            "question files inside it."
         )
 
         return
 
     # --------------------------------------------------------
-    # rglob searches all subdirectories
+    # Recursive JSON discovery
     # --------------------------------------------------------
 
     json_files = sorted(
@@ -653,31 +701,47 @@ def seed_questions(db):
 
     if not json_files:
 
+        print()
         print(
-            f"No JSON files found under:\n"
+            f"No JSON files found in:"
+        )
+        print(
             f"  {QUESTIONS_DIR}"
         )
 
         return
 
+    print()
+    print("=" * 70)
+    print("QUESTION SEEDING")
+    print("=" * 70)
+
     print(
-        f"Found {len(json_files)} JSON question file(s)."
+        f"Questions directory: {QUESTIONS_DIR}"
     )
 
-    total_loaded = 0
+    print(
+        f"JSON files found: {len(json_files)}"
+    )
+
+    total_inserted = 0
     total_skipped = 0
     total_errors = 0
 
+    # --------------------------------------------------------
+    # Process every file
+    # --------------------------------------------------------
+
     for json_path in json_files:
 
-        loaded, skipped, errors = (
-            import_question_file(
+        inserted, skipped, errors = (
+            seed_question_file(
                 db,
                 json_path
             )
         )
 
-        total_loaded += loaded
+        total_inserted += inserted
         total_skipped += skipped
         total_errors += errors
 
@@ -686,261 +750,176 @@ def seed_questions(db):
     # --------------------------------------------------------
 
     print()
-    print("-" * 60)
-    print("QUESTION IMPORT SUMMARY")
-    print("-" * 60)
+    print("=" * 70)
+    print("QUESTION SEEDING COMPLETE")
+    print("=" * 70)
 
     print(
-        f"Files found       : {len(json_files)}"
+        f"Files processed : {len(json_files)}"
     )
 
     print(
-        f"Questions loaded   : {total_loaded}"
+        f"Questions added : {total_inserted}"
     )
 
     print(
-        f"Questions skipped  : {total_skipped}"
+        f"Questions skipped: {total_skipped}"
     )
 
     print(
-        f"Questions errors   : {total_errors}"
+        f"Errors          : {total_errors}"
     )
 
-    print("-" * 60)
+    print("=" * 70)
 
 
 # ============================================================
 # DEFAULT ADMIN
 # ============================================================
 
-def seed_admin(db):
+def seed_admin(db: Session):
+    """
+    Create the default admin if it does not exist.
 
-    existing_admin = (
+    Adjust password handling here to match your
+    existing authentication implementation.
+    """
+
+    existing = (
         db.query(models.User)
         .filter(
-            models.User.role
-            == models.Role.admin
+            models.User.userid
+            == DEFAULT_ADMIN_USERID
         )
         .first()
     )
 
-    if not existing_admin:
-
-        admin = models.User(
-            userid=settings.DEFAULT_ADMIN_USERID,
-
-            email=settings.DEFAULT_ADMIN_EMAIL,
-
-            hashed_password=hash_password(
-                settings.DEFAULT_ADMIN_PASSWORD
-            ),
-
-            name="Administrator",
-
-            role=models.Role.admin,
+    if existing:
+        print(
+            "Admin already exists - skipping."
         )
+        return
 
-        db.add(admin)
+    # --------------------------------------------------------
+    # IMPORTANT
+    # --------------------------------------------------------
+    # Replace this with your application's password hashing
+    # function if the admin should have a login password.
+    #
+    # Example:
+    #
+    # hashed_password = hash_password("your-password")
+    #
+    # --------------------------------------------------------
 
+    admin = models.User(
+        userid=DEFAULT_ADMIN_USERID,
+        email=DEFAULT_ADMIN_EMAIL,
+        name=DEFAULT_ADMIN_NAME,
+        role=models.Role.admin,
+        account_tier=models.AccountTier.premium,
+        grade=None,
+        board=None,
+        avatar="🦊",
+        theme="classic",
+        is_active=True,
+        must_reset_password=False,
+    )
+
+    db.add(admin)
+
+    try:
         db.commit()
 
         print(
-            f"Created default admin "
-            f"'{settings.DEFAULT_ADMIN_USERID}' "
-            f"— log in with the password you set "
-            f"in DEFAULT_ADMIN_PASSWORD."
+            f"Created admin: {DEFAULT_ADMIN_USERID}"
         )
 
-    else:
+    except Exception as exc:
+
+        db.rollback()
 
         print(
-            "Admin account already exists, skipping."
+            f"ERROR creating admin: {exc}"
         )
 
 
 # ============================================================
-# THEMES
+# SUBJECTS
 # ============================================================
 
-def seed_themes(db):
+def seed_subjects(db: Session):
+    """
+    Add standard subjects if they don't already exist.
 
-    def seed_theme(
-        key: str,
-        name: str,
-        bg_filename: str,
-        icon_dir: str | None = None
-    ):
+    Modify this list to match your ERP.
+    """
 
-        # ----------------------------------------------------
-        # Existing theme
-        # ----------------------------------------------------
+    subjects = [
+        {
+            "key": "mathematics",
+            "name": "Mathematics",
+            "icon": "📐",
+        },
+        {
+            "key": "physics",
+            "name": "Physics",
+            "icon": "⚛️",
+        },
+        {
+            "key": "chemistry",
+            "name": "Chemistry",
+            "icon": "🧪",
+        },
+        {
+            "key": "biology",
+            "name": "Biology",
+            "icon": "🧬",
+        },
+        {
+            "key": "english",
+            "name": "English",
+            "icon": "📚",
+        },
+    ]
 
-        if (
-            db.query(models.Theme)
+    for item in subjects:
+
+        existing = (
+            db.query(models.Subject)
             .filter(
-                models.Theme.key == key
+                models.Subject.key
+                == item["key"]
             )
             .first()
-        ):
-
-            print(
-                f"Theme '{key}' already exists, "
-                f"skipping."
-            )
-
-            return
-
-        # ----------------------------------------------------
-        # Background
-        # ----------------------------------------------------
-
-        bg_path = (
-            ASSETS_DIR
-            / bg_filename
         )
 
-        if not bg_path.exists():
-
-            print(
-                f"Skipping theme '{key}' — "
-                f"{bg_path} not found."
-            )
-
-            return
-
-        # ----------------------------------------------------
-        # Create theme
-        # ----------------------------------------------------
-
-        theme = models.Theme(
-            key=key,
-
-            name=name,
-
-            background_image=(
-                bg_path.read_bytes()
-            ),
-
-            background_mime="image/jpeg",
-        )
-
-        db.add(theme)
-
-        db.flush()
-
-        # ----------------------------------------------------
-        # Icons
-        # ----------------------------------------------------
-
-        if icon_dir:
-
-            icon_directory = (
-                ASSETS_DIR
-                / icon_dir
-            )
-
-            icon_files = sorted(
-                icon_directory.glob("*.jpg")
-            )
-
-            for i, icon_path in enumerate(
-                icon_files
-            ):
-
-                db.add(
-                    models.ThemeIcon(
-                        theme_id=theme.id,
-
-                        image=icon_path.read_bytes(),
-
-                        mime="image/jpeg",
-
-                        sort_order=i,
-                    )
-                )
-
-            print(
-                f"Seeded theme '{key}' "
-                f"with {len(icon_files)} icons."
-            )
-
-        else:
-
-            print(
-                f"Seeded theme '{key}' "
-                f"(background only, "
-                f"no icons yet)."
-            )
-
-        db.commit()
-
-    # --------------------------------------------------------
-    # Themes
-    # --------------------------------------------------------
-
-    seed_theme(
-        "garden",
-        "Garden",
-        "garden_background.jpg"
-    )
-
-    seed_theme(
-        "ocean",
-        "Ocean",
-        "ocean_background.jpg",
-        icon_dir="ocean_icons"
-    )
-
-
-# ============================================================
-# SUBJECT CONFIG
-# ============================================================
-
-def seed_subjects(db):
-
-    existing_subject_keys = {
-        subject.key
-        for subject in (
-            db.query(models.Subject).all()
-        )
-    }
-
-    added = 0
-
-    for key, name, icon in SUBJECTS_SEED:
-
-        if key in existing_subject_keys:
-
+        if existing:
             continue
 
-        db.add(
-            models.Subject(
-                key=key,
-
-                name=name,
-
-                icon=icon,
-
-                demo_level_cap=5,
-            )
+        subject = models.Subject(
+            key=item["key"],
+            name=item["name"],
+            icon=item["icon"],
+            demo_level_cap=5,
         )
 
-        added += 1
+        db.add(subject)
 
-    if added:
+    try:
 
         db.commit()
 
         print(
-            f"Seeded {added} subject config "
-            f"row(s) (demo_level_cap=5 each)."
+            "Subjects seeded."
         )
 
-    else:
+    except Exception as exc:
+
+        db.rollback()
 
         print(
-            "Subject config already present, "
-            "skipping."
+            f"ERROR seeding subjects: {exc}"
         )
 
 
@@ -951,17 +930,28 @@ def seed_subjects(db):
 def main():
 
     print()
-    print("=" * 60)
-    print("DATABASE SEED")
-    print("=" * 60)
+    print("=" * 70)
+    print("ERP DATABASE SEEDER")
+    print("=" * 70)
 
     # --------------------------------------------------------
-    # Create tables
+    # Create tables if they don't exist
     # --------------------------------------------------------
+
+    print()
+    print("Checking database tables...")
 
     Base.metadata.create_all(
         bind=engine
     )
+
+    print(
+        "Database tables ready."
+    )
+
+    # --------------------------------------------------------
+    # Database session
+    # --------------------------------------------------------
 
     db = SessionLocal()
 
@@ -972,58 +962,40 @@ def main():
         # ----------------------------------------------------
 
         print()
-        print("[1/4] Default admin")
+        print("Checking admin...")
 
-        seed_admin(db)
-
-        # ----------------------------------------------------
-        # Questions
-        # ----------------------------------------------------
-
-        print()
-        print("[2/4] Question bank")
-
-        seed_questions(db)
-
-        # ----------------------------------------------------
-        # Themes
-        # ----------------------------------------------------
-
-        print()
-        print("[3/4] Themes")
-
-        seed_themes(db)
+        seed_admin(
+            db
+        )
 
         # ----------------------------------------------------
         # Subjects
         # ----------------------------------------------------
 
         print()
-        print("[4/4] Subject configuration")
+        print("Checking subjects...")
 
-        seed_subjects(db)
-
-        # ----------------------------------------------------
-        # Final count
-        # ----------------------------------------------------
-
-        question_count = (
-            db.query(models.Question).count()
+        seed_subjects(
+            db
         )
 
-        print()
-        print("=" * 60)
-        print("SEED COMPLETE")
-        print("=" * 60)
+        # ----------------------------------------------------
+        # Questions
+        # ----------------------------------------------------
 
-        print(
-            f"Total questions in database: "
-            f"{question_count}"
+        seed_all_questions(
+            db
         )
 
     finally:
 
         db.close()
+
+    print()
+    print("=" * 70)
+    print("SEEDER FINISHED")
+    print("=" * 70)
+    print()
 
 
 # ============================================================
@@ -1032,4 +1004,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
