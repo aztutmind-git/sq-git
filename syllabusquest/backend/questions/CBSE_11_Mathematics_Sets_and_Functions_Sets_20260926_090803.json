@@ -1,0 +1,27 @@
+[
+  {
+    "id": "53008",
+    "subject": "Mathematics",
+    "grade": 11,
+    "board": "CBSE",
+    "question": "Which statement is correct about Sets?",
+    "options": {
+      "A": "Basic concept of Sets",
+      "B": "An unrelated concept",
+      "C": "An incorrect interpretation of Sets",
+      "D": "None of the above"
+    },
+    "correct": "A",
+    "explanation": "This question tests the fundamental concept of Sets.",
+    "world": "Sets and Functions",
+    "chapter": "Sets and Functions",
+    "topic": "Sets",
+    "stage": "Foundation",
+    "cognitive_skill": "Remember",
+    "question_type": "MCQ",
+    "time_limit": 60,
+    "hint": "Recall the basic definition or principle associated with Sets.",
+    "status": "published",
+    "version": 1
+  }
+]
