@@ -3,7 +3,16 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import (
-    Column, String, Integer, Boolean, ForeignKey, DateTime, JSON, Enum, UniqueConstraint, LargeBinary
+    Column,
+    String,
+    Integer,
+    Boolean,
+    ForeignKey,
+    DateTime,
+    JSON,
+    Enum,
+    UniqueConstraint,
+    LargeBinary,
 )
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID
@@ -15,163 +24,585 @@ def gen_uuid():
     return str(uuid.uuid4())
 
 
+# ============================================================
+# ENUMS
+# ============================================================
+
 class Role(str, enum.Enum):
     student = "student"
     admin = "admin"
 
 
 class AccountTier(str, enum.Enum):
-    guest = "guest"       # auto-created via "Try Demo" — no password, capped levels per subject
-    silver = "silver"     # registered/paid — full concept-level access, unlimited levels
-    premium = "premium"   # everything Silver has, plus the analytics dashboard (future)
+    guest = "guest"
+    silver = "silver"
+    premium = "premium"
 
+
+# ============================================================
+# USER
+# ============================================================
 
 class User(Base):
-    """Both students and admins live here, distinguished by `role`."""
     __tablename__ = "users"
 
-    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
-    userid = Column(String(64), unique=True, nullable=False, index=True)
-    email = Column(String(255), nullable=True, index=True)  # real address (Gmail/Yahoo/etc.) for password-reset emails
-    hashed_password = Column(String(255), nullable=True)  # null for guest accounts — they never log in with a password
-    name = Column(String(120), nullable=False)
-    role = Column(Enum(Role), nullable=False, default=Role.student)
-    account_tier = Column(Enum(AccountTier), nullable=False, default=AccountTier.silver)
+    id = Column(
+        UUID(as_uuid=False),
+        primary_key=True,
+        default=gen_uuid
+    )
 
-    # student-only profile fields (nullable for admins)
-    grade = Column(String(8), nullable=True)
-    board = Column(String(16), nullable=True)
-    avatar = Column(String(8), nullable=True, default="🦊")
-    theme = Column(String(32), nullable=False, default="classic")
+    userid = Column(
+        String(64),
+        unique=True,
+        nullable=False,
+        index=True
+    )
 
-    is_active = Column(Boolean, default=True, nullable=False)
-    must_reset_password = Column(Boolean, default=False, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    email = Column(
+        String(255),
+        nullable=True,
+        index=True
+    )
 
-    progress = relationship("Progress", back_populates="user", cascade="all, delete-orphan")
-    reset_tokens = relationship("PasswordResetToken", back_populates="user", cascade="all, delete-orphan")
+    hashed_password = Column(
+        String(255),
+        nullable=True
+    )
 
+    name = Column(
+        String(120),
+        nullable=False
+    )
+
+    role = Column(
+        Enum(Role),
+        nullable=False,
+        default=Role.student
+    )
+
+    account_tier = Column(
+        Enum(AccountTier),
+        nullable=False,
+        default=AccountTier.silver
+    )
+
+    grade = Column(
+        String(8),
+        nullable=True
+    )
+
+    board = Column(
+        String(16),
+        nullable=True
+    )
+
+    avatar = Column(
+        String(8),
+        nullable=True,
+        default="🦊"
+    )
+
+    theme = Column(
+        String(32),
+        nullable=False,
+        default="classic"
+    )
+
+    is_active = Column(
+        Boolean,
+        default=True,
+        nullable=False
+    )
+
+    must_reset_password = Column(
+        Boolean,
+        default=False,
+        nullable=False
+    )
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow
+    )
+
+    progress = relationship(
+        "Progress",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+
+    reset_tokens = relationship(
+        "PasswordResetToken",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+
+
+# ============================================================
+# SUBJECT
+# ============================================================
 
 class Subject(Base):
-    """The master list of subjects. Admin-manageable (create/edit/delete) —
-    which grades each subject applies to is controlled separately via
-    GradeSubject, since e.g. Accounts (grade 11-12) and Science (grade 6-10)
-    don't overlap."""
     __tablename__ = "subjects"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    key = Column(String(32), unique=True, nullable=False, index=True)
-    name = Column(String(64), nullable=False)
-    icon = Column(String(8), nullable=True)
-    demo_level_cap = Column(Integer, nullable=False, default=5)
+    id = Column(
+        Integer,
+        primary_key=True,
+        autoincrement=True
+    )
 
+    key = Column(
+        String(32),
+        unique=True,
+        nullable=False,
+        index=True
+    )
+
+    name = Column(
+        String(64),
+        nullable=False
+    )
+
+    icon = Column(
+        String(8),
+        nullable=True
+    )
+
+    demo_level_cap = Column(
+        Integer,
+        nullable=False,
+        default=5
+    )
+
+
+# ============================================================
+# GRADE / SUBJECT
+# ============================================================
 
 class GradeSubject(Base):
-    """Which subjects are offered for a given grade — e.g. grade 8 might map
-    to mathematics/science/social_studies, while grade 12 maps to
-    chemistry/physics/accounts/etc. Drives both the guest pre-demo form's
-    subject dropdown and which subjects a newly-created student gets a
-    Progress row for."""
     __tablename__ = "grade_subjects"
-    __table_args__ = (UniqueConstraint("grade", "subject_key", name="uq_grade_subject"),)
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    grade = Column(String(8), nullable=False, index=True)
-    subject_key = Column(String(32), nullable=False)
+    __table_args__ = (
+        UniqueConstraint(
+            "grade",
+            "subject_key",
+            name="uq_grade_subject"
+        ),
+    )
 
+    id = Column(
+        Integer,
+        primary_key=True,
+        autoincrement=True
+    )
+
+    grade = Column(
+        String(8),
+        nullable=False,
+        index=True
+    )
+
+    subject_key = Column(
+        String(32),
+        nullable=False
+    )
+
+
+# ============================================================
+# QUESTION
+# ============================================================
 
 class Question(Base):
     __tablename__ = "questions"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    subject = Column(String(32), nullable=False, index=True)
-    level = Column(Integer, nullable=False, index=True)  # 1..5 sequential; 6+ are concept levels, unlocked all at once
-    board = Column(String(16), nullable=False, default="CBSE")
-    grade = Column(String(8), nullable=True)  # e.g. "8" — null means "applies to every grade" (all existing questions)
-    question = Column(String(1000), nullable=False)
-    option_a = Column(String(500), nullable=False)
-    option_b = Column(String(500), nullable=False)
-    option_c = Column(String(500), nullable=False)
-    option_d = Column(String(500), nullable=False)
-    correct = Column(Integer, nullable=False)  # 0=A, 1=B, 2=C, 3=D
-    explanation = Column(String(1000), nullable=True, default="")
-    created_at = Column(DateTime, default=datetime.utcnow)
+    # --------------------------------------------------------
+    # Database internal ID
+    # --------------------------------------------------------
 
-    # ---- descriptive tags (all optional — existing questions work with none set) ----
-    world = Column(String(64), nullable=True)
-    chapter = Column(String(64), nullable=True)
-    topic = Column(String(64), nullable=True)  # drives the concept-level label for levels beyond 5
-    stage = Column(String(32), nullable=True)
-    cognitive_skill = Column(String(32), nullable=True)  # Remember/Understand/Apply/Analyze...
-    question_type = Column(String(16), nullable=False, default="mcq")
-    time_limit = Column(Integer, nullable=True)  # seconds, optional
-    hint = Column(String(500), nullable=True)
-    status = Column(String(16), nullable=False, default="published")  # draft/published
-    version = Column(Integer, nullable=False, default=1)
+    id = Column(
+        Integer,
+        primary_key=True,
+        autoincrement=True
+    )
 
+    # --------------------------------------------------------
+    # Question-bank ID
+    #
+    # Example:
+    # "11021"
+    #
+    # This is separate from the database primary key.
+    # --------------------------------------------------------
+
+    question_id = Column(
+        String(64),
+        unique=True,
+        nullable=True,
+        index=True
+    )
+
+    # --------------------------------------------------------
+    # Curriculum information
+    # --------------------------------------------------------
+
+    subject = Column(
+        String(32),
+        nullable=False,
+        index=True
+    )
+
+    board = Column(
+        String(16),
+        nullable=False,
+        default="CBSE",
+        index=True
+    )
+
+    grade = Column(
+        String(8),
+        nullable=True,
+        index=True
+    )
+
+    # --------------------------------------------------------
+    # Difficulty / learning level
+    #
+    # 1 = Foundation
+    # 2 = Intermediate
+    # 3 = Advanced
+    # 4 = Application
+    # 5 = Mastery
+    #
+    # Adjust these values if your ERP uses a different
+    # learning-level system.
+    # --------------------------------------------------------
+
+    level = Column(
+        Integer,
+        nullable=False,
+        index=True
+    )
+
+    # --------------------------------------------------------
+    # Question content
+    # --------------------------------------------------------
+
+    question = Column(
+        String(1000),
+        nullable=False
+    )
+
+    option_a = Column(
+        String(500),
+        nullable=False
+    )
+
+    option_b = Column(
+        String(500),
+        nullable=False
+    )
+
+    option_c = Column(
+        String(500),
+        nullable=False
+    )
+
+    option_d = Column(
+        String(500),
+        nullable=False
+    )
+
+    # 0 = A
+    # 1 = B
+    # 2 = C
+    # 3 = D
+
+    correct = Column(
+        Integer,
+        nullable=False
+    )
+
+    explanation = Column(
+        String(1000),
+        nullable=True,
+        default=""
+    )
+
+    # --------------------------------------------------------
+    # Curriculum metadata
+    # --------------------------------------------------------
+
+    world = Column(
+        String(64),
+        nullable=True
+    )
+
+    chapter = Column(
+        String(64),
+        nullable=True
+    )
+
+    topic = Column(
+        String(64),
+        nullable=True
+    )
+
+    stage = Column(
+        String(32),
+        nullable=True
+    )
+
+    cognitive_skill = Column(
+        String(32),
+        nullable=True
+    )
+
+    question_type = Column(
+        String(16),
+        nullable=False,
+        default="mcq"
+    )
+
+    # --------------------------------------------------------
+    # Question timing / assistance
+    # --------------------------------------------------------
+
+    time_limit = Column(
+        Integer,
+        nullable=True
+    )
+
+    hint = Column(
+        String(500),
+        nullable=True
+    )
+
+    # --------------------------------------------------------
+    # Publishing/versioning
+    # --------------------------------------------------------
+
+    status = Column(
+        String(16),
+        nullable=False,
+        default="published"
+    )
+
+    version = Column(
+        Integer,
+        nullable=False,
+        default=1
+    )
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow
+    )
+
+
+# ============================================================
+# PROGRESS
+# ============================================================
 
 class Progress(Base):
-    """Per-student, per-subject progress: which level is unlocked, xp, stars per level."""
     __tablename__ = "progress"
-    __table_args__ = (UniqueConstraint("user_id", "subject", name="uq_progress_user_subject"),)
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(UUID(as_uuid=False), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    subject = Column(String(32), nullable=False)
-    unlocked_level = Column(Integer, nullable=False, default=1)
-    xp = Column(Integer, nullable=False, default=0)
-    stars = Column(JSON, nullable=False, default=dict)  # {"1": 3, "2": 2, ...}
-    # Whether this subject shows up for the student at all. Every student
-    # gets a Progress row per subject at creation time (so their stats are
-    # ready to go the moment they're enrolled) — this flag is what actually
-    # controls visibility. Defaults True so nothing changes for any student
-    # created before this feature existed.
-    enrolled = Column(Boolean, nullable=False, default=True)
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id",
+            "subject",
+            name="uq_progress_user_subject"
+        ),
+    )
 
-    user = relationship("User", back_populates="progress")
+    id = Column(
+        Integer,
+        primary_key=True,
+        autoincrement=True
+    )
 
+    user_id = Column(
+        UUID(as_uuid=False),
+        ForeignKey(
+            "users.id",
+            ondelete="CASCADE"
+        ),
+        nullable=False
+    )
+
+    subject = Column(
+        String(32),
+        nullable=False
+    )
+
+    unlocked_level = Column(
+        Integer,
+        nullable=False,
+        default=1
+    )
+
+    xp = Column(
+        Integer,
+        nullable=False,
+        default=0
+    )
+
+    stars = Column(
+        JSON,
+        nullable=False,
+        default=dict
+    )
+
+    enrolled = Column(
+        Boolean,
+        nullable=False,
+        default=True
+    )
+
+    user = relationship(
+        "User",
+        back_populates="progress"
+    )
+
+
+# ============================================================
+# PASSWORD RESET TOKEN
+# ============================================================
 
 class PasswordResetToken(Base):
     __tablename__ = "password_reset_tokens"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(UUID(as_uuid=False), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    token_hash = Column(String(255), nullable=False, index=True)
-    expires_at = Column(DateTime, nullable=False)
-    used = Column(Boolean, default=False, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    id = Column(
+        Integer,
+        primary_key=True,
+        autoincrement=True
+    )
 
-    user = relationship("User", back_populates="reset_tokens")
+    user_id = Column(
+        UUID(as_uuid=False),
+        ForeignKey(
+            "users.id",
+            ondelete="CASCADE"
+        ),
+        nullable=False
+    )
 
+    token_hash = Column(
+        String(255),
+        nullable=False,
+        index=True
+    )
+
+    expires_at = Column(
+        DateTime,
+        nullable=False
+    )
+
+    used = Column(
+        Boolean,
+        default=False,
+        nullable=False
+    )
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow
+    )
+
+    user = relationship(
+        "User",
+        back_populates="reset_tokens"
+    )
+
+
+# ============================================================
+# THEME
+# ============================================================
 
 class Theme(Base):
-    """An admin-uploaded visual theme: one background image plus zero or more
-    character icons for level nodes. Images are stored as bytes directly in
-    Postgres (not on local disk) since Render's free web service filesystem
-    is wiped on every redeploy/restart — the database is the only durable
-    storage available without adding a separate file-hosting service."""
     __tablename__ = "themes"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    key = Column(String(32), unique=True, nullable=False, index=True)  # slug, e.g. "ocean"
-    name = Column(String(64), nullable=False)  # display name, e.g. "Ocean"
-    background_image = Column(LargeBinary, nullable=False)
-    background_mime = Column(String(64), nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    id = Column(
+        Integer,
+        primary_key=True,
+        autoincrement=True
+    )
 
-    icons = relationship("ThemeIcon", back_populates="theme", cascade="all, delete-orphan",
-                          order_by="ThemeIcon.sort_order")
+    key = Column(
+        String(32),
+        unique=True,
+        nullable=False,
+        index=True
+    )
 
+    name = Column(
+        String(64),
+        nullable=False
+    )
+
+    background_image = Column(
+        LargeBinary,
+        nullable=False
+    )
+
+    background_mime = Column(
+        String(64),
+        nullable=False
+    )
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow
+    )
+
+    icons = relationship(
+        "ThemeIcon",
+        back_populates="theme",
+        cascade="all, delete-orphan",
+        order_by="ThemeIcon.sort_order"
+    )
+
+
+# ============================================================
+# THEME ICON
+# ============================================================
 
 class ThemeIcon(Base):
-    """One character icon belonging to a Theme, used to decorate level nodes
-    on the map (cycled through in order as levels go up)."""
     __tablename__ = "theme_icons"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    theme_id = Column(Integer, ForeignKey("themes.id", ondelete="CASCADE"), nullable=False)
-    image = Column(LargeBinary, nullable=False)
-    mime = Column(String(64), nullable=False)
-    sort_order = Column(Integer, nullable=False, default=0)
+    id = Column(
+        Integer,
+        primary_key=True,
+        autoincrement=True
+    )
 
-    theme = relationship("Theme", back_populates="icons")
+    theme_id = Column(
+        Integer,
+        ForeignKey(
+            "themes.id",
+            ondelete="CASCADE"
+        ),
+        nullable=False
+    )
+
+    image = Column(
+        LargeBinary,
+        nullable=False
+    )
+
+    mime = Column(
+        String(64),
+        nullable=False
+    )
+
+    sort_order = Column(
+        Integer,
+        nullable=False,
+        default=0
+    )
+
+    theme = relationship(
+        "Theme",
+        back_populates="icons"
+    )
+
