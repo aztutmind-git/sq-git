@@ -68,6 +68,111 @@ def _to_schema(db: Session, p: models.Progress) -> schemas.SubjectProgress:
     )
 
 
+# ---------- student-facing: save a completed quiz attempt ----------
+@router.post("/attempt", response_model=schemas.QuizAttemptResult)
+def save_quiz_attempt(
+    payload: schemas.QuizAttemptRequest,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+):
+    """Persist the result of a completed level in the Progress table.
+
+    The frontend sends only the quiz result. The database remains the source
+    of truth for stars, XP and the next unlocked level.
+    """
+    if payload.level < 1:
+        raise HTTPException(status_code=400, detail="Invalid level")
+
+    if payload.total_questions <= 0:
+        raise HTTPException(status_code=400, detail="total_questions must be greater than 0")
+
+    if payload.correct_count < 0 or payload.correct_count > payload.total_questions:
+        raise HTTPException(status_code=400, detail="correct_count is out of range")
+
+    subject = payload.subject.strip()
+    if not subject:
+        raise HTTPException(status_code=400, detail="Subject is required")
+
+    # The student must have a progress row for the subject.
+    progress = db.query(models.Progress).filter(
+        models.Progress.user_id == user.id,
+        models.Progress.subject == subject,
+    ).first()
+
+    if not progress:
+        raise HTTPException(status_code=404, detail="Progress record not found for this subject")
+
+    if not progress.enrolled:
+        raise HTTPException(status_code=403, detail="NOT_ENROLLED")
+
+    # Keep the same guest ceiling used by the question-access endpoint.
+    if user.account_tier == models.AccountTier.guest:
+        demo_cap = _demo_cap_for_subject(db, subject)
+        if payload.level > demo_cap:
+            raise HTTPException(status_code=403, detail="REGISTRATION_REQUIRED")
+
+    # Do not allow a student to submit a result for a locked level.
+    if not _is_level_accessible(
+        progress,
+        payload.level,
+        user.account_tier == models.AccountTier.guest,
+    ):
+        raise HTTPException(status_code=403, detail="That level is still locked")
+
+    score_pct = (payload.correct_count / payload.total_questions) * 100
+
+    # Star thresholds match the Student Quiz Board result logic:
+    # 90%+ = 3, 70%+ = 2, 50%+ = 1, otherwise 0.
+    if payload.out_of_hearts:
+        stars = 0
+    elif score_pct >= 90:
+        stars = 3
+    elif score_pct >= 70:
+        stars = 2
+    elif score_pct >= 50:
+        stars = 1
+    else:
+        stars = 0
+
+    passed = stars > 0
+
+    current_stars = {
+        str(k): max(0, min(3, int(v or 0)))
+        for k, v in (progress.stars or {}).items()
+    }
+
+    # Retesting cannot erase a student's previous achievement.
+    previous_stars = current_stars.get(str(payload.level), 0)
+    saved_stars = max(previous_stars, stars)
+    current_stars[str(payload.level)] = saved_stars
+
+    # Award XP for the current attempt. Keep the frontend's existing
+    # 10-XP-per-correct-answer rule as the server-side source of truth.
+    xp_gained = payload.correct_count * 10
+    progress.xp = (progress.xp or 0) + xp_gained
+
+    # Unlock only the next sequential level for levels 1-5.
+    # Level 6+ becomes available once level 5 has been cleared.
+    if passed:
+        if payload.level < 5 and progress.unlocked_level == payload.level:
+            progress.unlocked_level = payload.level + 1
+        elif payload.level == 5 and progress.unlocked_level <= 5:
+            progress.unlocked_level = 6
+
+    progress.stars = current_stars
+
+    db.add(progress)
+    db.commit()
+    db.refresh(progress)
+
+    return schemas.QuizAttemptResult(
+        passed=passed,
+        stars=stars,
+        xp_gained=xp_gained,
+        progress=_to_schema(db, progress),
+    )
+
+
 @router.get("", response_model=List[schemas.SubjectProgress])
 def get_my_progress(db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
     # Returns every subject the student has a Progress row for (i.e. every
