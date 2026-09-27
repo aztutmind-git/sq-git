@@ -248,7 +248,11 @@ class QuestionForQuiz(BaseModel):
     correct: int  # kept server-side authoritative; fine to send since quiz is not proctored
     hint: Optional[str] = None
     time_limit: Optional[int] = None
-
+    world: Optional[str] = None
+    chapter: Optional[str] = None
+    topic: Optional[str] = None
+    stage: Optional[str] = None
+    cognitive_skill: Optional[str] = None
 
 class ExcelUploadResult(BaseModel):
     added: int
