@@ -506,6 +506,12 @@ body.theme-ocean{
 .result-stats .box{flex:1;background:var(--white);border-radius:14px;padding:12px 8px;border:1.5px solid var(--paper-line);}
 .result-stats .box b{display:block;font-size:18px;font-family:'Fredoka';}
 .result-stats .box span{font-size:10.5px;color:var(--muted);text-transform:uppercase;font-weight:700;letter-spacing:0.03em;}
+.result-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:4px;}
+.result-actions .btn-primary{width:100%;}
+.result-action-secondary{width:100%;padding:12px 10px;border-radius:12px;background:#eef5fb;color:#16466a;border:1px solid #d7e8f4;font-weight:800;font-size:12px;}
+.result-action-secondary:hover{filter:brightness(.98);transform:translateY(-1px);}
+@media(max-width:380px){.result-actions{grid-template-columns:1fr;}}
+
 
 /* ---------- ADMIN ---------- */
 #screen-admin-login{background:var(--ink);color:#fff;align-items:center;justify-content:center;padding:26px;}
@@ -1016,7 +1022,12 @@ body.theme-ocean{
       <div class="box"><b id="result-correct">4/5</b><span>Correct</span></div>
       <div class="box"><b id="result-xp">+40</b><span>XP earned</span></div>
     </div>
-    <button class="btn-primary btn-gold" onclick="closeResult()" id="result-btn">Continue</button>
+    <div class="result-actions" id="result-actions">
+      <button class="btn-primary btn-gold" onclick="openResultProgress()">📊 Track Progress</button>
+      <button class="result-action-secondary" onclick="retestFinishedLevel()">🔄 Take Retest</button>
+      <button class="result-action-secondary" onclick="exploreOtherLevels()">🧭 Explore Other Levels</button>
+      <button class="result-action-secondary" onclick="backHomeFromResult()">🏠 Back Home</button>
+    </div>
   </div>
 </div>
 
@@ -2192,54 +2203,91 @@ function nextQuestion(){
 }
 async function finishLevel(outOfHearts, timeUp=false){
   const quiz = STATE.quiz;
-  if(quiz?.finished && !timeUp && !outOfHearts) return;
+  if(!quiz) return;
+  if(quiz.finished && !timeUp && !outOfHearts) return;
   quiz.finished = true;
   stopQuizTimer();
-  const total = quiz.questions.length;
+  const total = Math.max(1, quiz.questions.length);
+  const scorePct = Math.round((quiz.correct / total) * 100);
 
-  let result;
+  // The result screen must not depend on another question or another level
+  // existing. Even a one-question level is a valid completed level.
+  // The API is still used when available so saved progress/stars remain the
+  // source of truth. If that endpoint is unavailable, show the completion
+  // result locally instead of replacing it with a "Not Found" error.
+  let result = null;
   try{
     result = await api('/api/progress/attempt', {method:'POST', body:{
       subject: quiz.subject, level: quiz.level,
       correct_count: quiz.correct, total_questions: total,
-      out_of_hearts: outOfHearts,
+      out_of_hearts: !!outOfHearts,
     }});
   }catch(err){
-    toast(err.message || 'Could not save your result'); return;
+    console.warn('Progress save unavailable; showing local level result:', err);
   }
 
-  STATE.progress[quiz.subject] = result.progress;
-  const stars = result.stars, passed = result.passed, xpGained = result.xp_gained;
+  const passed = result?.passed ?? (!outOfHearts && scorePct >= 50);
+  const stars = Number(result?.stars ?? (outOfHearts ? 0 : scorePct >= 90 ? 3 : scorePct >= 70 ? 2 : scorePct >= 50 ? 1 : 0));
+  const xpGained = Number(result?.xp_gained ?? (quiz.correct * 10));
+
+  if(result?.progress){
+    STATE.progress[quiz.subject] = result.progress;
+  }else{
+    // Keep the UI usable when the progress endpoint is not available yet.
+    const current = STATE.progress[quiz.subject] || {unlocked_level:quiz.level, xp:0, stars:{}, max_level:5};
+    current.stars = {...(current.stars || {}), [quiz.level]:Math.max(Number(current.stars?.[quiz.level] || 0), stars)};
+    current.xp = Number(current.xp || 0) + xpGained;
+    if(passed) current.unlocked_level = Math.max(Number(current.unlocked_level || 1), quiz.level + 1);
+    STATE.progress[quiz.subject] = current;
+  }
 
   document.getElementById('result-emoji').textContent = outOfHearts ? '💔' : (passed ? (stars===3?'🏆':'🎉') : '📘');
-  document.getElementById('result-title').textContent = timeUp ? "Time's up!" : (outOfHearts ? 'Out of hearts' : (passed ? 'Level complete!' : 'So close — try again'));
+  document.getElementById('result-title').textContent = timeUp ? "Time's up!" : (outOfHearts ? 'Level finished' : 'Level finished!');
   document.getElementById('result-sub').textContent = timeUp
-    ? `Your ${quiz.durationMinutes}-minute quiz time has ended.`
-    : (outOfHearts
-    ? 'You ran out of hearts. Give it another shot.'
-    : (passed ? `You cleared Level ${quiz.level} · ${levelMeta(quiz.level).diff}` : 'You need at least 50% correct to unlock the next level.'));
-  document.getElementById('result-stars').textContent = passed ? '⭐'.repeat(stars) + '☆'.repeat(3-stars) : '☆☆☆';
+    ? `Your ${quiz.durationMinutes}-minute quiz time has ended. You earned ${stars} star${stars===1?'':'s'}.`
+    : `Level ${quiz.level} · ${quiz.correct}/${total} correct · ${stars} star${stars===1?'':'s'} obtained`;
+  document.getElementById('result-stars').textContent = '⭐'.repeat(stars) + '☆'.repeat(Math.max(0,3-stars));
   document.getElementById('result-correct').textContent = `${quiz.correct}/${total}`;
   document.getElementById('result-xp').textContent = `+${xpGained}`;
-  document.getElementById('result-btn').textContent = passed && result.progress.unlocked_level>quiz.level ? 'Next level →' : 'Back to map';
   document.getElementById('result-overlay').classList.add('active');
 }
+
 function closeResult(){
-  const chapterQuiz = !!(STATE.quiz && STATE.quiz.chapter);
   document.getElementById('result-overlay').classList.remove('active');
-  if(STATE.quiz && (STATE.quiz.chapter || STATE.quiz.chapters?.length)){
-    openTableOfContent('cbse', STATE.user.grade, 'mathematics');
+  goto('screen-home');
+}
+
+function openResultProgress(){
+  document.getElementById('result-overlay').classList.remove('active');
+  openPerformance();
+}
+
+function retestFinishedLevel(){
+  const quiz = STATE.quiz;
+  document.getElementById('result-overlay').classList.remove('active');
+  if(!quiz || !quiz.level){ goto('screen-home'); return; }
+  const chapters = quiz.chapters?.length ? quiz.chapters : (quiz.chapter ? [quiz.chapter] : []);
+  if(chapters.length){
+    startConfiguredQuiz(chapters, quiz.level);
     return;
   }
-  renderPath(STATE.currentSubject);
-  const p = STATE.progress[STATE.currentSubject];
-  document.getElementById('map-xp').textContent = p.xp;
-  document.getElementById('map-sub').textContent = `${subjMeta(STATE.currentSubject).icon} ${p.max_level} levels · Level ${p.unlocked_level} unlocked`;
-  if(chapterQuiz){
-    openTableOfContent('cbse', STATE.user.grade, 'mathematics');
+  toast('This level is ready to retest from the Question Bank.');
+  openTableOfContent('cbse', STATE.user?.grade || 11, quiz.subject || STATE.currentSubject || 'mathematics');
+}
+
+function exploreOtherLevels(){
+  const quiz = STATE.quiz;
+  document.getElementById('result-overlay').classList.remove('active');
+  if(quiz?.subject){
+    openTableOfContent('cbse', STATE.user?.grade || 11, quiz.subject);
   }else{
-    goto('screen-map');
+    goto('screen-home');
   }
+}
+
+function backHomeFromResult(){
+  document.getElementById('result-overlay').classList.remove('active');
+  goto('screen-home');
 }
 
 /* =========================================================
