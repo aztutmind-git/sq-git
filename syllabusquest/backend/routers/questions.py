@@ -79,7 +79,8 @@ def get_questions_for_quiz(
         schemas.QuestionForQuiz(
             id=q.id, subject=q.subject, level=q.level, board=q.board, question=q.question,
             options=[q.option_a, q.option_b, q.option_c, q.option_d],
-            explanation=q.explanation, correct=q.correct, hint=q.hint, time_limit=q.time_limit,
+            explanation=q.explanation, correct=q.correct, hint=q.hint, time_limit=q.time_limit,world=q.world,chapter=q.chapter,
+            topic=q.topic,stage=q.stage,cognitive_skill=q.cognitive_skill,
         )
         for q in rows
     ]
