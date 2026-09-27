@@ -1613,20 +1613,21 @@ async function loadMyProgress(){
   rows.forEach(r => map[r.subject] = {unlocked_level:r.unlocked_level, max_level:r.max_level, demo_level_cap:r.demo_level_cap, xp:r.xp, stars:r.stars || {}, enrolled:r.enrolled});
   STATE.progress = map;
 
-  // Full grade-appropriate subject list (name/icon), so newly admin-created
-  // subjects (e.g. "Science" for grade 8) render correctly even though
-  // they're not in the hardcoded SUBJECTS array. Falls back to every subject
-  // if the account has no grade set.
-  try{
-    const gradeParam = STATE.user.grade ? `?grade=${encodeURIComponent(STATE.user.grade)}` : '';
-    const allSubjects = await api(`/api/subjects${gradeParam}`, {auth:false});
-    STATE.subjectMeta = {};
-    STATE.allGradeSubjectKeys = allSubjects.map(s => s.key);
-    allSubjects.forEach(s => { STATE.subjectMeta[s.key] = {name:s.name, icon:s.icon}; });
-  }catch(err){
-    STATE.subjectMeta = {};
-    STATE.allGradeSubjectKeys = [];
-  }
+  // Do not make the student home screen depend on /api/subjects.
+  // The student progress endpoint is already authenticated and is the
+  // source of truth for the subjects available to this account. The
+  // previous extra /api/subjects request could fail when that route was not
+  // mounted, which caused a misleading "failed to fetch subjects" message.
+  STATE.allGradeSubjectKeys = Object.keys(map);
+  STATE.subjectMeta = STATE.subjectMeta || {};
+  rows.forEach(r => {
+    if(!STATE.subjectMeta[r.subject]){
+      STATE.subjectMeta[r.subject] = {
+        name: String(r.subject || '').replace(/[_-]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+        icon: '📘'
+      };
+    }
+  });
 
   // Needed so renderPath() knows the current theme's icon_count before the
   // student ever opens the theme picker (e.g. resuming a session that
