@@ -1,0 +1,2573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>SyllabusQuest — Grade 11 & 12 Exam Trainer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --ink:#171335;
+  --ink-2:#241f52;
+  --paper:#FBF7EC;
+  --paper-line:#E7DFC9;
+  --gold:#F0B429;
+  --gold-dark:#C98A0A;
+  --white:#ffffff;
+  --muted:#8b86ad;
+  --danger:#E15554;
+  --success:#2FAE6A;
+
+  --c-chemistry:#8B5CF6;
+  --c-chemistry-d:#6D3FD6;
+  --c-physics:#2FA8E0;
+  --c-physics-d:#1C86BB;
+  --c-botany:#3FAE5C;
+  --c-botany-d:#2C8A44;
+  --c-zoology:#E08A3C;
+  --c-zoology-d:#BE6B22;
+  --c-commerce:#E0507A;
+  --c-commerce-d:#BC335C;
+  --c-accounts:#C9A227;
+  --c-accounts-d:#A5820F;
+  --c-mathematics:#5B6EE1;
+  --c-mathematics-d:#3E4FC0;
+  --c-nutrition:#F2735E;
+  --c-nutrition-d:#D0523E;
+  --c-generic:#5B8DEF;
+  --c-generic-d:#3A66C4;
+
+  /* theme defaults (Classic) — overridden per theme-* class on <body> below */
+  --theme-outer-bg: var(--ink);
+  --theme-home-bg: var(--paper);
+  --theme-accent: var(--gold);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:'Inter',system-ui,sans-serif;
+  background:var(--theme-outer-bg);
+  color:var(--ink);
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+  overscroll-behavior:none;
+}
+h1,h2,h3,.display{font-family:'Fredoka',sans-serif;}
+.mono{font-family:'Space Mono',monospace;}
+button{font-family:inherit;cursor:pointer;border:none;}
+input,select{font-family:inherit;}
+::-webkit-scrollbar{width:0;height:0;}
+
+/* ---------- THEMES ----------
+   Each theme swaps a few CSS variables. Applied via a class on <body>
+   (theme-garden / theme-racetrack / theme-space / theme-ocean). Classic
+   (no class) uses the :root defaults above untouched. */
+body.theme-garden{
+  --theme-outer-bg: radial-gradient(circle at 15% 10%, #eafbe7 0%, transparent 45%), radial-gradient(circle at 85% 20%, #fde8f3 0%, transparent 45%), radial-gradient(circle at 40% 90%, #e3f6e0 0%, transparent 50%), #dff2da;
+  --theme-home-bg: radial-gradient(circle at 10% 0%, #eafbe7 0%, transparent 40%), radial-gradient(circle at 90% 100%, #fdeef8 0%, transparent 45%), var(--paper);
+  --theme-accent: #4CAF6D;
+}
+body.theme-racetrack{
+  --theme-outer-bg: repeating-linear-gradient(135deg, #1c1c22 0 26px, #232328 26px 52px), linear-gradient(#141416,#141416);
+  --theme-home-bg: linear-gradient(180deg, #fff6d8 0%, var(--paper) 55%), repeating-linear-gradient(90deg, transparent 0 38px, rgba(0,0,0,0.035) 38px 40px);
+  --theme-accent: #E23D3D;
+}
+body.theme-space{
+  --theme-outer-bg: radial-gradient(1.5px 1.5px at 20% 20%, #ffffff88 50%, transparent), radial-gradient(1.5px 1.5px at 70% 60%, #ffffff66 50%, transparent), radial-gradient(2px 2px at 40% 85%, #ffffff77 50%, transparent), radial-gradient(2px 2px at 90% 30%, #ffffff55 50%, transparent), radial-gradient(circle at 30% 20%, #2b1f66, transparent 55%), #0b0824;
+  --theme-home-bg: radial-gradient(circle at 85% 0%, #ece4ff 0%, transparent 45%), radial-gradient(circle at 10% 100%, #e3ecff 0%, transparent 45%), var(--paper);
+  --theme-accent: #8B7CF6;
+}
+body.theme-ocean{
+  --theme-outer-bg: radial-gradient(circle at 20% 15%, #d6f3ff33 0%, transparent 45%), radial-gradient(circle at 80% 80%, #a0e8ff22 0%, transparent 50%), linear-gradient(180deg,#0b3f5c,#082c42);
+  --theme-home-bg: radial-gradient(circle at 90% 0%, #e0f7fb 0%, transparent 45%), radial-gradient(circle at 5% 100%, #e5f6ff 0%, transparent 45%), var(--paper);
+  --theme-accent: #2AA6C9;
+}
+
+.app{
+  max-width:480px;
+  margin:0 auto;
+  min-height:100vh;
+  background:var(--ink);
+  position:relative;
+  overflow-x:hidden;
+}
+/* On tablet/desktop widths, the app becomes a centered "phone shell" — give
+   it a shadow and let the themed outer background show around it, instead
+   of stranding a full-bleed mobile layout in the middle of a wide viewport. */
+@media (min-width:600px){
+  body{display:flex;justify-content:center;padding:24px 0;}
+  .app{
+    min-height:calc(100vh - 48px);
+    border-radius:28px;
+    box-shadow:0 30px 70px rgba(0,0,0,0.45);
+  }
+}
+/* The admin console is dense dashboard content (student list, Excel upload,
+   full question bank) — cramming it into the same 480px phone shell as the
+   student-facing screens makes it painful to use on a laptop. Widen just
+   this screen into a two-column layout once there's room for it. The
+   student-facing gamified screens intentionally stay phone-shell width at
+   any viewport size — that's a deliberate design choice, not a gap. */
+@media (min-width:900px){
+  body.admin-active .app{max-width:1400px;}
+  body.admin-active #screen-admin{
+    padding:0 28px 100px;
+  }
+  body.admin-active #screen-admin .admin-top{
+    margin:0 -28px;
+    border-radius:0 0 20px 20px;
+  }
+}
+.admin-tabs{
+  display:flex;gap:6px;overflow-x:auto;padding:14px 16px 0;-webkit-overflow-scrolling:touch;
+}
+.admin-tab-btn{
+  flex-shrink:0;padding:10px 16px;border-radius:12px 12px 0 0;border:none;background:var(--paper-line);
+  color:var(--ink);font-weight:700;font-size:13.5px;cursor:pointer;white-space:nowrap;
+}
+.admin-tab-btn.active{background:var(--paper);box-shadow:0 -2px 0 var(--gold) inset;}
+.admin-tab-content{display:none;padding:16px;}
+.admin-tab-content.active{display:block;}
+/* The level map is the one other screen (besides admin) that benefits from
+   real width on larger viewports — the whole point of a themed background
+   is to feel like an immersive scene, not a strip peeking around a narrow
+   phone-shell column. Home/quiz/login stay phone-shell width on purpose;
+   that's the right size for focused reading and answering questions. */
+@media (min-width:700px){
+  body.map-active .app{max-width:1000px;}
+  body.map-active .path-wrap::before{left:50%;}
+  body.map-active .level-node-wrap:nth-child(4n+1){padding-left:22%;}
+  body.map-active .level-node-wrap:nth-child(4n+3){padding-right:22%;}
+}
+@media (min-width:900px){
+  body.map-active .level-node-wrap:nth-child(4n+1){padding-left:28%;}
+  body.map-active .level-node-wrap:nth-child(4n+3){padding-right:28%;}
+}
+@media (max-width:359px){
+  /* smallest phones — tighten a couple of spots that get cramped */
+  .two-col{flex-direction:column;}
+  .hero-line h1{font-size:26px;}
+}
+.screen{display:none;min-height:100vh;flex-direction:column;}
+.screen.active{display:flex;}
+
+/* ---------- AUTH SCREEN ---------- */
+#screen-auth{
+  background:
+    radial-gradient(circle at 18% 8%, rgba(240,180,41,0.16), transparent 40%),
+    radial-gradient(circle at 85% 15%, rgba(139,92,246,0.20), transparent 45%),
+    radial-gradient(circle at 30% 90%, rgba(47,168,224,0.16), transparent 45%),
+    var(--ink);
+  padding:40px 26px 30px;
+  color:var(--white);
+}
+.brand{display:flex;align-items:center;gap:12px;margin-bottom:6px;}
+.brand-mark{
+  width:46px;height:46px;border-radius:14px;
+  background:linear-gradient(145deg,var(--gold),var(--gold-dark));
+  display:flex;align-items:center;justify-content:center;
+  font-size:24px;transform:rotate(-6deg);
+  box-shadow:0 6px 14px rgba(240,180,41,0.35);
+}
+.brand-name{font-family:'Fredoka';font-weight:700;font-size:22px;letter-spacing:0.2px;}
+.brand-tag{font-size:12.5px;color:#b6b1e0;margin-top:1px;}
+
+.hero-line{margin-top:26px;}
+.hero-line h1{font-size:30px;line-height:1.18;margin:0 0 8px;font-weight:600;}
+.hero-line h1 em{font-style:normal;color:var(--gold);}
+.hero-line p{color:#c4c0e8;font-size:14.5px;line-height:1.5;margin:0;}
+
+.subject-strip{display:flex;gap:8px;margin:22px 0 6px;overflow-x:auto;padding-bottom:4px;}
+.chip{
+  flex:0 0 auto;padding:7px 12px;border-radius:999px;font-size:12.5px;font-weight:600;
+  background:rgba(255,255,255,0.08);color:#e9e7fb;white-space:nowrap;border:1px solid rgba(255,255,255,0.09);
+}
+
+.auth-card{
+  margin-top:24px;background:var(--paper);border-radius:22px;padding:22px 20px 24px;
+  box-shadow:0 20px 45px rgba(0,0,0,0.35);
+}
+.field{margin-bottom:13px;}
+.field label{display:block;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#948c68;margin-bottom:6px;}
+.field input, .field select{
+  width:100%;padding:12px 13px;border-radius:11px;border:1.5px solid var(--paper-line);
+  background:var(--white);font-size:14.5px;color:var(--ink);outline:none;
+}
+.field input:focus, .field select:focus{border-color:var(--gold);}
+.two-col{display:flex;gap:10px;}
+.two-col .field{flex:1;}
+
+.avatar-row{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+.avatar-opt{
+  width:44px;height:44px;border-radius:12px;font-size:20px;display:flex;align-items:center;justify-content:center;
+  background:var(--white);border:2px solid var(--paper-line);
+}
+.avatar-opt.sel{border-color:var(--gold-dark);background:#fff6e0;}
+
+.btn-primary{
+  width:100%;padding:14px;border-radius:13px;background:linear-gradient(180deg,#2a2260,var(--ink));
+  color:var(--white);font-weight:700;font-size:15px;letter-spacing:0.2px;
+  box-shadow:0 8px 0 #0d0a26, 0 12px 20px rgba(0,0,0,0.25);
+}
+.btn-primary:active{transform:translateY(3px);box-shadow:0 5px 0 #0d0a26;}
+.btn-gold{background:linear-gradient(180deg,#ffd166,var(--gold-dark));box-shadow:0 8px 0 #8a5e08,0 12px 20px rgba(0,0,0,0.25);color:#3a2600;}
+.btn-gold:active{box-shadow:0 5px 0 #8a5e08;}
+
+.existing-users{margin-top:2px;}
+.user-row{
+  display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:12px;background:var(--white);
+  border:1.5px solid var(--paper-line);margin-bottom:8px;
+}
+.user-row .av{width:38px;height:38px;border-radius:10px;background:#f3ecd8;display:flex;align-items:center;justify-content:center;font-size:19px;}
+.user-row .meta b{display:block;font-size:14px;}
+.user-row .meta span{font-size:11.5px;color:var(--muted);}
+.user-row button{margin-left:auto;background:var(--ink);color:#fff;font-size:12px;font-weight:700;padding:8px 12px;border-radius:9px;}
+.empty-note{font-size:12.5px;color:var(--muted);text-align:center;padding:14px 6px;}
+
+.admin-link{margin-top:18px;text-align:center;font-size:12px;color:#8b86c4;text-decoration:underline;background:none;}
+
+/* ---------- HOME ---------- */
+#screen-home{background:var(--theme-home-bg);}
+.topbar{
+  background:var(--ink);color:#fff;padding:18px 20px 24px;border-radius:0 0 26px 26px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.topbar .who{display:flex;align-items:center;gap:10px;}
+.topbar .av{width:42px;height:42px;border-radius:12px;background:linear-gradient(145deg,var(--gold),var(--gold-dark));display:flex;align-items:center;justify-content:center;font-size:20px;}
+.topbar .who b{display:block;font-size:15px;}
+.topbar .who span{font-size:11.5px;color:#b6b1e0;}
+.topbar .stat{display:flex;align-items:center;gap:5px;background:rgba(255,255,255,0.09);padding:7px 11px;border-radius:999px;font-size:13px;font-weight:700;}
+.topbar-btn{background:rgba(255,255,255,0.09);color:#fff;border-radius:10px;padding:8px 10px;font-size:11.5px;font-weight:700;}
+
+.section-title{padding:20px 20px 8px;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#9a916a;}
+.subject-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:6px 20px 26px;}
+.subj-card{
+  border-radius:18px;padding:16px 14px;position:relative;overflow:hidden;min-height:118px;
+  display:flex;flex-direction:column;justify-content:space-between;color:#fff;
+  box-shadow:0 10px 18px rgba(0,0,0,0.10);
+}
+.subj-card .icon{font-size:26px;}
+.subj-card .name{font-family:'Fredoka';font-weight:600;font-size:15.5px;margin-top:6px;}
+.subj-card .prog{font-size:11px;opacity:0.9;margin-top:2px;font-weight:600;}
+.subj-card .bar{height:5px;border-radius:4px;background:rgba(255,255,255,0.28);margin-top:8px;overflow:hidden;}
+.subj-card .bar i{display:block;height:100%;background:#fff;border-radius:4px;}
+
+
+
+/* ---------- TABLE OF CONTENT ---------- */
+#screen-toc{background:var(--paper);color:var(--ink);min-height:100vh;}
+.toc-top{
+  background:var(--ink);color:#fff;padding:16px 18px 18px;
+  display:flex;align-items:center;gap:12px;border-radius:0 0 22px 22px;
+}
+.toc-top .titles{flex:1;}
+.toc-top .titles b{font-family:'Fredoka';font-size:19px;display:block;}
+.toc-top .titles span{font-size:11.5px;color:#b6b1e0;}
+.toc-wrap{padding:16px 16px 42px;max-width:980px;margin:0 auto;}
+.toc-hero{
+  background:linear-gradient(135deg,#fffdf6 0%,#f7f0df 100%);
+  border:1px solid var(--paper-line);border-radius:20px;padding:16px;
+  margin-bottom:14px;box-shadow:0 8px 18px rgba(23,19,53,.06);
+}
+.toc-hero .eyebrow{
+  color:var(--gold-dark);font-size:10.5px;font-weight:800;
+  text-transform:uppercase;letter-spacing:.08em;
+}
+.toc-hero h2{margin:4px 0 3px;font-size:22px;color:var(--ink);}
+.toc-hero p{margin:0;color:#6f684f;font-size:12px;line-height:1.5;}
+.toc-unit{
+  background:#fff;border:1px solid var(--paper-line);border-radius:18px;
+  margin-bottom:12px;overflow:hidden;box-shadow:0 6px 14px rgba(23,19,53,.045);
+}
+.toc-unit-head{
+  display:flex;align-items:center;gap:11px;padding:13px 14px;
+  background:#faf7ed;border-bottom:1px solid var(--paper-line);
+}
+.toc-unit-num{
+  width:34px;height:34px;border-radius:10px;background:var(--gold);
+  color:#3a2600;display:flex;align-items:center;justify-content:center;
+  font-family:'Fredoka';font-weight:700;font-size:14px;flex:0 0 auto;
+}
+.toc-unit-main{flex:1;}
+.toc-unit-main b{display:block;font-family:'Fredoka';font-size:16px;color:var(--ink);}
+.toc-unit-main span{font-size:10.5px;color:#8b8264;}
+.toc-chapter{padding:13px 14px;border-bottom:1px solid #eee8d9;}
+.toc-chapter:last-child{border-bottom:0;}
+.toc-chapter-title{display:flex;align-items:center;gap:8px;margin-bottom:9px;}
+.toc-chapter-title b{font-size:14px;flex:1;}
+.toc-chapter-title span{font-size:10px;color:#9a916a;font-weight:700;}
+.toc-topic-list{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:11px;}
+.toc-topic{
+  padding:5px 8px;border-radius:999px;background:#f6f1e4;
+  color:#756d56;font-size:10.5px;border:1px solid #ece3ce;
+}
+.toc-level-title{
+  font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;
+  color:#9a916a;margin-bottom:7px;
+}
+.toc-levels{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;}
+.toc-level-btn{
+  min-height:62px;border-radius:13px;color:#fff;
+  background:linear-gradient(155deg,var(--ink),var(--ink-2));
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:2px;box-shadow:0 4px 0 rgba(23,19,53,.18);
+  transition:transform .12s ease,filter .12s ease;
+}
+.toc-level-btn:hover{filter:brightness(1.06);transform:translateY(-1px);}
+.toc-level-btn:active{transform:translateY(2px);box-shadow:0 2px 0 rgba(23,19,53,.18);}
+.toc-level-btn .ico{font-size:19px;line-height:1;}
+.toc-level-btn .lv{font-family:'Fredoka';font-size:11px;}
+.toc-level-btn .nm{font-size:8.5px;font-weight:700;opacity:.9;text-align:center;line-height:1.1;}
+.toc-map-btn{
+  width:100%;margin-top:2px;padding:12px;border-radius:12px;
+  background:#efe8d4;color:#6d6349;font-weight:700;font-size:12px;
+}
+.toc-empty{padding:18px;background:#fff;border:1px solid var(--paper-line);border-radius:16px;color:var(--muted);font-size:12px;}
+@media(max-width:420px){
+  .toc-levels{gap:5px;}
+  .toc-level-btn{min-height:58px;padding:3px 2px;}
+  .toc-level-btn .ico{font-size:17px;}
+  .toc-level-btn .nm{font-size:7.5px;}
+}
+
+/* ---------- PERFORMANCE DASHBOARD ---------- */
+#screen-performance{background:var(--paper);color:var(--ink);min-height:100vh;}
+.perf-top{background:var(--ink);color:#fff;padding:16px 20px 20px;display:flex;align-items:center;gap:12px;}
+.perf-top .titles{flex:1;}
+.perf-top b{font-family:'Fredoka';font-size:19px;display:block;}
+.perf-top span{font-size:11.5px;color:#b6b1e0;}
+.perf-wrap{padding:18px 20px 40px;max-width:1100px;margin:0 auto;}
+.perf-hero{display:grid;grid-template-columns:1.2fr .8fr;gap:14px;margin-bottom:16px;}
+.perf-card{background:var(--white);border:1px solid var(--paper-line);border-radius:18px;padding:16px;box-shadow:0 8px 18px rgba(23,19,53,.06);}
+.perf-score{display:flex;align-items:center;gap:18px;}
+.score-ring{width:92px;height:92px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:conic-gradient(var(--gold) var(--score,0%),#eee7d6 0);position:relative;flex:0 0 auto;}
+.score-ring::after{content:"";position:absolute;inset:8px;border-radius:50%;background:var(--white);}
+.score-ring b{position:relative;z-index:1;font-family:'Fredoka';font-size:24px;}
+.perf-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
+.perf-kpi{background:var(--white);border:1px solid var(--paper-line);border-radius:15px;padding:13px;}
+.perf-kpi b{display:block;font-family:'Fredoka';font-size:22px;}
+.perf-kpi span{font-size:11px;color:var(--muted);}
+.perf-section-title{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#9a916a;margin:18px 0 9px;}
+.perf-subject{border:1px solid var(--paper-line);border-radius:17px;background:var(--white);margin-bottom:12px;overflow:hidden;}
+.perf-subj-head{display:flex;align-items:center;gap:12px;padding:14px 15px;cursor:pointer;}
+.perf-subj-icon{font-size:25px;width:38px;text-align:center;}
+.perf-subj-main{flex:1;}
+.perf-subj-main b{display:block;font-size:15px;}
+.perf-subj-main span{font-size:11px;color:var(--muted);}
+.perf-bar{height:8px;background:#eee7d6;border-radius:99px;overflow:hidden;margin-top:7px;}
+.perf-bar i{display:block;height:100%;border-radius:99px;background:var(--gold-dark);}
+.perf-score-text{font-family:'Fredoka';font-size:19px;min-width:48px;text-align:right;}
+.perf-subj-body{display:none;padding:0 15px 15px;border-top:1px solid var(--paper-line);}
+.perf-subj.open .perf-subj-body{display:block;}
+.perf-chapter{border-bottom:1px solid #eee8d9;padding:11px 0;}
+.perf-chapter:last-child{border-bottom:0;}
+.perf-chapter-head{display:flex;align-items:center;gap:8px;}
+.perf-chapter-head b{flex:1;font-size:13px;}
+.perf-chapter-head span{font-size:12px;font-weight:800;}
+.perf-mini-bar{height:5px;background:#eee7d6;border-radius:99px;margin:7px 0;}
+.perf-mini-bar i{display:block;height:100%;border-radius:99px;background:#8bbf8a;}
+.perf-topic{margin:7px 0 0 12px;padding:7px 9px;border-left:3px solid var(--paper-line);font-size:11.5px;}
+.perf-topic-row{display:flex;justify-content:space-between;gap:10px;}
+.perf-insights{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+.perf-insight{border-radius:15px;padding:13px;background:#faf7ed;border:1px solid var(--paper-line);}
+.perf-insight b{display:block;font-size:12px;margin-bottom:7px;}
+.perf-insight p{font-size:11.5px;line-height:1.45;margin:0;color:#625b49;}
+.perf-legend{font-size:10.5px;color:var(--muted);margin:5px 0 14px;}
+.perf-unenrolled{opacity:.58;background:#f3f1eb;}
+.perf-table-wrap{overflow-x:auto;background:var(--white);border:1px solid var(--paper-line);border-radius:17px;}
+.perf-table{width:100%;border-collapse:collapse;font-size:11.5px;min-width:620px;}
+.perf-table th{padding:10px 11px;text-align:left;background:#faf7ed;color:#817963;font-size:10px;text-transform:uppercase;letter-spacing:.05em;}
+.perf-table td{padding:10px 11px;border-top:1px solid #eee8d9;}
+.perf-table .score{font-family:'Fredoka';font-size:15px;}
+.perf-stars{letter-spacing:1px;white-space:nowrap;}
+.perf-status{font-size:10px;font-weight:800;border-radius:999px;padding:4px 7px;background:#eee7d6;}
+@media(max-width:700px){
+  .perf-hero,.perf-insights{grid-template-columns:1fr;}
+  .perf-kpis{grid-template-columns:repeat(3,1fr);}
+  .perf-wrap{padding:15px 14px 30px;}
+}
+@media(min-width:900px){
+  body.performance-active .app{max-width:1100px;}
+}
+
+/* ---------- MAP ---------- */
+#screen-map{color:#fff;min-height:100vh;background:var(--theme-outer-bg);position:relative;}
+#screen-map::before{
+  /* Keeps the top bar / path readable over busy uploaded artwork without
+     hiding the art itself — a soft top-to-bottom scrim, not a flat overlay. */
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:0;
+  background:linear-gradient(180deg, rgba(10,8,30,0.55) 0%, rgba(10,8,30,0.25) 18%, rgba(10,8,30,0.15) 45%, rgba(10,8,30,0.45) 100%);
+}
+#screen-map > *{position:relative;z-index:1;}
+.map-top{padding:16px 16px 14px;display:flex;align-items:center;gap:12px;}
+.icon-btn{width:38px;height:38px;border-radius:11px;background:rgba(255,255,255,0.12);color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;}
+.map-top .titles{flex:1;}
+.map-top .titles b{font-family:'Fredoka';font-size:17px;display:block;}
+.map-top .titles span{font-size:11.5px;color:rgba(255,255,255,0.7);}
+.map-top .xp-pill{background:rgba(255,255,255,0.12);padding:7px 12px;border-radius:999px;font-size:12.5px;font-weight:700;}
+
+.path-wrap{flex:1;padding:14px 0 40px;position:relative;}
+.path-wrap::before{
+  content:"";position:absolute;left:50%;top:10px;bottom:10px;width:3px;
+  background:repeating-linear-gradient(180deg, rgba(255,255,255,0.28) 0 10px, transparent 10px 20px);
+  transform:translateX(-50%);
+}
+.level-node-wrap{display:flex;justify-content:center;padding:16px 0;position:relative;}
+.level-node-wrap:nth-child(4n+1){justify-content:flex-start;padding-left:16%;}
+.level-node-wrap:nth-child(4n+2){justify-content:center;}
+.level-node-wrap:nth-child(4n+3){justify-content:flex-end;padding-right:16%;}
+.level-node-wrap:nth-child(4n){justify-content:center;}
+
+.level-node{
+  width:78px;height:78px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  position:relative;z-index:2;border:none;
+}
+.level-node.has-icon{
+  width:84px;height:84px;box-shadow:0 8px 0 rgba(0,0,0,0.28), 0 0 0 4px rgba(255,255,255,0.85);
+}
+.level-node.has-icon.unlocked.pulse{box-shadow:0 8px 0 rgba(0,0,0,0.28), 0 0 0 4px rgba(255,255,255,0.85), 0 0 0 8px rgba(255,255,255,0.25);}
+.node-badge{
+  position:absolute;bottom:-6px;right:-6px;background:var(--ink);color:#fff;
+  font-family:'Fredoka';font-weight:700;font-size:13px;width:24px;height:24px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;box-shadow:0 2px 0 rgba(0,0,0,0.3);z-index:3;
+}
+.level-node .num{font-family:'Fredoka';font-weight:700;font-size:22px;}
+.level-node .tag{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;margin-top:1px;}
+.level-node.locked{background:#2c2760;color:rgba(255,255,255,0.4);box-shadow:inset 0 0 0 2px rgba(255,255,255,0.06);}
+.level-node.locked .lock{font-size:18px;}
+.level-node.unlocked{color:#fff;box-shadow:0 8px 0 rgba(0,0,0,0.28), 0 0 0 5px rgba(255,255,255,0.10);}
+.level-node.unlocked.pulse{animation:pulse 1.8s ease-in-out infinite;}
+@keyframes pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.06);}}
+.level-node.done{color:#fff;box-shadow:0 8px 0 rgba(0,0,0,0.28);}
+.stars-row{position:absolute;bottom:-10px;display:flex;gap:2px;background:var(--ink-2);padding:2px 6px;border-radius:8px;z-index:3;}
+.stars-row span{font-size:10px;}
+.level-label{position:absolute;top:-2px;font-size:10.5px;font-weight:700;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap;}
+
+/* ---------- QUIZ ---------- */
+#screen-quiz{background:var(--paper);min-height:100vh;}
+.quiz-top{padding:16px 18px 10px;display:flex;align-items:center;gap:12px;}
+.progress-track{flex:1;height:11px;background:#e9e1c8;border-radius:999px;overflow:hidden;}
+.progress-track i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--gold),var(--gold-dark));transition:width .25s ease;}
+.hearts{display:flex;gap:3px;font-size:15px;}
+.quiz-body{flex:1;padding:14px 20px 10px;display:flex;flex-direction:column;}
+.q-meta{display:flex;gap:8px;margin-bottom:14px;}
+.tagpill{font-size:10.5px;font-weight:700;padding:4px 10px;border-radius:999px;text-transform:uppercase;letter-spacing:0.03em;}
+.q-card{
+  background:var(--white);border-radius:20px;padding:22px 18px;box-shadow:0 8px 0 var(--paper-line),0 10px 20px rgba(23,19,53,0.06);
+  margin-bottom:20px;
+}
+.q-card p{font-size:17px;line-height:1.5;font-weight:600;margin:0;color:var(--ink);}
+.options{display:flex;flex-direction:column;gap:10px;}
+.opt{
+  text-align:left;padding:14px 16px;border-radius:14px;background:var(--white);border:2px solid var(--paper-line);
+  font-size:14.5px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:10px;
+}
+.opt .letter{width:24px;height:24px;border-radius:50%;background:#efe8d4;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex:0 0 auto;}
+.opt.correct{border-color:var(--success);background:#eafaf1;}
+.opt.correct .letter{background:var(--success);color:#fff;}
+.opt.wrong{border-color:var(--danger);background:#fdecec;}
+.opt.wrong .letter{background:var(--danger);color:#fff;}
+.opt.disabled{opacity:0.55;}
+.explain-card{
+  display:none;margin-top:14px;padding:14px 16px;border-radius:14px;
+  background:#fff6e0;border:1.5px solid #f0d78c;
+}
+.explain-card.show{display:flex;gap:10px;align-items:flex-start;animation:slideup .22s ease;}
+.explain-card .ico{font-size:18px;flex:0 0 auto;margin-top:1px;}
+.explain-card .txt b{display:block;font-size:11.5px;text-transform:uppercase;letter-spacing:0.04em;color:#a5820f;margin-bottom:3px;}
+.explain-card .txt p{margin:0;font-size:13.5px;line-height:1.5;color:#4a4326;}
+.quiz-footer{padding:14px 20px 26px;}
+#quiz-continue{display:none;}
+
+/* ---------- RESULT OVERLAY ---------- */
+.overlay{position:fixed;inset:0;background:rgba(10,8,30,0.72);display:none;align-items:flex-end;justify-content:center;z-index:50;}
+.overlay.active{display:flex;}
+.result-sheet{
+  width:100%;max-width:480px;background:var(--paper);border-radius:26px 26px 0 0;padding:30px 26px 32px;text-align:center;
+  animation:slideup .32s cubic-bezier(.2,.9,.3,1);
+}
+@keyframes slideup{from{transform:translateY(40px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+.result-emoji{font-size:56px;}
+.result-sheet h2{margin:6px 0 4px;font-size:24px;}
+.result-sheet p.sub{color:var(--muted);font-size:13.5px;margin:0 0 18px;}
+.stars-big{font-size:34px;letter-spacing:6px;margin-bottom:16px;}
+.result-stats{display:flex;gap:10px;margin-bottom:22px;}
+.result-stats .box{flex:1;background:var(--white);border-radius:14px;padding:12px 8px;border:1.5px solid var(--paper-line);}
+.result-stats .box b{display:block;font-size:18px;font-family:'Fredoka';}
+.result-stats .box span{font-size:10.5px;color:var(--muted);text-transform:uppercase;font-weight:700;letter-spacing:0.03em;}
+
+/* ---------- ADMIN ---------- */
+#screen-admin-login{background:var(--ink);color:#fff;align-items:center;justify-content:center;padding:26px;}
+#screen-force-reset{background:var(--ink);color:#fff;align-items:center;justify-content:center;padding:26px;}
+.admin-box{background:var(--paper);color:var(--ink);width:100%;max-width:340px;border-radius:20px;padding:26px 22px;}
+.admin-box h2{margin:0 0 4px;font-size:19px;}
+.admin-box p{font-size:12.5px;color:var(--muted);margin:0 0 18px;}
+#screen-admin{background:var(--paper);}
+.admin-top{background:var(--ink);color:#fff;padding:18px 20px;display:flex;align-items:center;justify-content:space-between;border-radius:0 0 20px 20px;}
+.admin-top b{font-family:'Fredoka';font-size:17px;}
+.admin-pay-settings{margin:14px 16px 4px;background:var(--white);border:1.5px solid var(--paper-line);border-radius:16px;padding:16px 16px 18px;}
+.admin-pay-settings h4{margin:0 0 12px;font-size:14px;font-family:'Fredoka';}
+.admin-pay-settings h4.sub-h4{margin-top:16px;font-size:12.5px;text-transform:uppercase;letter-spacing:0.04em;color:#9a916a;}
+.admin-pay-settings .pay-opt{cursor:pointer;}
+.admin-pay-settings .pay-opt:not(.sel){opacity:0.5;}
+.pay-opt-hint{font-size:10.5px;color:var(--muted);margin:-8px 0 14px;}
+.qr-upload-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:2px;}
+.qr-preview{width:56px;height:56px;object-fit:contain;border:1.5px solid var(--paper-line);border-radius:10px;padding:4px;background:#fff;}
+.link-btn{background:none;color:var(--danger);font-size:11.5px;font-weight:700;text-decoration:underline;padding:0;}
+.gpay-receive-info{margin:2px 0 6px;}
+.qr-scan-block{display:flex;flex-direction:column;align-items:center;padding:8px 0 10px;}
+.qr-scan-block img{width:150px;height:150px;object-fit:contain;border:1.5px solid #eee;border-radius:12px;padding:6px;background:#fff;}
+.qr-scan-block span{font-size:11px;color:#9aa0a6;margin-top:6px;}
+.admin-subjrow{display:flex;gap:8px;overflow-x:auto;padding:14px 16px 4px;}
+.admin-subjrow button{flex:0 0 auto;padding:8px 13px;border-radius:999px;font-size:12.5px;font-weight:700;background:#efe8d4;color:#8b8264;}
+.admin-subjrow button.active{background:var(--ink);color:#fff;}
+.admin-section{padding:6px 18px 100px;}
+.admin-level-block{margin-bottom:18px;}
+.admin-level-block h4{font-size:12.5px;text-transform:uppercase;letter-spacing:0.05em;color:#9a916a;margin:0 0 8px;display:flex;justify-content:space-between;}
+.q-row{background:var(--white);border:1.5px solid var(--paper-line);border-radius:13px;padding:12px 13px;margin-bottom:8px;}
+.q-row .qtxt{font-size:13.5px;font-weight:600;margin-bottom:6px;}
+.q-row .optlist{font-size:11.5px;color:var(--muted);line-height:1.6;}
+.q-row .optlist b{color:var(--success);}
+.q-row .qactions{display:flex;justify-content:flex-end;margin-top:8px;}
+.del-btn{background:#fdecec;color:var(--danger);font-size:11.5px;font-weight:700;padding:6px 12px;border-radius:8px;}
+.fab{
+  position:fixed;bottom:22px;left:50%;transform:translateX(-50%);max-width:428px;width:calc(100% - 40px);
+  background:var(--ink);color:#fff;padding:15px;border-radius:14px;font-weight:700;font-size:14px;
+  box-shadow:0 10px 24px rgba(0,0,0,0.35);z-index:20;
+}
+.modal{position:fixed;inset:0;background:rgba(10,8,30,0.72);display:none;align-items:center;justify-content:center;z-index:60;padding:20px;}
+.modal.active{display:flex;}
+.modal-card{background:var(--paper);border-radius:20px;padding:22px;width:100%;max-width:420px;max-height:85vh;overflow-y:auto;}
+.modal-card h3{margin:0 0 14px;font-size:17px;}
+.close-x{position:absolute;top:14px;right:14px;background:rgba(0,0,0,0.06);width:30px;height:30px;border-radius:50%;font-size:14px;}
+.radio-row{display:flex;gap:8px;}
+.radio-row label{flex:1;display:flex;align-items:center;gap:7px;background:#fff;border:1.5px solid var(--paper-line);border-radius:10px;padding:10px 10px;font-size:12.5px;font-weight:600;}
+.theme-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.theme-opt{
+  border-radius:16px;padding:16px 12px;text-align:left;position:relative;overflow:hidden;
+  min-height:88px;display:flex;flex-direction:column;justify-content:flex-end;
+  border:2.5px solid transparent;color:#fff;background:linear-gradient(155deg,var(--ink),var(--ink-2));
+}
+.theme-opt.selected{border-color:var(--gold);box-shadow:0 0 0 3px rgba(240,180,41,0.25);}
+.theme-opt .t-icon{font-size:22px;position:absolute;top:12px;left:12px;}
+.theme-opt .t-thumb{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;}
+.theme-opt .t-name{font-family:'Fredoka';font-weight:600;font-size:13.5px;position:relative;z-index:1;text-shadow:0 1px 6px rgba(0,0,0,0.65);}
+.theme-opt::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(0,0,0,0.55) 100%);z-index:0;pointer-events:none;}
+.msg-note{font-size:12px;color:var(--muted);text-align:center;margin-top:10px;}
+.toast{
+  position:fixed;top:16px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 18px;
+  border-radius:999px;font-size:13px;font-weight:600;z-index:80;box-shadow:0 8px 20px rgba(0,0,0,0.3);opacity:0;transition:opacity .25s ease, top .25s ease;pointer-events:none;
+}
+.toast.show{opacity:1;top:26px;}
+.hidden{display:none !important;}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ================= AUTH ================= -->
+  <div class="screen active" id="screen-auth">
+    <div class="brand">
+      <div class="brand-mark">🎓</div>
+      <div>
+        <div class="brand-name">SyllabusQuest</div>
+        <div class="brand-tag">Grade 11–12 · CBSE · IB · IGCSE</div>
+      </div>
+    </div>
+    <div class="hero-line">
+      <h1>Turn your <em>syllabus</em><br>into a game you<br>actually want to play.</h1>
+      <p>Climb the level map subject by subject — from foundation questions to genuinely tough, exam-tier ones.</p>
+    </div>
+    <div class="subject-strip">
+      <div class="chip">🧪 Chemistry</div>
+      <div class="chip">⚛️ Physics</div>
+      <div class="chip">🌿 Botany</div>
+      <div class="chip">🐾 Zoology</div>
+      <div class="chip">💼 Commerce</div>
+      <div class="chip">📒 Accounts</div>
+      <div class="chip">📐 Maths</div>
+      <div class="chip">🍎 Nutrition</div>
+    </div>
+
+    <div class="auth-card">
+      <div class="field"><label>User ID</label><input id="login-userid" placeholder="Your user ID" autocomplete="username"></div>
+      <div class="field"><label>Password</label><input id="login-password" type="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')loginUser()"></div>
+      <button class="btn-primary" onclick="loginUser()">Log in</button>
+      <p class="empty-note" id="no-users-note" style="display:none;">No accounts have been created yet. Ask your admin/teacher to set one up for you.</p>
+    </div>
+    <button class="admin-link" onclick="openGuestFormModal()">Try it free — no account needed →</button>
+    <button class="admin-link" onclick="openForgotModal()">Forgot password?</button>
+    <button class="admin-link" onclick="goto('screen-admin-login')">Admin / teacher login</button>
+  </div>
+
+  <!-- ================= HOME ================= -->
+  <div class="screen" id="screen-home">
+    <div class="topbar">
+      <div class="who">
+        <div class="av" id="home-avatar">🦊</div>
+        <div><b id="home-name">—</b><span id="home-sub">—</span></div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <div class="stat">⚡ <span id="home-xp">0</span></div>
+        <button class="topbar-btn" onclick="openPerformance()" aria-label="View performance">📊</button>
+        <button class="topbar-btn" onclick="openThemeModal()" aria-label="Change theme">🎨</button>
+        <button class="topbar-btn" onclick="logout()">Switch</button>
+      </div>
+    </div>
+    <div id="guest-banner" style="display:none;margin:0 20px 14px;padding:12px 14px;border-radius:14px;background:#fff6e0;border:1.5px solid #f0d78c;font-size:13px;color:#4a4326;">
+      <b>Free demo</b> — your guest ID is <b id="guest-banner-id"></b>.
+      <button class="admin-link" style="display:inline;padding:0;margin-left:4px;color:#a5820f;text-decoration:underline;" onclick="openRegistrationCta()">Register to unlock more →</button>
+    </div>
+    <div class="section-title">Choose a subject</div>
+    <div class="subject-grid" id="subject-grid"></div>
+  </div>
+
+
+  <!-- ================= TABLE OF CONTENT ================= -->
+  <div class="screen" id="screen-toc">
+    <div class="toc-top">
+      <button class="icon-btn" onclick="goto('screen-home')">←</button>
+      <div class="titles">
+        <b id="toc-title">Table of Content</b>
+        <span id="toc-subtitle">CBSE · Grade 11 · Mathematics</span>
+      </div>
+      <div class="xp-pill">⚡ <span id="toc-xp">0</span></div>
+    </div>
+    <div class="toc-wrap" id="toc-wrap"></div>
+  </div>
+
+  <!-- ================= PERFORMANCE DASHBOARD ================= -->
+  <div class="screen" id="screen-performance">
+    <div class="perf-top">
+      <button class="icon-btn" onclick="goto('screen-home')">←</button>
+      <div class="titles"><b>My Performance</b><span id="perf-subtitle">Learning overview</span></div>
+    </div>
+    <div class="perf-wrap">
+      <div class="perf-hero">
+        <div class="perf-card">
+          <div class="perf-score">
+            <div class="score-ring" id="perf-ring" style="--score:0%"><b id="perf-overall">0%</b></div>
+            <div>
+              <h2 style="margin:0 0 5px;font-family:'Fredoka';font-size:21px;">Your learning snapshot</h2>
+              <p id="perf-summary" style="margin:0;font-size:12px;line-height:1.45;color:var(--muted);">Loading your progress…</p>
+            </div>
+          </div>
+        </div>
+        <div class="perf-card">
+          <b style="font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:#9a916a;">How to read this</b>
+          <div class="perf-legend">90–100 Mastered · 80–89 Strong · 70–79 Growing · 50–69 Practice · 0–49 Needs more practice</div>
+          <div style="font-size:11.5px;line-height:1.5;color:#625b49;">Subject scores are derived from completed level stars. Chapter → topic → stage uses the question-bank metadata already attached to each question.</div>
+        </div>
+      </div>
+      <div class="perf-kpis">
+        <div class="perf-kpi"><b id="perf-subject-count">0</b><span>Enrolled subjects</span></div>
+        <div class="perf-kpi"><b id="perf-mastered">0</b><span>Mastered</span></div>
+        <div class="perf-kpi"><b id="perf-practice">0</b><span>Needs practice</span></div>
+      </div>
+      <div class="perf-section-title">Performance table</div>
+      <div class="perf-table-wrap"><table class="perf-table"><thead><tr><th>Subject</th><th>Level</th><th>Stars</th><th>Score</th><th>Status</th><th>XP</th></tr></thead><tbody id="perf-table-body"></tbody></table></div>
+      <div class="perf-section-title">Subject breakdown</div>
+      <div id="perf-subjects"></div>
+    </div>
+  </div>
+
+  <!-- ================= FORCED PASSWORD RESET (first login) ================= -->
+  <div class="screen" id="screen-force-reset">
+    <div class="admin-box">
+      <h2>Welcome! Set your password</h2>
+      <p>Your admin created this account with a temporary password. Choose a new password to continue.</p>
+      <div class="field"><label>New password</label><input id="force-reset-password" type="password" placeholder="At least 6 characters"></div>
+      <div class="field"><label>Confirm new password</label><input id="force-reset-password-confirm" type="password" placeholder="Re-enter password" onkeydown="if(event.key==='Enter')submitForceReset()"></div>
+      <button class="btn-primary" onclick="submitForceReset()">Set password & continue</button>
+    </div>
+  </div>
+
+  <!-- ================= MAP ================= -->
+  <div class="screen" id="screen-map">
+    <div class="map-top">
+      <button class="icon-btn" onclick="goto('screen-home')">←</button>
+      <div class="titles"><b id="map-title">Subject</b><span id="map-sub">5 levels</span></div>
+      <div class="xp-pill">⚡ <span id="map-xp">0</span> XP</div>
+    </div>
+    <div class="path-wrap" id="path-wrap"></div>
+  </div>
+
+  <!-- ================= QUIZ ================= -->
+  <div class="screen" id="screen-quiz">
+    <div class="quiz-top">
+      <button class="icon-btn" onclick="exitQuiz()">✕</button>
+      <div class="progress-track"><i id="quiz-progress" style="width:0%"></i></div>
+      <div class="hearts" id="quiz-hearts"></div>
+    </div>
+    <div class="quiz-body">
+      <div class="q-meta">
+        <div class="tagpill" id="q-difficulty" style="background:#efe8d4;color:#8b8264;">Easy</div>
+        <div class="tagpill" id="q-board" style="background:#efe8d4;color:#8b8264;">CBSE</div>
+      </div>
+      <div class="q-card"><p id="q-text">Question text</p></div>
+      <button class="admin-link" id="hint-toggle" style="display:none;margin:2px 0 10px;" onclick="toggleHint()">💡 Show a hint</button>
+      <p class="msg-note" id="hint-text" style="display:none;margin:-6px 0 10px;"></p>
+      <div class="options" id="q-options"></div>
+      <div class="explain-card" id="explain-card">
+        <div class="ico" id="explain-ico">💡</div>
+        <div class="txt"><b id="explain-label">Why</b><p id="explain-text"></p></div>
+      </div>
+    </div>
+    <div class="quiz-footer">
+      <button class="btn-primary btn-gold" id="quiz-continue" onclick="nextQuestion()">Continue</button>
+    </div>
+  </div>
+
+  <!-- ================= ADMIN LOGIN ================= -->
+  <div class="screen" id="screen-admin-login">
+    <div class="admin-box">
+      <h2>Admin console</h2>
+      <p>Manage the question bank — add or remove questions per subject and level.</p>
+      <div class="field"><label>Admin user ID</label><input id="admin-userid" placeholder="e.g. admin" onkeydown="if(event.key==='Enter')document.getElementById('admin-pw').focus()"></div>
+      <div class="field"><label>Admin password</label><input id="admin-pw" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')adminLogin()"></div>
+      <button class="btn-primary" onclick="adminLogin()">Enter console</button>
+      <button class="admin-link" style="margin-top:14px;" onclick="openForgotModal()">Forgot password?</button>
+      <button class="admin-link" onclick="goto('screen-auth')">← Back to student login</button>
+    </div>
+  </div>
+
+  <!-- ================= ADMIN ================= -->
+  <div class="screen" id="screen-admin">
+    <div class="admin-top">
+      <b>Admin console</b>
+      <button class="topbar-btn" onclick="adminLogout()">Log out</button>
+    </div>
+
+    <div class="admin-tabs" id="admin-tabs">
+      <button class="admin-tab-btn active" data-tab="tab-students" onclick="switchAdminTab('tab-students')">👤 Students</button>
+      <button class="admin-tab-btn" data-tab="tab-questions" onclick="switchAdminTab('tab-questions')">📚 Questions</button>
+      <button class="admin-tab-btn" data-tab="tab-subjects" onclick="switchAdminTab('tab-subjects')">🧭 Subjects &amp; Grades</button>
+      <button class="admin-tab-btn" data-tab="tab-themes" onclick="switchAdminTab('tab-themes')">🎨 Themes</button>
+    </div>
+
+    <div class="admin-tab-content active" id="tab-students">
+      <div class="admin-pay-settings" id="admin-students">
+        <h4>Student accounts</h4>
+        <div class="two-col">
+          <div class="field"><label>User ID</label><input id="new-stu-userid" placeholder="e.g. ananya11"></div>
+          <div class="field"><label>Password</label><input id="new-stu-password" placeholder="Set a password"></div>
+        </div>
+        <div class="field"><label>Full name</label><input id="new-stu-name" placeholder="e.g. Ananya Rao"></div>
+        <div class="field"><label>Email (for password reset)</label><input id="new-stu-email" type="email" placeholder="e.g. ananya@gmail.com"></div>
+        <div class="two-col">
+          <div class="field"><label>Grade</label>
+            <select id="new-stu-grade"><option value="6">Grade 6</option><option value="10">Grade 10</option><option value="11">Grade 11</option><option value="12">Grade 12</option></select>
+          </div>
+          <div class="field"><label>Board</label>
+            <select id="new-stu-board"><option>CBSE</option><option>IB</option><option>IGCSE</option></select>
+          </div>
+        </div>
+        <div class="field"><label>Avatar</label>
+          <div class="avatar-row" id="admin-avatar-row"></div>
+        </div>
+        <div class="field"><label>Account tier</label>
+          <select id="new-stu-tier"><option value="silver">Silver</option><option value="premium">Premium</option></select>
+        </div>
+        <div class="field" style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+          <input type="checkbox" id="new-stu-force-reset" checked style="width:auto;">
+          <label style="margin:0;text-transform:none;font-weight:600;font-size:12.5px;color:var(--ink);letter-spacing:normal;">Require password reset on first login</label>
+        </div>
+        <button class="btn-primary" onclick="addStudent()">Add student</button>
+        <div class="existing-users" id="admin-student-list" style="margin-top:14px;"></div>
+      </div>
+    </div>
+
+    <div class="admin-tab-content" id="tab-questions">
+      <div class="admin-pay-settings" id="admin-upload">
+        <h4>Upload questions from Excel</h4>
+        <p class="pay-opt-hint" style="margin:-2px 0 12px;">The Level column decides which level in the map a question appears in. See the downloaded template for every supported column.</p>
+        <div class="qr-upload-row">
+          <input type="file" id="admin-excel-file" accept=".xlsx,.xls,.csv" onchange="handleExcelUpload(event)">
+          <button type="button" class="link-btn" onclick="downloadExcelTemplate()">Download template</button>
+        </div>
+        <p class="msg-note" id="excel-upload-status"></p>
+      </div>
+
+      <div class="admin-pay-settings" id="admin-question-search">
+        <h4>Find questions</h4>
+        <p class="pay-opt-hint" style="margin:-2px 0 12px;">Search instead of browsing everything — pick at least one filter and hit Search.</p>
+        <div class="two-col">
+          <div class="field"><label>Subject</label>
+            <select id="qf-subject"><option value="">Any</option></select>
+          </div>
+          <div class="field"><label>Grade</label><input id="qf-grade" placeholder="e.g. 9"></div>
+        </div>
+        <div class="two-col">
+          <div class="field"><label>Level</label><input type="number" id="qf-level" min="1" placeholder="e.g. 6"></div>
+          <div class="field"><label>Question ID</label><input type="number" id="qf-id" placeholder="e.g. 42"></div>
+        </div>
+        <div class="two-col">
+          <div class="field"><label>Status</label>
+            <select id="qf-status"><option value="">Any</option><option value="published">Published</option><option value="draft">Draft</option></select>
+          </div>
+          <div class="field"><label>Topic contains</label><input id="qf-topic" placeholder="e.g. Newton"></div>
+        </div>
+        <div class="field"><label>Question text contains</label><input id="qf-search" placeholder="Search question wording"></div>
+        <button class="btn-primary" onclick="searchAdminQuestions()">Search</button>
+        <button class="admin-link" onclick="clearAdminQuestionFilters()">Clear filters</button>
+        <button class="btn-primary" style="background:var(--gold-dark, #C98A0A);margin-top:14px;" onclick="openAddModal()">+ Add new question</button>
+        <div id="admin-section" style="margin-top:16px;"></div>
+      </div>
+    </div>
+
+    <div class="admin-tab-content" id="tab-subjects">
+      <div class="admin-pay-settings" id="admin-subjects">
+        <h4>Subjects</h4>
+        <p class="pay-opt-hint" style="margin:-2px 0 12px;">Add subjects here (e.g. "Science" or "Social Studies" for younger grades) — the demo-cap number is how many levels a guest can play before being asked to register; Silver/Premium always have full access.</p>
+        <div class="field"><label>Key (lowercase, e.g. science)</label><input id="new-subj-key" placeholder="science"></div>
+        <div class="field"><label>Display name</label><input id="new-subj-name" placeholder="Science"></div>
+        <div class="field"><label>Icon (one emoji)</label><input id="new-subj-icon" placeholder="🔬"></div>
+        <div class="field"><label>Demo level cap</label><input type="number" id="new-subj-cap" min="1" value="5" style="width:80px;"></div>
+        <button class="btn-primary" onclick="createSubject()">Add subject</button>
+        <p class="msg-note" id="new-subj-status"></p>
+        <div id="admin-subject-cap-list" style="margin-top:14px;"></div>
+      </div>
+
+      <div class="admin-pay-settings" id="admin-grade-subjects">
+        <h4>Grade → Subject mapping</h4>
+        <p class="pay-opt-hint" style="margin:-2px 0 12px;">Which subjects are offered for each grade — e.g. grade 8 might get Mathematics/Science/Social Studies, while grade 12 gets Chemistry/Physics/Accounts. This drives the guest demo form and what a newly-created student sees. A grade with no mapping here shows every subject (safe default until you configure it).</p>
+        <div class="field"><label>Add a grade band</label>
+          <div style="display:flex;gap:8px;">
+            <input id="new-grade-band" placeholder="e.g. 8" style="flex:1;">
+            <button onclick="addGradeBand()">Add</button>
+          </div>
+        </div>
+        <div id="admin-grade-subject-list"></div>
+      </div>
+    </div>
+
+    <div class="admin-tab-content" id="tab-themes">
+      <div class="admin-pay-settings" id="admin-themes">
+        <h4>Visual themes</h4>
+        <p class="pay-opt-hint" style="margin:-2px 0 12px;">Upload a background scene (no numbers/path baked in) and, optionally, a few character icons — these get cycled through as level markers. Students pick from whatever themes exist here, plus the built-in Classic look.</p>
+        <div class="field"><label>Theme key</label><input id="new-theme-key" placeholder="e.g. race-track (lowercase, no spaces)"></div>
+        <div class="field"><label>Display name</label><input id="new-theme-name" placeholder="e.g. Race Track"></div>
+        <div class="field"><label>Background image</label><input type="file" id="new-theme-bg" accept="image/*"></div>
+        <div class="field"><label>Character icons (optional, select multiple)</label><input type="file" id="new-theme-icons" accept="image/*" multiple></div>
+        <button class="btn-primary" onclick="uploadTheme()">Upload theme</button>
+        <p class="msg-note" id="theme-upload-status"></p>
+        <div id="admin-theme-list" style="margin-top:14px;"></div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- RESULT OVERLAY -->
+<div class="overlay" id="result-overlay">
+  <div class="result-sheet">
+    <div class="result-emoji" id="result-emoji">🎉</div>
+    <h2 id="result-title">Level complete!</h2>
+    <p class="sub" id="result-sub">Nicely done.</p>
+    <div class="stars-big" id="result-stars">⭐⭐⭐</div>
+    <div class="result-stats">
+      <div class="box"><b id="result-correct">4/5</b><span>Correct</span></div>
+      <div class="box"><b id="result-xp">+40</b><span>XP earned</span></div>
+    </div>
+    <button class="btn-primary btn-gold" onclick="closeResult()" id="result-btn">Continue</button>
+  </div>
+</div>
+
+<!-- ADD QUESTION MODAL -->
+<div class="modal" id="add-modal">
+  <div class="modal-card" style="position:relative;">
+    <button class="close-x" onclick="closeAddModal()">✕</button>
+    <h3 id="add-modal-title">Add a question</h3>
+    <div class="field"><label>Subject</label>
+      <select id="new-subject"></select>
+    </div>
+    <div class="field"><label>Level (1 = easiest — no upper limit)</label>
+      <input type="number" id="new-level" min="1" step="1" value="1" placeholder="e.g. 1, 5, 12...">
+    </div>
+    <div class="field"><label>Grade (optional — leave blank to show to every grade)</label>
+      <input id="new-grade" placeholder="e.g. 8">
+    </div>
+    <div class="field"><label>Board</label>
+      <div class="radio-row">
+        <label><input type="radio" name="new-board" value="CBSE" checked> CBSE</label>
+        <label><input type="radio" name="new-board" value="IB"> IB</label>
+        <label><input type="radio" name="new-board" value="IGCSE"> IGCSE</label>
+      </div>
+    </div>
+    <div class="field"><label>Question</label><input id="new-qtext" placeholder="Type the question..."></div>
+    <div class="field"><label>Option A</label><input id="new-optA"></div>
+    <div class="field"><label>Option B</label><input id="new-optB"></div>
+    <div class="field"><label>Option C</label><input id="new-optC"></div>
+    <div class="field"><label>Option D</label><input id="new-optD"></div>
+    <div class="field"><label>Correct option</label>
+      <select id="new-correct"><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option></select>
+    </div>
+    <div class="field"><label>Explanation (shown to students after they answer)</label><input id="new-expl" placeholder="Why is this the correct answer?"></div>
+    <div class="field"><label>Topic (used as the level's name for Level 6+, optional otherwise)</label><input id="new-topic" placeholder="e.g. Newton's Laws"></div>
+    <div class="field"><label>Hint (optional, shown to students during the quiz)</label><input id="new-hint" placeholder="A nudge in the right direction"></div>
+    <button class="btn-primary" id="add-modal-submit-btn" onclick="submitQuestionForm()">Save question</button>
+  </div>
+</div>
+
+<!-- FORGOT PASSWORD MODAL -->
+<div class="modal" id="forgot-modal">
+  <div class="modal-card" style="position:relative;">
+    <button class="close-x" onclick="closeForgotModal()">✕</button>
+    <h3>Reset your password</h3>
+    <div id="forgot-step-request">
+      <div class="field"><label>User ID</label><input id="forgot-userid" placeholder="Your user ID" onkeydown="if(event.key==='Enter')requestPasswordReset()"></div>
+      <button class="btn-primary" onclick="requestPasswordReset()">Send reset link</button>
+      <p class="msg-note">We'll email you a link if that user ID has an account on file.</p>
+    </div>
+    <div id="forgot-step-reset" class="hidden">
+      <p class="msg-note" id="forgot-dev-note" style="margin-bottom:10px;"></p>
+      <div class="field"><label>New password</label><input id="forgot-new-password" type="password" placeholder="At least 6 characters"></div>
+      <button class="btn-primary" onclick="submitPasswordReset()">Set new password</button>
+    </div>
+  </div>
+</div>
+
+<!-- THEME PICKER MODAL -->
+<div class="modal" id="theme-modal">
+  <div class="modal-card" style="position:relative;">
+    <button class="close-x" onclick="closeThemeModal()">✕</button>
+    <h3>Pick your look</h3>
+    <p class="msg-note" style="margin-bottom:14px;">Choose whatever feels most like you — you can change this anytime.</p>
+    <div class="theme-grid" id="theme-grid"></div>
+  </div>
+</div>
+
+<!-- GUEST PRE-DEMO FORM (grade + subject, before creating the guest account) -->
+<div class="modal" id="guest-form-modal">
+  <div class="modal-card" style="position:relative;">
+    <button class="close-x" onclick="closeGuestFormModal()">✕</button>
+    <h3>Let's set up your demo</h3>
+    <p class="msg-note" style="margin-bottom:14px;">Pick your grade and one subject to start with — you can always explore more once you register.</p>
+    <div class="field"><label>Grade</label>
+      <select id="guest-grade" onchange="onGuestGradeChange()"></select>
+    </div>
+    <div class="field"><label>Subject</label>
+      <select id="guest-subject"></select>
+    </div>
+    <button class="btn-primary" onclick="startGuestSession()">Start my free demo</button>
+  </div>
+</div>
+
+<!-- REGISTRATION CTA MODAL (shown when a guest hits their demo cap) -->
+<div class="modal" id="registration-modal">
+  <div class="modal-card" style="position:relative;text-align:center;">
+    <button class="close-x" onclick="closeRegistrationCta()">✕</button>
+    <div style="font-size:40px;margin-bottom:6px;">🚀</div>
+    <h3>You're on a roll!</h3>
+    <p class="msg-note" style="margin-bottom:6px;">You've reached the end of the free demo. Register to unlock the rest of this subject and track your full progress.</p>
+    <p class="msg-note">Your guest ID: <b id="registration-guest-id"></b> — mention this when you register so we can carry over your progress.</p>
+    <button class="btn-primary" onclick="goToRegistrationForm()">Register now</button>
+    <button class="admin-link" onclick="closeRegistrationCta()">Maybe later</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================
+   API CONFIG
+   Point this at your FastAPI backend. Override by setting
+   window.SQ_API_BASE before this script runs, if needed.
+   ========================================================= */
+const API_BASE = window.SQ_API_BASE || 'https://sq-git.onrender.com';
+const REGISTRATION_FORM_URL = window.SQ_REGISTRATION_URL || 'https://forms.gle/wtEbCgdcDPB3EC8S9';
+
+/* =========================================================
+   SUBJECT / LEVEL META (static, matches backend's VALID_SUBJECTS)
+   ========================================================= */
+const SUBJECTS = [
+  {key:'chemistry',  name:'Chemistry',   icon:'🧪', c:'--c-chemistry',   cd:'--c-chemistry-d'},
+  {key:'physics',    name:'Physics',     icon:'⚛️', c:'--c-physics',     cd:'--c-physics-d'},
+  {key:'botany',     name:'Botany',      icon:'🌿', c:'--c-botany',      cd:'--c-botany-d'},
+  {key:'zoology',    name:'Zoology',     icon:'🐾', c:'--c-zoology',     cd:'--c-zoology-d'},
+  {key:'commerce',   name:'Commerce',    icon:'💼', c:'--c-commerce',    cd:'--c-commerce-d'},
+  {key:'accounts',   name:'Accounts',    icon:'📒', c:'--c-accounts',    cd:'--c-accounts-d'},
+  {key:'mathematics',name:'Mathematics', icon:'📐', c:'--c-mathematics', cd:'--c-mathematics-d'},
+  {key:'nutrition',  name:'Nutrition',   icon:'🍎', c:'--c-nutrition',   cd:'--c-nutrition-d'},
+];
+const LEVEL_META = {
+  1:{label:'Foundation', diff:'Easy'},
+  2:{label:'Building',   diff:'Easy-Med'},
+  3:{label:'Application',diff:'Medium'},
+  4:{label:'Challenge',  diff:'Hard'},
+  5:{label:'Mastery',    diff:'Expert'},
+};
+// Levels beyond 5 have no named tier — fall back to a plain "Level N" label,
+// cycling through the same 5 difficulty tags so the UI still shows *some*
+// sense of escalating difficulty without needing new admin-side config.
+function levelMeta(lvl){
+  if(LEVEL_META[lvl]) return LEVEL_META[lvl];
+  const cycled = LEVEL_META[((lvl - 1) % 5) + 1];
+  return {label:`Level ${lvl}`, diff:cycled.diff};
+}
+function currentThemeIconInfo(){
+  const key = (STATE.user && STATE.user.theme) || 'classic';
+  if(key === 'classic') return null;
+  const t = DYNAMIC_THEMES.find(t=>t.key===key);
+  if(!t || !t.icon_count) return null;
+  return {key, count: t.icon_count};
+}
+const AVATARS = ['🦊','🐼','🦉','🐯','🐸','🐨','🦁','🐵','🐢','🦄'];
+
+/* =========================================================
+   STATE
+   ========================================================= */
+let STATE = {
+  token: localStorage.getItem('sq_token') || null,
+  user: null,          // {userid, name, role, avatar, grade, board}
+  progress: {},        // subjectKey -> {unlocked_level, xp, stars:{level:n}}
+  isAdmin: false,
+  selectedAvatar: AVATARS[0],
+  quiz: null,           // {subject, level, chapter, questions, idx, correct, hearts, failed}
+  currentSubject: null,
+  currentToc: null,
+  adminSubject: 'chemistry',
+  pendingResetToken: null,
+};
+
+function escapeHtml(s){
+  const div = document.createElement('div');
+  div.textContent = s == null ? '' : s;
+  return div.innerHTML;
+}
+function subjMeta(key){
+  const hardcoded = SUBJECTS.find(s=>s.key===key);
+  if(hardcoded) return hardcoded;
+  const dynamic = (STATE.subjectMeta || {})[key];
+  return {
+    key, name: dynamic ? dynamic.name : key, icon: dynamic ? (dynamic.icon || '📘') : '📘',
+    c: '--c-generic', cd: '--c-generic-d',
+  };
+}
+function goto(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  // The admin console and level map both get wider layouts on desktop
+  // widths — admin because it's dense dashboard content, map because an
+  // immersive themed background deserves real screen space. Home/quiz/login
+  // intentionally stay phone-shell width at any viewport size.
+  document.body.classList.toggle('admin-active', id === 'screen-admin');
+  document.body.classList.toggle('map-active', id === 'screen-map');
+  document.body.classList.toggle('performance-active', id === 'screen-performance');
+  window.scrollTo(0,0);
+}
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 1800);
+}
+
+/* =========================================================
+   API HELPER
+   ========================================================= */
+async function api(path, {method='GET', body=null, isForm=false, auth=true} = {}){
+  const headers = {};
+  if(!isForm) headers['Content-Type'] = 'application/json';
+  if(auth && STATE.token) headers['Authorization'] = `Bearer ${STATE.token}`;
+
+  const res = await fetch(`${API_BASE}${path}`, {
+    method,
+    headers,
+    body: body ? (isForm ? body : JSON.stringify(body)) : undefined,
+  });
+
+  let data = null;
+  try{ data = await res.json(); }catch(e){ /* no body */ }
+
+  if(!res.ok){
+    const msg = (data && (data.detail || data.message)) || `Request failed (${res.status})`;
+    if(res.status === 401){ handleAuthExpired(); }
+    throw new Error(typeof msg === 'string' ? msg : JSON.stringify(msg));
+  }
+  return data;
+}
+function handleAuthExpired(){
+  STATE.token = null; STATE.user = null;
+  localStorage.removeItem('sq_token');
+}
+
+/* =========================================================
+   AUTH
+   ========================================================= */
+function renderAvatarPicker(){
+  const row = document.getElementById('admin-avatar-row');
+  if(!row) return;
+  row.innerHTML = AVATARS.map(a=>`<button type="button" class="avatar-opt ${a===STATE.selectedAvatar?'sel':''}" onclick="pickAvatar('${a}')">${a}</button>`).join('');
+}
+function pickAvatar(a){ STATE.selectedAvatar = a; renderAvatarPicker(); }
+
+async function loginUser(){
+  const userid = document.getElementById('login-userid').value.trim();
+  const password = document.getElementById('login-password').value;
+  if(!userid || !password){ toast('Enter your user ID and password'); return; }
+  try{
+    const data = await api('/api/auth/login', {method:'POST', body:{userid, password}, auth:false});
+    if(data.role !== 'student'){
+      toast('This is an admin account — use "Admin / teacher login" instead');
+      return;
+    }
+    await onLoginSuccess(data);
+    document.getElementById('login-password').value = '';
+    if(data.must_reset_password){
+      goto('screen-force-reset');
+      return;
+    }
+    await loadMyProgress();
+    enterHome();
+  }catch(err){
+    toast(err.message || 'Incorrect user ID or password');
+  }
+}
+async function submitForceReset(){
+  const p1 = document.getElementById('force-reset-password').value;
+  const p2 = document.getElementById('force-reset-password-confirm').value;
+  if(!p1 || p1.length < 6){ toast('Password must be at least 6 characters'); return; }
+  if(p1 !== p2){ toast('Passwords do not match'); return; }
+  try{
+    await api('/api/auth/set-password', {method:'POST', body:{new_password: p1}});
+    STATE.user.must_reset_password = false;
+    document.getElementById('force-reset-password').value = '';
+    document.getElementById('force-reset-password-confirm').value = '';
+    toast('Password set — welcome!');
+    await loadMyProgress();
+    enterHome();
+  }catch(err){
+    toast(err.message || 'Could not set password');
+  }
+}
+async function loadAllSubjectMeta(){
+  // Admin needs every subject across every grade, not just one grade's
+  // worth — unlike loadMyProgress()'s student-scoped version of this.
+  try{
+    const allSubjects = await api('/api/subjects', {auth:false});
+    STATE.subjectMeta = {};
+    STATE.allGradeSubjectKeys = allSubjects.map(s => s.key);
+    allSubjects.forEach(s => { STATE.subjectMeta[s.key] = {name:s.name, icon:s.icon}; });
+  }catch(err){
+    STATE.subjectMeta = {};
+    STATE.allGradeSubjectKeys = [];
+  }
+}
+async function adminLogin(){
+  const userid = document.getElementById('admin-userid').value.trim();
+  const password = document.getElementById('admin-pw').value;
+  if(!userid || !password){ toast('Enter the admin user ID and password'); return; }
+  try{
+    const data = await api('/api/auth/login', {method:'POST', body:{userid, password}, auth:false});
+    if(data.role !== 'admin'){
+      toast('That account is not an admin account');
+      return;
+    }
+    await onLoginSuccess(data);
+    STATE.isAdmin = true;
+    document.getElementById('admin-pw').value = '';
+    populateSubjectSelect('qf-subject');
+    document.getElementById('admin-section').innerHTML = '<p class="empty-note">Choose at least one filter above, then hit Search.</p>';
+    renderAvatarPicker();
+    await renderAdminStudentList();
+    await renderAdminThemeList();
+    await renderAdminSubjectCaps();
+    await renderAdminGradeSubjectList();
+    goto('screen-admin');
+  }catch(err){
+    toast(err.message || 'Incorrect admin user ID or password');
+  }
+}
+async function onLoginSuccess(data){
+  STATE.token = data.access_token;
+  STATE.user = {userid:data.userid, name:data.name, role:data.role, avatar:data.avatar, grade:data.grade, board:data.board, theme:data.theme || 'classic', account_tier:data.account_tier || 'silver'};
+  localStorage.setItem('sq_token', STATE.token);
+  await loadThemes();
+  applyTheme(STATE.user.theme);
+}
+async function openGuestFormModal(){
+  const gradeSelect = document.getElementById('guest-grade');
+  gradeSelect.innerHTML = '<option>Loading…</option>';
+  try{
+    const grades = await api('/api/grades', {auth:false});
+    if(grades.length === 0){
+      gradeSelect.innerHTML = '<option value="">No grades configured yet</option>';
+      toast('No grades are set up yet — ask your admin to configure grade/subject mappings');
+    } else {
+      grades.sort((a,b) => parseInt(a) - parseInt(b));
+      gradeSelect.innerHTML = grades.map(g => `<option value="${g}">Grade ${g}</option>`).join('');
+    }
+  }catch(err){
+    gradeSelect.innerHTML = '<option value="">Could not load grades</option>';
+  }
+  await onGuestGradeChange();
+  document.getElementById('guest-form-modal').classList.add('active');
+}
+async function onGuestGradeChange(){
+  const grade = document.getElementById('guest-grade').value;
+  const subjectSelect = document.getElementById('guest-subject');
+  if(!grade){ subjectSelect.innerHTML = ''; return; }
+  subjectSelect.innerHTML = '<option>Loading…</option>';
+  try{
+    const subjects = await api(`/api/subjects?grade=${encodeURIComponent(grade)}`, {auth:false});
+    subjectSelect.innerHTML = subjects.map(s => `<option value="${s.key}">${s.icon||''} ${s.name}</option>`).join('');
+  }catch(err){
+    subjectSelect.innerHTML = '<option value="">Could not load subjects</option>';
+  }
+}
+function closeGuestFormModal(){
+  document.getElementById('guest-form-modal').classList.remove('active');
+}
+async function startGuestSession(){
+  const grade = document.getElementById('guest-grade').value;
+  const subject = document.getElementById('guest-subject').value;
+  if(!grade || !subject){ toast('Please pick a grade and subject'); return; }
+  try{
+    const data = await api('/api/auth/guest', {method:'POST', auth:false, body:{grade, subject}});
+    await onLoginSuccess(data);
+    closeGuestFormModal();
+    await loadMyProgress();
+    enterHome();
+    toast(`Welcome! Your guest ID is ${data.userid} — save it to mention when you register.`);
+  }catch(err){
+    toast(err.message || 'Could not start a demo session — please try again.');
+  }
+}
+function openRegistrationCta(){
+  document.getElementById('registration-guest-id').textContent = STATE.user.userid;
+  document.getElementById('registration-modal').classList.add('active');
+}
+function closeRegistrationCta(){
+  document.getElementById('registration-modal').classList.remove('active');
+}
+function goToRegistrationForm(){
+  window.open(REGISTRATION_FORM_URL, '_blank');
+  closeRegistrationCta();
+}
+
+/* ---------- theme picker ---------- */
+// Dynamic themes fetched from the backend (admin-uploaded) plus the
+// permanent built-in Classic look, which needs no image at all.
+let DYNAMIC_THEMES = []; // [{key, name, icon_count}, ...] — refreshed each time the picker opens
+const LEGACY_GRADIENT_KEYS = ['garden','racetrack','space','ocean']; // built-in fallback look, used until/unless a real image is uploaded for that key
+
+async function loadThemes(){
+  try{ DYNAMIC_THEMES = await api('/api/themes', {auth:false}); }
+  catch(err){ DYNAMIC_THEMES = []; }
+}
+function applyTheme(theme){
+  document.body.classList.remove(...LEGACY_GRADIENT_KEYS.map(k=>`theme-${k}`));
+  document.body.style.removeProperty('--theme-outer-bg');
+  document.body.style.removeProperty('--theme-home-bg');
+  if(!theme || theme === 'classic') return;
+
+  // Fallback gradient look for the 4 original keys, shown until a real
+  // image exists for them (or forever, for any brand-new custom key that
+  // doesn't match one of these — in which case there's just no fallback and
+  // the background stays blank until an image is uploaded for it).
+  if(LEGACY_GRADIENT_KEYS.includes(theme)) document.body.classList.add(`theme-${theme}`);
+
+  // A real uploaded image (a row that actually exists in DYNAMIC_THEMES,
+  // fetched fresh via loadThemes() before this runs) wins over the gradient
+  // fallback. Themes with no upload yet — e.g. a legacy key nobody has
+  // uploaded art for — correctly keep showing just the gradient instead of
+  // pointing at an image URL that would 404.
+  const hasRealUpload = DYNAMIC_THEMES.some(t => t.key === theme);
+  if(!hasRealUpload) return;
+
+  const bgUrl = `${API_BASE}/api/themes/${encodeURIComponent(theme)}/background`;
+  document.body.style.setProperty('--theme-outer-bg', `url('${bgUrl}') center/cover no-repeat`);
+  document.body.style.setProperty('--theme-home-bg', `url('${bgUrl}') center/cover no-repeat`);
+}
+async function openThemeModal(){
+  await loadThemes();
+  const grid = document.getElementById('theme-grid');
+  const current = (STATE.user && STATE.user.theme) || 'classic';
+  const options = [{key:'classic', name:'Classic'}, ...DYNAMIC_THEMES];
+  grid.innerHTML = options.map(t=>{
+    const thumb = t.key === 'classic'
+      ? `<span class="t-icon">⭐</span>`
+      : `<img class="t-thumb" src="${API_BASE}/api/themes/${encodeURIComponent(t.key)}/background" alt="">`;
+    return `<button class="theme-opt ${t.key===current?'selected':''}" onclick="selectTheme('${t.key}')">
+      ${thumb}
+      <span class="t-name">${t.name}</span>
+    </button>`;
+  }).join('');
+  document.getElementById('theme-modal').classList.add('active');
+}
+function closeThemeModal(){ document.getElementById('theme-modal').classList.remove('active'); }
+async function selectTheme(theme){
+  applyTheme(theme); // instant feedback, even before the save round-trip finishes
+  if(STATE.user) STATE.user.theme = theme;
+  try{
+    await api('/api/auth/set-theme', {method:'POST', body:{theme}});
+    closeThemeModal();
+  }catch(err){
+    toast(err.message || 'Could not save theme');
+  }
+}
+
+function logout(){
+  STATE.token = null; STATE.user = null; STATE.progress = {};
+  localStorage.removeItem('sq_token');
+  applyTheme('classic');
+  goto('screen-auth');
+}
+function adminLogout(){
+  STATE.token = null; STATE.user = null; STATE.isAdmin = false;
+  localStorage.removeItem('sq_token');
+  goto('screen-auth');
+}
+
+/* ---------- forgot / reset password ---------- */
+function openForgotModal(){
+  document.getElementById('forgot-step-request').classList.remove('hidden');
+  document.getElementById('forgot-step-reset').classList.add('hidden');
+  document.getElementById('forgot-userid').value = '';
+  document.getElementById('forgot-modal').classList.add('active');
+}
+function closeForgotModal(){ document.getElementById('forgot-modal').classList.remove('active'); }
+
+async function requestPasswordReset(){
+  const userid = document.getElementById('forgot-userid').value.trim();
+  if(!userid){ toast('Enter your user ID'); return; }
+  try{
+    const data = await api('/api/auth/forgot-password', {method:'POST', body:{userid}, auth:false});
+    toast(data.message || 'If that account exists, a reset link was sent');
+    if(data.reset_token){
+      // Dev/demo mode (no SMTP configured on the backend): the API returned
+      // the token directly so the flow can be tested without an email server.
+      STATE.pendingResetToken = data.reset_token;
+      document.getElementById('forgot-step-request').classList.add('hidden');
+      document.getElementById('forgot-step-reset').classList.remove('hidden');
+      document.getElementById('forgot-dev-note').textContent =
+        'Dev mode: no email server is configured, so you can reset your password right here.';
+    } else {
+      closeForgotModal();
+    }
+  }catch(err){
+    toast(err.message || 'Something went wrong');
+  }
+}
+async function submitPasswordReset(){
+  const newPassword = document.getElementById('forgot-new-password').value;
+  if(!newPassword || newPassword.length < 6){ toast('Password must be at least 6 characters'); return; }
+  try{
+    await api('/api/auth/reset-password', {method:'POST', body:{token: STATE.pendingResetToken, new_password: newPassword}, auth:false});
+    toast('Password updated — you can log in now');
+    closeForgotModal();
+  }catch(err){
+    toast(err.message || 'Could not reset password');
+  }
+}
+
+/* =========================================================
+   HOME / PROGRESS
+   ========================================================= */
+async function loadMyProgress(){
+  const rows = await api('/api/progress');
+  const map = {};
+  rows.forEach(r => map[r.subject] = {unlocked_level:r.unlocked_level, max_level:r.max_level, demo_level_cap:r.demo_level_cap, xp:r.xp, stars:r.stars || {}, enrolled:r.enrolled});
+  STATE.progress = map;
+
+  // Full grade-appropriate subject list (name/icon), so newly admin-created
+  // subjects (e.g. "Science" for grade 8) render correctly even though
+  // they're not in the hardcoded SUBJECTS array. Falls back to every subject
+  // if the account has no grade set.
+  try{
+    const gradeParam = STATE.user.grade ? `?grade=${encodeURIComponent(STATE.user.grade)}` : '';
+    const allSubjects = await api(`/api/subjects${gradeParam}`, {auth:false});
+    STATE.subjectMeta = {};
+    STATE.allGradeSubjectKeys = allSubjects.map(s => s.key);
+    allSubjects.forEach(s => { STATE.subjectMeta[s.key] = {name:s.name, icon:s.icon}; });
+  }catch(err){
+    STATE.subjectMeta = {};
+    STATE.allGradeSubjectKeys = [];
+  }
+
+  // Needed so renderPath() knows the current theme's icon_count before the
+  // student ever opens the theme picker (e.g. resuming a session that
+  // already had a theme picked).
+  await loadThemes();
+}
+function totalXp(){
+  return Object.values(STATE.progress).reduce((sum,s)=>sum+(s.xp||0), 0);
+}
+function enterHome(){
+  const u = STATE.user;
+  document.getElementById('home-avatar').textContent = u.avatar || '🦊';
+  document.getElementById('home-name').textContent = u.name;
+  document.getElementById('home-sub').textContent = `Grade ${u.grade || '—'} · ${u.board || '—'}`;
+  document.getElementById('home-xp').textContent = totalXp();
+  const banner = document.getElementById('guest-banner');
+  if(u.account_tier === 'guest'){
+    banner.style.display = 'block';
+    document.getElementById('guest-banner-id').textContent = u.userid;
+  } else {
+    banner.style.display = 'none';
+  }
+  renderSubjectGrid();
+  goto('screen-home');
+}
+function renderSubjectGrid(){
+  const grid = document.getElementById('subject-grid');
+  const isGuest = STATE.user.account_tier === 'guest';
+  const allKeys = (STATE.allGradeSubjectKeys && STATE.allGradeSubjectKeys.length)
+    ? STATE.allGradeSubjectKeys
+    : Object.keys(STATE.progress);
+
+  // Guests see every subject for their grade — locked ones prompt
+  // registration instead of disappearing, since that's a conversion nudge.
+  // Silver/Premium students only ever see subjects their admin enrolled
+  // them in — hidden, not locked, since that's a deliberate admin choice,
+  // not a sales funnel.
+  const visibleKeys = isGuest ? allKeys : allKeys.filter(k => STATE.progress[k] && STATE.progress[k].enrolled);
+
+  if(visibleKeys.length === 0){
+    grid.innerHTML = '<p class="empty-note">You\'re not enrolled in any subjects yet — ask your admin/teacher to add some.</p>';
+    return;
+  }
+
+  grid.innerHTML = visibleKeys.map(key=>{
+    const s = subjMeta(key);
+    const sp = STATE.progress[key];
+    const isLocked = isGuest && (!sp || !sp.enrolled);
+    if(isLocked){
+      return `<button class="subj-card" style="background:linear-gradient(155deg, #8a8a92, #5f5f68);opacity:0.75;" onclick="openRegistrationCta()">
+        <div class="icon">🔒</div>
+        <div>
+          <div class="name">${s.name}</div>
+          <div class="prog">Register to unlock</div>
+        </div>
+      </button>`;
+    }
+    const totalLevels = sp.max_level || 5;
+    const doneLevels = Object.keys(sp.stars).length;
+    const pct = Math.round((doneLevels/totalLevels)*100);
+    return `<button class="subj-card" style="background:linear-gradient(155deg, var(${s.c}), var(${s.cd}));" onclick="openSubject('${key}')">
+      <div class="icon">${s.icon}</div>
+      <div>
+        <div class="name">${s.name}</div>
+        <div class="prog">Level ${sp.unlocked_level} of ${totalLevels}</div>
+        <div class="bar"><i style="width:${pct}%"></i></div>
+      </div>
+    </button>`;
+  }).join('');
+}
+
+
+/* =========================================================
+   PERFORMANCE DASHBOARD
+   ========================================================= */
+function scoreTone(score){
+  if(score === null || score === undefined) return 'na';
+  if(score >= 90) return 'mastered';
+  if(score >= 80) return 'strong';
+  if(score >= 70) return 'growing';
+  if(score >= 50) return 'practice';
+  return 'needs';
+}
+function openPerformance(){
+  if(!STATE.user || STATE.user.account_tier === 'guest'){
+    toast('Performance dashboard is available after registration.');
+    return;
+  }
+  goto('screen-performance');
+  loadPerformanceDashboard();
+}
+async function loadPerformanceDashboard(){
+  const container=document.getElementById('perf-subjects');
+  container.innerHTML='<p class="empty-note">Loading performance…</p>';
+  try{
+    const d=await api('/api/progress/performance');
+    document.getElementById('perf-subtitle').textContent=`Grade ${d.student.grade || '—'} · ${d.student.board || '—'}`;
+    document.getElementById('perf-overall').textContent=`${d.overall_score}%`;
+    document.getElementById('perf-ring').style.setProperty('--score', `${d.overall_score}%`);
+    document.getElementById('perf-subject-count').textContent=d.enrolled_subjects;
+    document.getElementById('perf-mastered').textContent=d.mastered_subjects;
+    document.getElementById('perf-practice').textContent=d.needs_practice;
+    document.getElementById('perf-summary').textContent =
+      d.enrolled_subjects
+        ? `${d.enrolled_subjects} enrolled subject${d.enrolled_subjects===1?'':'s'} are included. Performance is calculated directly from your saved level stars and XP.`
+        : 'No subjects are enrolled yet.';
+
+    const tableBody=document.getElementById('perf-table-body');
+    const rows=d.performance_table || [];
+    tableBody.innerHTML=rows.length ? rows.map(r=>{
+      const status=r.completed ? (r.score>=90?'Mastered':r.score>=70?'Progressing':'Practice') : 'Not attempted';
+      return `<tr><td><b>${escapeHtml(r.subject)}</b></td><td>Level ${r.level}</td><td class="perf-stars">${'★'.repeat(r.stars)}${'☆'.repeat(3-r.stars)}</td><td class="score">${r.completed?r.score+'%':'—'}</td><td><span class="perf-status">${status}</span></td><td>${r.xp}</td></tr>`;
+    }).join('') : '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:18px;">No performance records yet. Complete a level to see it here.</td></tr>';
+
+    container.innerHTML=d.subjects.map((s,idx)=>{
+      const enrolled=s.enrolled;
+      const score=s.score;
+      const tone=scoreTone(score);
+      const chapterHtml=(s.chapters||[]).map(c=>`
+        <div class="perf-chapter">
+          <div class="perf-chapter-head"><b>${escapeHtml(c.name)}</b><span>${c.score}%</span></div>
+          <div class="perf-mini-bar"><i style="width:${Math.max(0,Math.min(100,c.score))}%"></i></div>
+          ${(c.topics||[]).map(t=>`
+            <div class="perf-topic">
+              <div class="perf-topic-row"><span>${escapeHtml(t.name)}</span><b>${t.score}%</b></div>
+              ${(t.stages||[]).map(st=>`<div style="display:flex;justify-content:space-between;margin-top:4px;color:#817963;"><span>${escapeHtml(st.name)}</span><span>${st.score}%</span></div>`).join('')}
+            </div>`).join('')}
+        </div>`).join('');
+      const strong=(s.what_went_well||[]).join(', ') || 'Keep building consistency.';
+      const improve=(s.improvement||[]).join(', ') || 'No immediate improvement area flagged.';
+      return `<div class="perf-subject ${!enrolled?'perf-unenrolled':''}" id="perf-${s.key}">
+        <div class="perf-subj-head" onclick="${enrolled?`togglePerfSubject('${s.key}')`:''}">
+          <div class="perf-subj-icon">${s.icon}</div>
+          <div class="perf-subj-main">
+            <b>${escapeHtml(s.name)}</b>
+            <span>${enrolled ? `${s.unlocked_level} / ${s.max_level} levels unlocked · ${tone}` : 'Not enrolled · no evaluation'}</span>
+            ${enrolled?`<div class="perf-bar"><i style="width:${score||0}%"></i></div>`:''}
+          </div>
+          <div class="perf-score-text">${enrolled?`${score}%`:'—'}</div>
+          ${enrolled?'<span>⌄</span>':''}
+        </div>
+        ${enrolled?`<div class="perf-subj-body">
+          <div class="perf-section-title" style="margin-top:13px;">Chapter → Topic → Stage</div>
+          ${chapterHtml || '<p class="empty-note">Question metadata has not been mapped yet.</p>'}
+          <div class="perf-section-title">Reflection</div>
+          <div class="perf-insights">
+            <div class="perf-insight"><b>🌱 What went well</b><p>${escapeHtml(strong)}</p></div>
+            <div class="perf-insight"><b>🧭 Improvement</b><p>${escapeHtml(improve)}</p></div>
+            <div class="perf-insight"><b>💭 Reflection</b><p>${escapeHtml(s.reflection||'Keep practising and review your next level.')}</p></div>
+          </div>
+        </div>`:''}
+      </div>`;
+    }).join('');
+  }catch(err){
+    container.innerHTML=`<p class="empty-note">${escapeHtml(err.message||'Could not load performance data.')}</p>`;
+  }
+}
+function togglePerfSubject(key){
+  const el=document.getElementById(`perf-${key}`);
+  if(el) el.classList.toggle('open');
+}
+function escapeHtml(v){
+  return String(v ?? '').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+}
+
+/* =========================================================
+   LEVEL MAP
+   ========================================================= */
+async function openSubject(key){
+  STATE.currentSubject = key;
+  const s = subjMeta(key);
+  const grade = String(STATE.user?.grade || '');
+  const board = String(STATE.user?.board || '').toLowerCase();
+  const tocSubject = String(key || '').toLowerCase();
+
+  // Mathematics Grade 11 CBSE is backed by the first Table of Content file.
+  // Other subjects keep the existing level-map experience until their TOC
+  // files are added.
+  if(board === 'cbse' && grade === '11' && tocSubject === 'mathematics'){
+    await openTableOfContent('cbse', 11, 'mathematics');
+    return;
+  }
+
+  const prog = STATE.progress[key];
+  document.getElementById('map-title').textContent = s.name;
+  document.getElementById('map-sub').textContent = `${s.icon} ${prog.max_level} levels · Level ${prog.unlocked_level} unlocked`;
+  document.getElementById('map-xp').textContent = prog.xp;
+  const mapScreen = document.getElementById('screen-map');
+  const theme = (STATE.user && STATE.user.theme) || 'classic';
+  if(theme === 'classic'){
+    mapScreen.style.background = `linear-gradient(180deg, var(${s.c}), var(${s.cd}) 60%, #1a1440)`;
+  } else {
+    mapScreen.style.background = '';
+  }
+  renderPath(key);
+  goto('screen-map');
+}
+
+async function loadTableContent(board, grade, subject){
+  const path = `table_content/${encodeURIComponent(board.toLowerCase())}/grade_${encodeURIComponent(grade)}/${encodeURIComponent(subject.toLowerCase().replace(/\\s+/g,'_'))}.json`;
+  const res = await fetch(path, {cache:'no-store'});
+  if(!res.ok) throw new Error(`Table of Content file not found: ${path}`);
+  return await res.json();
+}
+
+function tocLevelButton(level){
+  const icons = {1:'🌱',2:'📘',3:'🚀',4:'🧠',5:'🏆'};
+  return `<button class="toc-level-btn" onclick="startChapterLevel('mathematics',${level},this.dataset.chapter)" data-chapter="">
+    <span class="ico">${icons[level] || '⭐'}</span>
+    <span class="lv">Level ${level}</span>
+    <span class="nm"></span>
+  </button>`;
+}
+
+async function openTableOfContent(board, grade, subject){
+  const wrap = document.getElementById('toc-wrap');
+  wrap.innerHTML = '<div class="toc-empty">Loading Table of Content…</div>';
+  try{
+    const toc = await loadTableContent(board, grade, subject);
+    STATE.currentToc = toc;
+    document.getElementById('toc-title').textContent = toc.subject || 'Table of Content';
+    document.getElementById('toc-subtitle').textContent =
+      `${toc.board || board.toUpperCase()} · Grade ${toc.grade || grade}${toc.academic_session ? ` · ${toc.academic_session}` : ''}`;
+    document.getElementById('toc-xp').textContent = totalXp();
+
+    const levels = toc.levels || [];
+    const levelButtons = levels.length ? levels : [
+      {level:1,name:'Foundation',icon:'🌱'},
+      {level:2,name:'Intermediate',icon:'📘'},
+      {level:3,name:'Advanced',icon:'🚀'},
+      {level:4,name:'Application',icon:'🧠'},
+      {level:5,name:'Mastery',icon:'🏆'}
+    ];
+
+    let html = `
+      <div class="toc-hero">
+        <div class="eyebrow">📚 Table of Content</div>
+        <h2>${escapeHtml(toc.subject || subject)}</h2>
+        <p>Select a chapter and then tap any level icon to open the questions for that chapter and level.</p>
+      </div>`;
+
+    (toc.units || []).forEach(unit=>{
+      html += `
+        <section class="toc-unit">
+          <div class="toc-unit-head">
+            <div class="toc-unit-num">${unit.order || ''}</div>
+            <div class="toc-unit-main">
+              <b>${escapeHtml(unit.name || '')}</b>
+              <span>${unit.marks ? `${escapeHtml(unit.marks)} marks` : 'Syllabus unit'}</span>
+            </div>
+          </div>`;
+
+      (unit.chapters || []).forEach(chapter=>{
+        const chapterName = chapter.name || '';
+        const chapterTopics = chapter.topics || [];
+        html += `
+          <div class="toc-chapter">
+            <div class="toc-chapter-title">
+              <b>📖 ${escapeHtml(chapterName)}</b>
+              <span>${chapterTopics.length} topic${chapterTopics.length===1?'':'s'}</span>
+            </div>
+            ${chapterTopics.length ? `<div class="toc-topic-list">${chapterTopics.map(t=>`<span class="toc-topic">${escapeHtml(t)}</span>`).join('')}</div>` : ''}
+            <div class="toc-level-title">Choose level</div>
+            <div class="toc-levels">`;
+
+        levelButtons.forEach(l=>{
+          const lv=Number(l.level);
+          const icon=l.icon || ({1:'🌱',2:'📘',3:'🚀',4:'🧠',5:'🏆'}[lv] || '⭐');
+          const name=l.name || `Level ${lv}`;
+          html += `<button class="toc-level-btn"
+                    data-chapter="${escapeHtml(chapterName)}"
+                    onclick="startChapterLevel('mathematics',${lv},this.dataset.chapter)">
+                    <span class="ico">${icon}</span>
+                    <span class="lv">Level ${lv}</span>
+                    <span class="nm">${escapeHtml(name)}</span>
+                  </button>`;
+        });
+
+        html += `</div></div>`;
+      });
+
+      html += `</section>`;
+    });
+
+    if(!(toc.units || []).length){
+      html += '<div class="toc-empty">No units have been defined in this Table of Content yet.</div>';
+    }
+
+    html += `<button class="toc-map-btn" onclick="openSubjectLevelMap('mathematics')">🗺️ Open classic level map</button>`;
+    wrap.innerHTML = html;
+    goto('screen-toc');
+  }catch(err){
+    wrap.innerHTML = `<div class="toc-empty">Could not load this Table of Content. ${escapeHtml(err.message || '')}</div>`;
+    goto('screen-toc');
+  }
+}
+
+function openSubjectLevelMap(key){
+  const s = subjMeta(key);
+  const prog = STATE.progress[key];
+  document.getElementById('map-title').textContent = s.name;
+  document.getElementById('map-sub').textContent = `${s.icon} ${prog.max_level} levels · Level ${prog.unlocked_level} unlocked`;
+  document.getElementById('map-xp').textContent = prog.xp;
+  const mapScreen = document.getElementById('screen-map');
+  const theme = (STATE.user && STATE.user.theme) || 'classic';
+  mapScreen.style.background = theme === 'classic'
+    ? `linear-gradient(180deg, var(${s.c}), var(${s.cd}) 60%, #1a1440)` : '';
+  renderPath(key);
+  goto('screen-map');
+}
+
+function renderPath(key){
+  const s = subjMeta(key);
+  const prog = STATE.progress[key];
+  const wrap = document.getElementById('path-wrap');
+  const iconInfo = currentThemeIconInfo();
+  const isGuest = STATE.user.account_tier === 'guest';
+  let html = '';
+  for(let lvl=prog.max_level; lvl>=1; lvl--){
+    const meta = levelMeta(lvl);
+    const isConceptLevel = lvl > 5;
+    const isGuestBeyondCap = isGuest && lvl > prog.demo_level_cap;
+    const stars = prog.stars[lvl] || 0;
+    // Levels 1-5 (and a guest's whole demo range) stay strictly sequential.
+    // For a non-guest past level 5, every concept-tier level is playable at
+    // once — 'done' if already cleared, otherwise the same 'unlocked' look
+    // as the single frontier node, just without the pulse (since several
+    // can be available simultaneously here, not just one "next" step).
+    let state;
+    if(isGuest || !isConceptLevel){
+      state = lvl < prog.unlocked_level ? 'done' : (lvl === prog.unlocked_level ? 'unlocked' : 'locked');
+    } else {
+      state = prog.unlocked_level >= 6 ? (stars > 0 ? 'done' : 'unlocked') : 'locked';
+    }
+    const hasIcon = iconInfo && state !== 'locked';
+    let bg = '';
+    let inner;
+    if(isGuestBeyondCap){
+      bg = '';
+      inner = `<span class="lock">🔒</span>`;
+    } else if(hasIcon){
+      const iconIdx = (lvl - 1) % iconInfo.count;
+      const iconUrl = `${API_BASE}/api/themes/${encodeURIComponent(iconInfo.key)}/icons/${iconIdx}`;
+      bg = `background-image:url('${iconUrl}');background-size:cover;background-position:center;`;
+      inner = `<span class="node-badge">${lvl}</span>`;
+    } else {
+      bg = state==='locked' ? '' : `background:linear-gradient(155deg, var(${s.c}), var(${s.cd}));`;
+      inner = state==='locked'
+        ? `<span class="lock">🔒</span>`
+        : `<span class="num">${lvl}</span><span class="tag">${meta.diff}</span>`;
+    }
+    let starsHtml = state!=='locked' && (state==='done' || stars>0)
+      ? `<div class="stars-row">${[1,2,3].map(i=>`<span>${i<=stars?'⭐':'☆'}</span>`).join('')}</div>` : '';
+    // A concept level's real topic name (e.g. "Newton's Laws") wins over the
+    // generic "Level N" fallback, once the admin has tagged questions with one.
+    const conceptLabel = isConceptLevel && prog.level_labels && prog.level_labels[String(lvl)];
+    const label = isGuestBeyondCap ? '🔒 Register to unlock' : (conceptLabel || meta.label);
+    const pulses = state==='unlocked' && !isGuestBeyondCap && !isConceptLevel;
+    const clickAction = isGuestBeyondCap
+      ? 'openRegistrationCta()'
+      : (state!=='locked' ? `startLevel('${key}',${lvl})` : `toast('Complete Level 5 first')`);
+    html += `<div class="level-node-wrap">
+      <span class="level-label">${label}</span>
+      <button class="level-node ${isGuestBeyondCap?'locked':state} ${pulses?'pulse':''} ${hasIcon&&!isGuestBeyondCap?'has-icon':''}" style="${bg}" onclick="${clickAction}">
+        ${inner}
+      </button>
+      ${starsHtml}
+    </div>`;
+  }
+  wrap.innerHTML = html;
+}
+
+/* =========================================================
+   QUIZ FLOW
+   ========================================================= */
+async function startChapterLevel(subject, level, chapter){
+  let qs;
+  try{
+    qs = await api(`/api/questions?subject=${encodeURIComponent(subject)}&level=${level}`);
+  }catch(err){
+    if(err.message === 'REGISTRATION_REQUIRED'){ openRegistrationCta(); return; }
+    toast(err.message || 'Could not load questions'); return;
+  }
+
+  const wanted = String(chapter || '').trim().toLowerCase();
+  const filtered = qs.filter(q => String(q.chapter || '').trim().toLowerCase() === wanted);
+
+  if(!filtered.length){
+    toast(`No Level ${level} questions tagged for "${chapter}" yet`);
+    return;
+  }
+
+  const shuffled = [...filtered].sort(()=>Math.random()-0.5);
+  STATE.quiz = {
+    subject, level, chapter,
+    questions: shuffled, idx:0, correct:0, hearts:5, failed:false
+  };
+  renderQuestion();
+  goto('screen-quiz');
+}
+
+async function startLevel(subject, level){
+  let qs;
+  try{
+    qs = await api(`/api/questions?subject=${encodeURIComponent(subject)}&level=${level}`);
+  }catch(err){
+    if(err.message === 'REGISTRATION_REQUIRED'){ openRegistrationCta(); return; }
+    toast(err.message || 'Could not load questions'); return;
+  }
+  if(!qs.length){ toast('No questions have been added for this level yet'); return; }
+  const shuffled = [...qs].sort(()=>Math.random()-0.5);
+  STATE.quiz = {subject, level, chapter:null, questions: shuffled, idx:0, correct:0, hearts:5, failed:false};
+  renderQuestion();
+  goto('screen-quiz');
+}
+function exitQuiz(){
+  if(confirm('Leave this level? Your progress on this attempt will be lost.')){
+    if(STATE.quiz && STATE.quiz.chapter){
+      openTableOfContent('cbse', STATE.user.grade, 'mathematics');
+    }else{
+      goto('screen-map');
+    }
+  }
+}
+function renderHearts(){
+  const h = document.getElementById('quiz-hearts');
+  h.innerHTML = Array.from({length:5}).map((_,i)=> i < STATE.quiz.hearts ? '❤️' : '🤍').join('');
+}
+function renderQuestion(){
+  const quiz = STATE.quiz;
+  const q = quiz.questions[quiz.idx];
+  const s = subjMeta(quiz.subject);
+  document.getElementById('screen-quiz').style.background = '#FBF7EC';
+  document.getElementById('quiz-progress').style.width = `${(quiz.idx/quiz.questions.length)*100}%`;
+  renderHearts();
+  document.getElementById('q-difficulty').textContent = levelMeta(quiz.level).diff;
+  document.getElementById('q-difficulty').style.background = `var(${s.c})`;
+  document.getElementById('q-difficulty').style.color = '#fff';
+  document.getElementById('q-board').textContent = q.board;
+  document.getElementById('q-text').textContent = q.question;
+  const hintToggle = document.getElementById('hint-toggle');
+  const hintText = document.getElementById('hint-text');
+  hintText.style.display = 'none';
+  hintText.textContent = q.hint || '';
+  hintToggle.style.display = q.hint ? 'block' : 'none';
+  hintToggle.textContent = '💡 Show a hint';
+  const letters = ['A','B','C','D'];
+  const optWrap = document.getElementById('q-options');
+  optWrap.innerHTML = q.options.map((o,i)=>`<button class="opt" data-i="${i}" onclick="selectOption(${i})"><span class="letter">${letters[i]}</span><span>${escapeHtml(o)}</span></button>`).join('');
+  document.getElementById('quiz-continue').style.display = 'none';
+  document.getElementById('explain-card').classList.remove('show');
+}
+function toggleHint(){
+  const hintText = document.getElementById('hint-text');
+  const isHidden = hintText.style.display === 'none';
+  hintText.style.display = isHidden ? 'block' : 'none';
+  document.getElementById('hint-toggle').textContent = isHidden ? '💡 Hide hint' : '💡 Show a hint';
+}
+function selectOption(i){
+  const quiz = STATE.quiz;
+  const q = quiz.questions[quiz.idx];
+  const btns = document.querySelectorAll('#q-options .opt');
+  btns.forEach(b=>b.classList.add('disabled'));
+  btns.forEach(b=>b.onclick=null);
+  const wasCorrect = (i === q.correct);
+  if(wasCorrect){
+    quiz.correct++;
+    btns[i].classList.add('correct');
+    toast('Correct! ⚡ +10 XP');
+  } else {
+    btns[i].classList.add('wrong');
+    btns[q.correct].classList.add('correct');
+    quiz.hearts--;
+    toast('Not quite');
+  }
+  if(q.explanation){
+    document.getElementById('explain-ico').textContent = wasCorrect ? '✅' : '💡';
+    document.getElementById('explain-label').textContent = wasCorrect ? 'Nice — here\'s why' : 'Here\'s why';
+    document.getElementById('explain-text').textContent = q.explanation;
+    document.getElementById('explain-card').classList.add('show');
+  }
+  document.getElementById('quiz-continue').style.display = 'block';
+  document.getElementById('quiz-continue').textContent = (quiz.hearts<=0) ? 'See result' : (quiz.idx===quiz.questions.length-1 ? 'Finish level' : 'Continue');
+}
+function nextQuestion(){
+  const quiz = STATE.quiz;
+  if(quiz.hearts <= 0){ finishLevel(true); return; }
+  quiz.idx++;
+  if(quiz.idx >= quiz.questions.length){ finishLevel(false); return; }
+  renderQuestion();
+}
+async function finishLevel(outOfHearts){
+  const quiz = STATE.quiz;
+  const total = quiz.questions.length;
+
+  let result;
+  try{
+    result = await api('/api/progress/attempt', {method:'POST', body:{
+      subject: quiz.subject, level: quiz.level,
+      correct_count: quiz.correct, total_questions: total,
+      out_of_hearts: outOfHearts,
+    }});
+  }catch(err){
+    toast(err.message || 'Could not save your result'); return;
+  }
+
+  STATE.progress[quiz.subject] = result.progress;
+  const stars = result.stars, passed = result.passed, xpGained = result.xp_gained;
+
+  document.getElementById('result-emoji').textContent = outOfHearts ? '💔' : (passed ? (stars===3?'🏆':'🎉') : '📘');
+  document.getElementById('result-title').textContent = outOfHearts ? 'Out of hearts' : (passed ? 'Level complete!' : 'So close — try again');
+  document.getElementById('result-sub').textContent = outOfHearts
+    ? 'You ran out of hearts. Give it another shot.'
+    : (passed ? `You cleared Level ${quiz.level} · ${levelMeta(quiz.level).diff}` : 'You need at least 50% correct to unlock the next level.');
+  document.getElementById('result-stars').textContent = passed ? '⭐'.repeat(stars) + '☆'.repeat(3-stars) : '☆☆☆';
+  document.getElementById('result-correct').textContent = `${quiz.correct}/${total}`;
+  document.getElementById('result-xp').textContent = `+${xpGained}`;
+  document.getElementById('result-btn').textContent = passed && result.progress.unlocked_level>quiz.level ? 'Next level →' : 'Back to map';
+  document.getElementById('result-overlay').classList.add('active');
+}
+function closeResult(){
+  const chapterQuiz = !!(STATE.quiz && STATE.quiz.chapter);
+  document.getElementById('result-overlay').classList.remove('active');
+  renderPath(STATE.currentSubject);
+  const p = STATE.progress[STATE.currentSubject];
+  document.getElementById('map-xp').textContent = p.xp;
+  document.getElementById('map-sub').textContent = `${subjMeta(STATE.currentSubject).icon} ${p.max_level} levels · Level ${p.unlocked_level} unlocked`;
+  if(chapterQuiz){
+    openTableOfContent('cbse', STATE.user.grade, 'mathematics');
+  }else{
+    goto('screen-map');
+  }
+}
+
+/* =========================================================
+   ADMIN — student accounts
+   ========================================================= */
+async function addStudent(){
+  const userid = document.getElementById('new-stu-userid').value.trim();
+  const email = document.getElementById('new-stu-email').value.trim();
+  const password = document.getElementById('new-stu-password').value;
+  const name = document.getElementById('new-stu-name').value.trim();
+  const grade = document.getElementById('new-stu-grade').value;
+  const board = document.getElementById('new-stu-board').value;
+  const accountTier = document.getElementById('new-stu-tier').value;
+  const requireReset = document.getElementById('new-stu-force-reset').checked;
+  if(!userid || !email || !password || !name){ toast('Fill in user ID, email, password and name'); return; }
+  if(password.length < 6){ toast('Password must be at least 6 characters'); return; }
+  try{
+    await api('/api/admin/students', {method:'POST', body:{
+      userid, email, password, name, grade, board, avatar: STATE.selectedAvatar,
+      account_tier: accountTier, require_password_reset: requireReset,
+    }});
+    ['new-stu-userid','new-stu-email','new-stu-password','new-stu-name'].forEach(i=>document.getElementById(i).value='');
+    await renderAdminStudentList();
+    toast('Student account created');
+  }catch(err){
+    toast(err.message || 'Could not create student');
+  }
+}
+async function deleteStudent(id){
+  if(!confirm('Remove this student account and their progress?')) return;
+  try{
+    await api(`/api/admin/students/${id}`, {method:'DELETE'});
+    await renderAdminStudentList();
+  }catch(err){
+    toast(err.message || 'Could not remove student');
+  }
+}
+let EXPANDED_GUEST_IDS = new Set();
+let EXPANDED_ENROLLMENT_IDS = new Set();
+let ENROLLMENT_CACHE = {}; // student id -> [{subject,name,icon,enrolled}, ...], fetched on demand
+
+async function renderAdminStudentList(){
+  const wrap = document.getElementById('admin-student-list');
+  if(!wrap) return;
+  let students;
+  try{ students = await api('/api/admin/students'); }
+  catch(err){ toast(err.message || 'Could not load students'); return; }
+  if(students.length===0){ wrap.innerHTML = '<p class="empty-note">No student accounts yet — add one above.</p>'; return; }
+
+  const tierColors = {guest:'#948c68', silver:'#7a7a8c', premium:'#C98A0A'};
+  wrap.innerHTML = students.map(u=>{
+    const isGuest = u.account_tier === 'guest';
+    const isOpen = EXPANDED_GUEST_IDS.has(u.id);
+    const enrollOpen = EXPANDED_ENROLLMENT_IDS.has(u.id);
+    const tierBadge = `<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:#fff;background:${tierColors[u.account_tier]||'#888'};margin-left:6px;">${escapeHtml(u.account_tier||'—')}</span>`;
+    const enrollmentList = ENROLLMENT_CACHE[u.id];
+    const enrollmentPanel = (!isGuest && enrollOpen) ? `
+      <div style="flex-basis:100%;margin-top:14px;padding-top:14px;border-top:1px solid var(--paper-line);">
+        <label style="display:block;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#948c68;margin-bottom:8px;">Enrolled subjects</label>
+        ${enrollmentList ? `
+        <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
+          ${enrollmentList.map(e => `
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;background:var(--paper-line);padding:6px 10px;border-radius:20px;cursor:pointer;">
+              <input type="checkbox" class="enroll-check-${u.id}" value="${e.subject}" ${e.enrolled?'checked':''} style="width:auto;">
+              ${e.icon||''} ${escapeHtml(e.name)}
+            </label>`).join('')}
+        </div>
+        <button class="btn-primary" onclick="saveEnrollment('${u.id}')">Save enrollment</button>
+        <p class="msg-note" id="enroll-status-${u.id}"></p>
+        ` : '<p class="empty-note">Loading…</p>'}
+      </div>` : '';
+    return `
+    <div class="user-row" style="flex-wrap:wrap;">
+      <div class="av">${u.avatar || '🦊'}</div>
+      <div class="meta"><b>${escapeHtml(u.name)}</b>${tierBadge}<span>${escapeHtml(u.userid)}${u.email ? ' · '+escapeHtml(u.email) : ''}${u.grade ? ' · Grade '+u.grade : ''}${u.board ? ' · '+u.board : ''}</span></div>
+      ${isGuest ? `<button onclick="toggleGuestUpgrade('${u.id}')">${isOpen?'Close':'Upgrade'}</button>` : `<button onclick="toggleEnrollmentPanel('${u.id}')">${enrollOpen?'Close':'Subjects'}</button>`}
+      <button onclick="deleteStudent('${u.id}')">Remove</button>
+      ${isGuest && isOpen ? `
+      <div style="flex-basis:100%;margin-top:14px;padding-top:14px;border-top:1px solid var(--paper-line);">
+        <div class="field"><label>Set password</label><input type="password" id="upgrade-pw-${u.id}" placeholder="At least 6 characters"></div>
+        <div class="field"><label>Email</label><input type="email" id="upgrade-email-${u.id}" placeholder="e.g. student@gmail.com"></div>
+        <div class="field"><label>Account tier</label>
+          <select id="upgrade-tier-${u.id}"><option value="silver">Silver</option><option value="premium">Premium</option></select>
+        </div>
+        <button class="btn-primary" onclick="submitGuestUpgrade('${u.id}')">Confirm upgrade</button>
+        <p class="msg-note" id="upgrade-status-${u.id}"></p>
+      </div>` : ''}
+      ${enrollmentPanel}
+    </div>`;
+  }).join('');
+}
+async function toggleEnrollmentPanel(id){
+  if(EXPANDED_ENROLLMENT_IDS.has(id)){
+    EXPANDED_ENROLLMENT_IDS.delete(id);
+    renderAdminStudentList();
+    return;
+  }
+  EXPANDED_ENROLLMENT_IDS.add(id);
+  delete ENROLLMENT_CACHE[id];
+  renderAdminStudentList(); // show "Loading…" immediately
+  try{
+    ENROLLMENT_CACHE[id] = await api(`/api/admin/students/${id}/enrollment`);
+  }catch(err){
+    toast(err.message || 'Could not load enrollment');
+    EXPANDED_ENROLLMENT_IDS.delete(id);
+  }
+  renderAdminStudentList();
+}
+async function saveEnrollment(id){
+  const statusEl = document.getElementById(`enroll-status-${id}`);
+  const checked = Array.from(document.querySelectorAll(`.enroll-check-${id}:checked`)).map(el => el.value);
+  try{
+    ENROLLMENT_CACHE[id] = await api(`/api/admin/students/${id}/enrollment`, {method:'PUT', body:{enrolled_subjects: checked}});
+    statusEl.textContent = 'Saved.';
+    toast('Enrollment updated');
+  }catch(err){
+    statusEl.textContent = err.message || 'Could not save enrollment';
+  }
+}
+function toggleGuestUpgrade(id){
+  if(EXPANDED_GUEST_IDS.has(id)) EXPANDED_GUEST_IDS.delete(id);
+  else EXPANDED_GUEST_IDS.add(id);
+  renderAdminStudentList();
+}
+async function submitGuestUpgrade(id){
+  const statusEl = document.getElementById(`upgrade-status-${id}`);
+  const password = document.getElementById(`upgrade-pw-${id}`).value;
+  const email = document.getElementById(`upgrade-email-${id}`).value.trim();
+  const accountTier = document.getElementById(`upgrade-tier-${id}`).value;
+  if(!password || password.length < 6){ statusEl.textContent = 'Password must be at least 6 characters.'; return; }
+  try{
+    await api(`/api/admin/students/${id}/upgrade`, {method:'PUT', body:{
+      password, account_tier: accountTier, email: email || undefined, require_password_reset: true,
+    }});
+    toast('Guest upgraded successfully');
+    EXPANDED_GUEST_IDS.delete(id);
+    await renderAdminStudentList();
+  }catch(err){
+    statusEl.textContent = err.message || 'Could not upgrade this account.';
+  }
+}
+
+/* =========================================================
+   ADMIN — bulk question upload from Excel
+   ========================================================= */
+function downloadExcelTemplate(){
+  const sample = [
+    {Subject:'chemistry', Level:1, Grade:'', Board:'CBSE', Question:'Which is the SI unit of amount of substance?',
+     OptionA:'Mole', OptionB:'Gram', OptionC:'Litre', OptionD:'Atom', Correct:'A',
+     Explanation:'Mole is the SI base unit for amount of substance.',
+     World:'', Chapter:'', Topic:'', Stage:'', CognitiveSkill:'', QuestionType:'mcq', TimeLimit:'', Hint:'',
+     Status:'published', Version:1},
+    {Subject:'physics', Level:6, Grade:'8', Board:'CBSE', Question:'What is the SI unit of force?',
+     OptionA:'Newton', OptionB:'Joule', OptionC:'Watt', OptionD:'Pascal', Correct:'A',
+     Explanation:"Force is measured in Newtons, named after Sir Isaac Newton.",
+     World:'Mechanics', Chapter:'Forces', Topic:"Newton's Laws", Stage:'1', CognitiveSkill:'Remember',
+     QuestionType:'mcq', TimeLimit:30, Hint:'Think about F = ma', Status:'published', Version:1},
+  ];
+  const ws = XLSX.utils.json_to_sheet(sample);
+  ws['!cols'] = [13,7,7,9,38,15,15,15,15,9,30,13,13,16,8,13,11,9,22,11,8].map(w=>({wch:w}));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Questions');
+  XLSX.writeFile(wb, 'question_upload_template.xlsx');
+}
+async function handleExcelUpload(evt){
+  const file = evt.target.files[0];
+  if(!file) return;
+  const statusEl = document.getElementById('excel-upload-status');
+  statusEl.textContent = 'Uploading…';
+  const form = new FormData();
+  form.append('file', file);
+  try{
+    const result = await api('/api/admin/questions/upload', {method:'POST', body:form, isForm:true});
+    statusEl.textContent = `Added ${result.added} question${result.added===1?'':'s'}${result.skipped ? `, skipped ${result.skipped} invalid row${result.skipped===1?'':'s'}` : ''}.`;
+    if(result.errors && result.errors.length){
+      statusEl.textContent += ' See console for row-level details.';
+      console.warn('Excel upload issues:', result.errors);
+    }
+    toast(`${result.added} question${result.added===1?'':'s'} added`);
+    await searchAdminQuestions(true);
+  }catch(err){
+    statusEl.textContent = err.message || 'Could not read that file — please check it is a valid Excel file.';
+  }
+  document.getElementById('admin-excel-file').value = '';
+}
+
+/* =========================================================
+   ADMIN — free-demo level caps per subject
+   ========================================================= */
+async function renderAdminSubjectCaps(){
+  const wrap = document.getElementById('admin-subject-cap-list');
+  if(!wrap) return;
+  let subjects;
+  try{ subjects = await api('/api/admin/subjects'); }
+  catch(err){ wrap.innerHTML = `<p class="empty-note">${err.message || 'Could not load subjects'}</p>`; return; }
+  wrap.innerHTML = subjects.map(s => `
+    <div class="user-row">
+      <div class="av">${s.icon || '📘'}</div>
+      <div class="meta"><b>${escapeHtml(s.name)}</b><span>${escapeHtml(s.key)}</span></div>
+      <input type="number" min="1" max="1000" id="subj-cap-${s.key}" value="${s.demo_level_cap}"
+             style="width:64px;padding:8px;border-radius:8px;border:1.5px solid var(--paper-line);text-align:center;">
+      <button onclick="saveSubjectCap('${s.key}')">Save</button>
+      <button onclick="deleteSubject('${s.key}')">Remove</button>
+    </div>`).join('');
+}
+async function saveSubjectCap(key){
+  const input = document.getElementById(`subj-cap-${key}`);
+  const cap = parseInt(input.value, 10);
+  if(!cap || cap < 1){ toast('Enter a valid level number'); return; }
+  try{
+    await api(`/api/admin/subjects/${encodeURIComponent(key)}`, {method:'PUT', body:{demo_level_cap: cap}});
+    toast(`${key} demo cap set to ${cap}`);
+  }catch(err){
+    toast(err.message || 'Could not save that cap');
+  }
+}
+async function createSubject(){
+  const statusEl = document.getElementById('new-subj-status');
+  const key = document.getElementById('new-subj-key').value.trim().toLowerCase();
+  const name = document.getElementById('new-subj-name').value.trim();
+  const icon = document.getElementById('new-subj-icon').value.trim();
+  const cap = parseInt(document.getElementById('new-subj-cap').value, 10) || 5;
+  if(!key || !name){ statusEl.textContent = 'Enter a key and display name.'; return; }
+  try{
+    await api('/api/admin/subjects', {method:'POST', body:{key, name, icon: icon || undefined, demo_level_cap: cap}});
+    statusEl.textContent = `"${name}" added.`;
+    toast('Subject added');
+    ['new-subj-key','new-subj-name','new-subj-icon'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('new-subj-cap').value = '5';
+    await renderAdminSubjectCaps();
+    await renderAdminGradeSubjectList();
+  }catch(err){
+    statusEl.textContent = err.message || 'Could not add that subject.';
+  }
+}
+async function deleteSubject(key){
+  if(!confirm(`Delete the "${key}" subject? This also removes it from every grade mapping.`)) return;
+  try{
+    await api(`/api/admin/subjects/${encodeURIComponent(key)}`, {method:'DELETE'});
+    toast('Subject deleted');
+    await renderAdminSubjectCaps();
+    await renderAdminGradeSubjectList();
+  }catch(err){
+    toast(err.message || 'Could not delete that subject');
+  }
+}
+
+/* =========================================================
+   ADMIN — grade \u2192 subject mapping
+   ========================================================= */
+async function addGradeBand(){
+  const input = document.getElementById('new-grade-band');
+  const grade = input.value.trim();
+  if(!grade){ toast('Enter a grade'); return; }
+  try{
+    await api(`/api/admin/grade-subjects/${encodeURIComponent(grade)}`, {method:'PUT', body:{subject_keys: []}});
+    input.value = '';
+    toast(`Grade ${grade} added — now pick its subjects below`);
+    await renderAdminGradeSubjectList();
+  }catch(err){
+    toast(err.message || 'Could not add that grade');
+  }
+}
+async function renderAdminGradeSubjectList(){
+  const wrap = document.getElementById('admin-grade-subject-list');
+  if(!wrap) return;
+  let mappings, allSubjects;
+  try{
+    [mappings, allSubjects] = await Promise.all([
+      api('/api/admin/grade-subjects'),
+      api('/api/admin/subjects'),
+    ]);
+  }catch(err){
+    wrap.innerHTML = `<p class="empty-note">${err.message || 'Could not load grade mappings'}</p>`;
+    return;
+  }
+  if(mappings.length === 0){
+    wrap.innerHTML = '<p class="empty-note">No grade bands configured yet — every grade currently sees every subject. Add a grade above to start restricting.</p>';
+    return;
+  }
+  wrap.innerHTML = mappings.map(m => {
+    const selectedKeys = new Set(m.subjects.map(s => s.key));
+    return `
+    <div style="margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--paper-line);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <b>Grade ${escapeHtml(m.grade)}</b>
+        <button onclick="deleteGradeBand('${m.grade}')">Remove grade</button>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+        ${allSubjects.map(s => `
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;background:var(--paper-line);padding:6px 10px;border-radius:20px;cursor:pointer;">
+            <input type="checkbox" class="grade-subj-${m.grade}" value="${s.key}" ${selectedKeys.has(s.key)?'checked':''} style="width:auto;">
+            ${s.icon||''} ${escapeHtml(s.name)}
+          </label>`).join('')}
+      </div>
+      <button class="btn-primary" onclick="saveGradeSubjects('${m.grade}')">Save Grade ${escapeHtml(m.grade)}</button>
+    </div>`;
+  }).join('');
+}
+async function saveGradeSubjects(grade){
+  const checked = Array.from(document.querySelectorAll(`.grade-subj-${grade}:checked`)).map(el => el.value);
+  try{
+    await api(`/api/admin/grade-subjects/${encodeURIComponent(grade)}`, {method:'PUT', body:{subject_keys: checked}});
+    toast(`Grade ${grade} updated`);
+  }catch(err){
+    toast(err.message || 'Could not save');
+  }
+}
+async function deleteGradeBand(grade){
+  if(!confirm(`Remove grade ${grade}'s subject mapping? It will fall back to showing every subject.`)) return;
+  try{
+    await api(`/api/admin/grade-subjects/${encodeURIComponent(grade)}`, {method:'DELETE'});
+    toast('Grade mapping removed');
+    await renderAdminGradeSubjectList();
+  }catch(err){
+    toast(err.message || 'Could not remove that grade');
+  }
+}
+
+/* =========================================================
+   ADMIN — visual theme management
+   ========================================================= */
+async function uploadTheme(){
+  const statusEl = document.getElementById('theme-upload-status');
+  const key = document.getElementById('new-theme-key').value.trim().toLowerCase();
+  const name = document.getElementById('new-theme-name').value.trim();
+  const bgInput = document.getElementById('new-theme-bg');
+  const iconsInput = document.getElementById('new-theme-icons');
+  const bgFile = bgInput.files[0];
+
+  if(!key || !name){ statusEl.textContent = 'Enter a theme key and display name.'; return; }
+  if(!bgFile){ statusEl.textContent = 'Choose a background image.'; return; }
+
+  const form = new FormData();
+  form.append('key', key);
+  form.append('name', name);
+  form.append('background', bgFile);
+  for(const f of iconsInput.files) form.append('icons', f);
+
+  statusEl.textContent = 'Uploading…';
+  try{
+    const theme = await api('/api/admin/themes', {method:'POST', body:form, isForm:true});
+    statusEl.textContent = `"${theme.name}" added successfully${theme.icon_count ? ` with ${theme.icon_count} icon${theme.icon_count===1?'':'s'}` : ''}.`;
+    toast(`Theme "${theme.name}" added`);
+    document.getElementById('new-theme-key').value = '';
+    document.getElementById('new-theme-name').value = '';
+    bgInput.value = '';
+    iconsInput.value = '';
+    await renderAdminThemeList();
+  }catch(err){
+    statusEl.textContent = err.message || 'Could not upload that theme.';
+    toast(err.message || 'Theme upload failed');
+  }
+}
+let EXPANDED_THEME_KEYS = new Set(); // which theme cards are currently showing their edit panel
+
+async function renderAdminThemeList(){
+  const wrap = document.getElementById('admin-theme-list');
+  if(!wrap) return;
+  let themes;
+  try{ themes = await api('/api/admin/themes'); }
+  catch(err){ wrap.innerHTML = `<p class="empty-note">${err.message || 'Could not load themes'}</p>`; return; }
+  if(!themes.length){ wrap.innerHTML = '<p class="empty-note">No themes uploaded yet — add one above.</p>'; return; }
+
+  wrap.innerHTML = themes.map(t => {
+    const isOpen = EXPANDED_THEME_KEYS.has(t.key);
+    const iconThumbs = Array.from({length: t.icon_count}, (_, i) => `
+      <div style="position:relative;display:inline-block;margin:0 6px 6px 0;">
+        <img src="${API_BASE}/api/themes/${encodeURIComponent(t.key)}/icons/${i}" alt=""
+             style="width:52px;height:52px;border-radius:8px;object-fit:cover;display:block;">
+        <button onclick="deleteThemeIcon('${t.key}', ${i})" title="Remove this icon"
+                style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:#E15554;color:#fff;font-size:12px;line-height:1;border:2px solid var(--paper);cursor:pointer;">✕</button>
+      </div>`).join('');
+
+    return `
+    <div class="user-row" style="flex-wrap:wrap;">
+      <img src="${API_BASE}/api/themes/${encodeURIComponent(t.key)}/background" alt=""
+           style="width:44px;height:44px;border-radius:10px;object-fit:cover;flex-shrink:0;">
+      <div class="meta"><b>${escapeHtml(t.name)}</b><span>${escapeHtml(t.key)} · ${t.icon_count} icon${t.icon_count===1?'':'s'}</span></div>
+      <button onclick="toggleThemeEdit('${t.key}')">${isOpen ? 'Close' : 'Edit'}</button>
+      <button onclick="deleteTheme('${t.key}')">Remove</button>
+      ${isOpen ? `
+      <div style="flex-basis:100%;margin-top:14px;padding-top:14px;border-top:1px solid var(--paper-line);">
+        <div class="field"><label>Display name</label><input id="edit-theme-name-${t.key}" value="${escapeHtml(t.name)}"></div>
+        <div class="field"><label>Replace background image (optional)</label><input type="file" id="edit-theme-bg-${t.key}" accept="image/*"></div>
+        <button class="btn-primary" onclick="saveThemeEdit('${t.key}')">Save changes</button>
+        <p class="msg-note" id="edit-theme-status-${t.key}"></p>
+
+        <div style="margin-top:16px;">
+          <label style="display:block;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#948c68;margin-bottom:8px;">Character icons</label>
+          <div>${iconThumbs || '<p class="empty-note">No icons yet.</p>'}</div>
+        </div>
+        <div class="field" style="margin-top:10px;"><label>Add more icons</label><input type="file" id="edit-theme-add-icons-${t.key}" accept="image/*" multiple></div>
+        <button class="btn-primary" onclick="addIconsToExistingTheme('${t.key}')">Add icons</button>
+        <p class="msg-note" id="edit-theme-icons-status-${t.key}"></p>
+      </div>` : ''}
+    </div>`;
+  }).join('');
+}
+function toggleThemeEdit(key){
+  if(EXPANDED_THEME_KEYS.has(key)) EXPANDED_THEME_KEYS.delete(key);
+  else EXPANDED_THEME_KEYS.add(key);
+  renderAdminThemeList();
+}
+async function saveThemeEdit(key){
+  const statusEl = document.getElementById(`edit-theme-status-${key}`);
+  const name = document.getElementById(`edit-theme-name-${key}`).value.trim();
+  const bgInput = document.getElementById(`edit-theme-bg-${key}`);
+  const form = new FormData();
+  if(name) form.append('name', name);
+  if(bgInput.files[0]) form.append('background', bgInput.files[0]);
+  statusEl.textContent = 'Saving…';
+  try{
+    const theme = await api(`/api/admin/themes/${encodeURIComponent(key)}`, {method:'PUT', body:form, isForm:true});
+    statusEl.textContent = `"${theme.name}" updated successfully.`;
+    toast('Theme updated');
+    bgInput.value = '';
+    await renderAdminThemeList();
+  }catch(err){
+    statusEl.textContent = err.message || 'Could not save changes.';
+    toast(err.message || 'Update failed');
+  }
+}
+async function addIconsToExistingTheme(key){
+  const statusEl = document.getElementById(`edit-theme-icons-status-${key}`);
+  const input = document.getElementById(`edit-theme-add-icons-${key}`);
+  if(!input.files.length){ statusEl.textContent = 'Choose at least one icon image.'; return; }
+  const form = new FormData();
+  for(const f of input.files) form.append('icons', f);
+  statusEl.textContent = 'Uploading…';
+  try{
+    const theme = await api(`/api/admin/themes/${encodeURIComponent(key)}/icons`, {method:'POST', body:form, isForm:true});
+    statusEl.textContent = `Now ${theme.icon_count} icon${theme.icon_count===1?'':'s'} added successfully.`;
+    toast('Icons added');
+    input.value = '';
+    await renderAdminThemeList();
+  }catch(err){
+    statusEl.textContent = err.message || 'Could not add icons.';
+    toast(err.message || 'Icon upload failed');
+  }
+}
+async function deleteThemeIcon(key, index){
+  if(!confirm('Remove this icon?')) return;
+  try{
+    await api(`/api/admin/themes/${encodeURIComponent(key)}/icons/${index}`, {method:'DELETE'});
+    toast('Icon removed');
+    await renderAdminThemeList();
+  }catch(err){
+    toast(err.message || 'Could not remove icon');
+  }
+}
+async function deleteTheme(key){
+  if(!confirm(`Delete the "${key}" theme? Students using it will fall back to Classic.`)) return;
+  try{
+    await api(`/api/admin/themes/${encodeURIComponent(key)}`, {method:'DELETE'});
+    EXPANDED_THEME_KEYS.delete(key);
+    toast('Theme deleted');
+    await renderAdminThemeList();
+  }catch(err){
+    toast(err.message || 'Could not delete theme');
+  }
+}
+
+/* =========================================================
+   ADMIN — question bank browser (see searchAdminQuestions above)
+   ========================================================= */
+async function deleteQuestion(id){
+  if(!confirm('Delete this question permanently from the bank?')) return;
+  try{
+    await api(`/api/admin/questions/${id}`, {method:'DELETE'});
+    await searchAdminQuestions(true);
+    toast('Question deleted');
+  }catch(err){
+    toast(err.message || 'Could not delete question');
+  }
+}
+let STATE_editingQuestionId = null;
+
+function openAddModal(){
+  STATE_editingQuestionId = null;
+  document.getElementById('add-modal-title').textContent = 'Add a question';
+  document.getElementById('add-modal-submit-btn').textContent = 'Save question';
+  ['new-qtext','new-optA','new-optB','new-optC','new-optD','new-expl','new-topic','new-hint','new-grade'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('new-level').value = 1;
+  document.getElementById('new-correct').value = '0';
+  populateSubjectSelect('new-subject');
+  document.getElementById('add-modal').classList.add('active');
+}
+function openEditModal(q){
+  STATE_editingQuestionId = q.id;
+  document.getElementById('add-modal-title').textContent = `Edit question #${q.id}`;
+  document.getElementById('add-modal-submit-btn').textContent = 'Save changes';
+  populateSubjectSelect('new-subject', q.subject);
+  document.getElementById('new-level').value = q.level;
+  document.getElementById('new-grade').value = q.grade || '';
+  document.querySelectorAll('input[name="new-board"]').forEach(r => r.checked = (r.value === q.board));
+  document.getElementById('new-qtext').value = q.question;
+  document.getElementById('new-optA').value = q.option_a;
+  document.getElementById('new-optB').value = q.option_b;
+  document.getElementById('new-optC').value = q.option_c;
+  document.getElementById('new-optD').value = q.option_d;
+  document.getElementById('new-correct').value = String(q.correct);
+  document.getElementById('new-expl').value = q.explanation || '';
+  document.getElementById('new-topic').value = q.topic || '';
+  document.getElementById('new-hint').value = q.hint || '';
+  document.getElementById('add-modal').classList.add('active');
+}
+function closeAddModal(){
+  document.getElementById('add-modal').classList.remove('active');
+  STATE_editingQuestionId = null;
+}
+async function submitQuestionForm(){
+  const subject = document.getElementById('new-subject').value;
+  const level = parseInt(document.getElementById('new-level').value);
+  const grade = document.getElementById('new-grade').value.trim();
+  const board = document.querySelector('input[name="new-board"]:checked').value;
+  const qtext = document.getElementById('new-qtext').value.trim();
+  const a = document.getElementById('new-optA').value.trim();
+  const b = document.getElementById('new-optB').value.trim();
+  const c = document.getElementById('new-optC').value.trim();
+  const d = document.getElementById('new-optD').value.trim();
+  const correct = parseInt(document.getElementById('new-correct').value);
+  const expl = document.getElementById('new-expl').value.trim();
+  const topic = document.getElementById('new-topic').value.trim();
+  const hint = document.getElementById('new-hint').value.trim();
+  if(!subject){ toast('Choose a subject'); return; }
+  if(!qtext || !a || !b || !c || !d){ toast('Fill in the question and all 4 options'); return; }
+  const body = {
+    level, board, question: qtext,
+    option_a:a, option_b:b, option_c:c, option_d:d, correct, explanation: expl,
+    topic: topic || undefined, hint: hint || undefined, grade: grade || undefined,
+  };
+  try{
+    if(STATE_editingQuestionId){
+      await api(`/api/admin/questions/${STATE_editingQuestionId}`, {method:'PUT', body});
+      toast('Question updated');
+    } else {
+      await api('/api/admin/questions', {method:'POST', body:{subject, ...body}});
+      toast('Question added to the bank');
+    }
+    closeAddModal();
+    await searchAdminQuestions(true);
+  }catch(err){
+    toast(err.message || 'Could not save question');
+  }
+}
+
+/* ---------- admin tabs ---------- */
+function switchAdminTab(tabId){
+  document.querySelectorAll('.admin-tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.admin-tab-btn').forEach(el => el.classList.toggle('active', el.dataset.tab === tabId));
+  document.getElementById(tabId).classList.add('active');
+}
+
+/* ---------- question search (replaces the old "load everything" browser) ---------- */
+function populateSubjectSelect(selectId, selected){
+  const sel = document.getElementById(selectId);
+  if(!sel) return;
+  const keys = (STATE.allGradeSubjectKeys && STATE.allGradeSubjectKeys.length) ? STATE.allGradeSubjectKeys : SUBJECTS.map(s=>s.key);
+  const includeAny = selectId === 'qf-subject';
+  sel.innerHTML = (includeAny ? '<option value="">Any</option>' : '') + keys.map(key => {
+    const meta = subjMeta(key) || {name: key, icon: '📘'};
+    return `<option value="${key}">${meta.icon || ''} ${escapeHtml(meta.name || key)}</option>`;
+  }).join('');
+  if(selected) sel.value = selected;
+}
+async function searchAdminQuestions(quiet){
+  const filters = {
+    subject: document.getElementById('qf-subject').value,
+    grade: document.getElementById('qf-grade').value.trim(),
+    level: document.getElementById('qf-level').value,
+    question_id: document.getElementById('qf-id').value,
+    status: document.getElementById('qf-status').value,
+    topic: document.getElementById('qf-topic').value.trim(),
+    search: document.getElementById('qf-search').value.trim(),
+  };
+  const hasAnyFilter = Object.values(filters).some(v => v);
+  const wrap = document.getElementById('admin-section');
+  if(!hasAnyFilter){
+    if(!quiet) toast('Pick at least one filter first');
+    wrap.innerHTML = '<p class="empty-note">Choose at least one filter above, then hit Search.</p>';
+    return;
+  }
+  const params = new URLSearchParams();
+  Object.entries(filters).forEach(([k,v]) => { if(v) params.set(k, v); });
+  let results;
+  try{ results = await api(`/api/admin/questions?${params.toString()}`); }
+  catch(err){ toast(err.message || 'Search failed'); return; }
+
+  if(!results.length){ wrap.innerHTML = '<p class="empty-note">No questions match those filters.</p>'; return; }
+  const letters = ['A','B','C','D'];
+  wrap.innerHTML = `<p class="msg-note" style="margin-bottom:10px;">${results.length} result${results.length===1?'':'s'}${results.length===50?' (showing first 50 — narrow your filters for more precision)':''}</p>` +
+    results.map(q => {
+      const opts = [q.option_a, q.option_b, q.option_c, q.option_d];
+      const meta = subjMeta(q.subject);
+      return `<div class="q-row">
+        <div class="optlist" style="margin-bottom:4px;">#${q.id} · ${meta ? meta.icon+' '+escapeHtml(meta.name) : escapeHtml(q.subject)} · Level ${q.level}${q.grade ? ' · Grade '+escapeHtml(q.grade) : ''} · ${q.status}</div>
+        <div class="qtxt">${escapeHtml(q.question)}</div>
+        <div class="optlist">${opts.map((o,i)=> i===q.correct ? `<b>${letters[i]}. ${escapeHtml(o)} ✓</b>` : `${letters[i]}. ${escapeHtml(o)}`).join('<br>')}</div>
+        ${q.explanation ? `<div class="optlist" style="margin-top:6px;font-style:italic;">💡 ${escapeHtml(q.explanation)}</div>` : ''}
+        <div class="qactions">
+          <button onclick='openEditModal(${JSON.stringify(q).replace(/'/g,"&apos;")})'>Edit</button>
+          <button class="del-btn" onclick="deleteQuestion(${q.id})">Delete</button>
+        </div>
+      </div>`;
+    }).join('');
+}
+function clearAdminQuestionFilters(){
+  ['qf-grade','qf-level','qf-id','qf-topic','qf-search'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('qf-subject').value = '';
+  document.getElementById('qf-status').value = '';
+  document.getElementById('admin-section').innerHTML = '<p class="empty-note">Choose at least one filter above, then hit Search.</p>';
+}
+
+/* =========================================================
+   INIT — resume a session if a token is already stored
+   ========================================================= */
+renderAvatarPicker();
+(async function init(){
+  if(!STATE.token) return;
+  try{
+    const me = await api('/api/auth/me');
+    STATE.user = {userid:me.userid, name:me.name, role:me.role, avatar:me.avatar, grade:me.grade, board:me.board, theme:me.theme || 'classic', account_tier:me.account_tier || 'silver'};
+    await loadThemes();
+    applyTheme(STATE.user.theme);
+    if(me.role === 'admin'){
+      STATE.isAdmin = true;
+      goto('screen-admin'); // show the screen regardless of whether every panel below renders cleanly
+      try{
+        await renderAdminSubjRow();
+        await searchAdminQuestions(true);
+        renderAvatarPicker();
+        await renderAdminStudentList();
+        await renderAdminThemeList();
+        await renderAdminSubjectCaps();
+        await renderAdminGradeSubjectList();
+      }catch(panelErr){
+        console.error('Admin panel failed to fully load:', panelErr);
+      }
+    } else {
+      await loadMyProgress();
+      enterHome();
+    }
+  }catch(err){
+    // stored token is invalid/expired — api() already cleared it
+    goto('screen-auth');
+  }
+})();
+</script>
+
+</body>
+</html>
