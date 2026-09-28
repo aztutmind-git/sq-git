@@ -1,418 +1,93 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<title>My Performance — SyllabusQuest</title>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>SyllabusQuest — Grade 11 & 12 Exam Trainer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-<style>
-:root{
-  --ink:#171335;
-  --ink-2:#241f52;
-  --paper:#FBF7EC;
-  --paper-line:#E7DFC9;
-  --gold:#F0B429;
-  --gold-dark:#C98A0A;
-  --white:#ffffff;
-  --muted:#8b86ad;
-  --danger:#E15554;
-  --success:#2FAE6A;
-
-  --c-chemistry:#8B5CF6;
-  --c-chemistry-d:#6D3FD6;
-  --c-physics:#2FA8E0;
-  --c-physics-d:#1C86BB;
-  --c-botany:#3FAE5C;
-  --c-botany-d:#2C8A44;
-  --c-zoology:#E08A3C;
-  --c-zoology-d:#BE6B22;
-  --c-commerce:#E0507A;
-  --c-commerce-d:#BC335C;
-  --c-accounts:#C9A227;
-  --c-accounts-d:#A5820F;
-  --c-mathematics:#5B6EE1;
-  --c-mathematics-d:#3E4FC0;
-  --c-nutrition:#F2735E;
-  --c-nutrition-d:#D0523E;
-  --c-generic:#5B8DEF;
-  --c-generic-d:#3A66C4;
-
-  /* theme defaults (Classic) — overridden per theme-* class on <body> below */
-  --theme-outer-bg: var(--ink);
-  --theme-home-bg: var(--paper);
-  --theme-accent: var(--gold);
-}
-*{box-sizing:border-box;}
-html,body{margin:0;padding:0;}
-body{
-  font-family:'Inter',system-ui,sans-serif;
-  background:var(--theme-outer-bg);
-  color:var(--ink);
-  min-height:100vh;
-  -webkit-font-smoothing:antialiased;
-  overscroll-behavior:none;
-}
-h1,h2,h3,.display{font-family:'Fredoka',sans-serif;}
-.mono{font-family:'Space Mono',monospace;}
-button{font-family:inherit;cursor:pointer;border:none;}
-input,select{font-family:inherit;}
-::-webkit-scrollbar{width:0;height:0;}
-
-/* ---------- THEMES ----------
-   Each theme swaps a few CSS variables. Applied via a class on <body>
-   (theme-garden / theme-racetrack / theme-space / theme-ocean). Classic
-   (no class) uses the :root defaults above untouched. */
-body.theme-garden{
-  --theme-outer-bg: radial-gradient(circle at 15% 10%, #eafbe7 0%, transparent 45%), radial-gradient(circle at 85% 20%, #fde8f3 0%, transparent 45%), radial-gradient(circle at 40% 90%, #e3f6e0 0%, transparent 50%), #dff2da;
-  --theme-home-bg: radial-gradient(circle at 10% 0%, #eafbe7 0%, transparent 40%), radial-gradient(circle at 90% 100%, #fdeef8 0%, transparent 45%), var(--paper);
-  --theme-accent: #4CAF6D;
-}
-body.theme-racetrack{
-  --theme-outer-bg: repeating-linear-gradient(135deg, #1c1c22 0 26px, #232328 26px 52px), linear-gradient(#141416,#141416);
-  --theme-home-bg: linear-gradient(180deg, #fff6d8 0%, var(--paper) 55%), repeating-linear-gradient(90deg, transparent 0 38px, rgba(0,0,0,0.035) 38px 40px);
-  --theme-accent: #E23D3D;
-}
-body.theme-space{
-  --theme-outer-bg: radial-gradient(1.5px 1.5px at 20% 20%, #ffffff88 50%, transparent), radial-gradient(1.5px 1.5px at 70% 60%, #ffffff66 50%, transparent), radial-gradient(2px 2px at 40% 85%, #ffffff77 50%, transparent), radial-gradient(2px 2px at 90% 30%, #ffffff55 50%, transparent), radial-gradient(circle at 30% 20%, #2b1f66, transparent 55%), #0b0824;
-  --theme-home-bg: radial-gradient(circle at 85% 0%, #ece4ff 0%, transparent 45%), radial-gradient(circle at 10% 100%, #e3ecff 0%, transparent 45%), var(--paper);
-  --theme-accent: #8B7CF6;
-}
-body.theme-ocean{
-  --theme-outer-bg: radial-gradient(circle at 20% 15%, #d6f3ff33 0%, transparent 45%), radial-gradient(circle at 80% 80%, #a0e8ff22 0%, transparent 50%), linear-gradient(180deg,#0b3f5c,#082c42);
-  --theme-home-bg: radial-gradient(circle at 90% 0%, #e0f7fb 0%, transparent 45%), radial-gradient(circle at 5% 100%, #e5f6ff 0%, transparent 45%), var(--paper);
-  --theme-accent: #2AA6C9;
-}
-
-.app{
-  max-width:480px;
-  margin:0 auto;
-  min-height:100vh;
-  background:var(--ink);
-  position:relative;
-  overflow-x:hidden;
-}
-/* On tablet/desktop widths, the app becomes a centered "phone shell" — give
-   it a shadow and let the themed outer background show around it, instead
-   of stranding a full-bleed mobile layout in the middle of a wide viewport. */
-@media (min-width:600px){
-  body{display:flex;justify-content:center;padding:24px 0;}
-  .app{
-    min-height:calc(100vh - 48px);
-    border-radius:28px;
-    box-shadow:0 30px 70px rgba(0,0,0,0.45);
-  }
-}
-
-.screen{display:none;min-height:100vh;flex-direction:column;}
-.screen.active{display:flex;}
-.icon-btn{width:38px;height:38px;border-radius:11px;background:rgba(255,255,255,0.12);color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;}
-
-/* ---------- PERFORMANCE DASHBOARD ---------- */
-#screen-performance{background:var(--theme-home-bg);color:var(--ink);min-height:100vh;}
-.perf-top{background:var(--ink);color:#fff;padding:16px 20px 20px;display:flex;align-items:center;gap:12px;}
-.perf-top .titles{flex:1;}
-.perf-top b{font-family:'Fredoka';font-size:19px;display:block;}
-.perf-top span{font-size:11.5px;color:#b6b1e0;}
-.perf-wrap{padding:18px 20px 40px;max-width:1100px;margin:0 auto;}
-.perf-hero{display:grid;grid-template-columns:1.2fr .8fr;gap:14px;margin-bottom:16px;}
-.perf-card{background:var(--white);border:1px solid var(--paper-line);border-radius:18px;padding:16px;box-shadow:0 8px 18px rgba(23,19,53,.06);}
-.perf-score{display:flex;align-items:center;gap:18px;}
-.score-ring{width:92px;height:92px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:conic-gradient(var(--gold) var(--score,0%),#eee7d6 0);position:relative;flex:0 0 auto;}
-.score-ring::after{content:"";position:absolute;inset:8px;border-radius:50%;background:var(--white);}
-.score-ring b{position:relative;z-index:1;font-family:'Fredoka';font-size:24px;}
-.perf-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
-.perf-kpi{background:var(--white);border:1px solid var(--paper-line);border-radius:15px;padding:13px;}
-.perf-kpi b{display:block;font-family:'Fredoka';font-size:22px;}
-.perf-kpi span{font-size:11px;color:var(--muted);}
-.perf-section-title{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#9a916a;margin:18px 0 9px;}
-.perf-subject{border:1px solid var(--paper-line);border-radius:17px;background:var(--white);margin-bottom:12px;overflow:hidden;}
-.perf-subj-head{display:flex;align-items:center;gap:12px;padding:14px 15px;cursor:pointer;}
-.perf-subj-icon{font-size:24px;width:44px;height:44px;flex:0 0 44px;border-radius:13px;display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 4px 10px rgba(0,0,0,.14);}
-.perf-subj-icon.has-theme-icon{background-size:cover;background-position:center;background-repeat:no-repeat;}
-.perf-subj-main{flex:1;}
-.perf-subj-main b{display:block;font-size:15px;}
-.perf-subj-main span{font-size:11px;color:var(--muted);}
-.perf-bar{height:8px;background:#eee7d6;border-radius:99px;overflow:hidden;margin-top:7px;}
-.perf-bar i{display:block;height:100%;border-radius:99px;background:var(--gold-dark);}
-.perf-score-text{font-family:'Fredoka';font-size:19px;min-width:48px;text-align:right;}
-.perf-subj-body{display:none;padding:0 15px 15px;border-top:1px solid var(--paper-line);}
-.perf-subj.open .perf-subj-body{display:block;}
-.perf-chapter{border-bottom:1px solid #eee8d9;padding:11px 0;}
-.perf-chapter:last-child{border-bottom:0;}
-.perf-chapter-head{display:flex;align-items:center;gap:8px;}
-.perf-chapter-head b{flex:1;font-size:13px;}
-.perf-chapter-head span{font-size:12px;font-weight:800;}
-.perf-mini-bar{height:5px;background:#eee7d6;border-radius:99px;margin:7px 0;}
-.perf-mini-bar i{display:block;height:100%;border-radius:99px;background:#8bbf8a;}
-.perf-topic{margin:7px 0 0 12px;padding:7px 9px;border-left:3px solid var(--paper-line);font-size:11.5px;}
-.perf-topic-row{display:flex;justify-content:space-between;gap:10px;}
-.perf-insights{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
-.perf-insight{border-radius:15px;padding:13px;background:#faf7ed;border:1px solid var(--paper-line);}
-.perf-insight b{display:block;font-size:12px;margin-bottom:7px;}
-.perf-insight p{font-size:11.5px;line-height:1.45;margin:0;color:#625b49;}
-.perf-legend{font-size:10.5px;color:var(--muted);margin:5px 0 14px;}
-.perf-unenrolled{opacity:.58;background:#f3f1eb;}
-.perf-table-wrap{overflow-x:auto;background:var(--white);border:1px solid var(--paper-line);border-radius:17px;}
-.perf-table{width:100%;border-collapse:collapse;font-size:11.5px;min-width:620px;}
-.perf-table th{padding:10px 11px;text-align:left;background:#faf7ed;color:#817963;font-size:10px;text-transform:uppercase;letter-spacing:.05em;}
-.perf-table td{padding:10px 11px;border-top:1px solid #eee8d9;}
-.perf-table .score{font-family:'Fredoka';font-size:15px;}
-.perf-stars{letter-spacing:1px;white-space:nowrap;}
-.perf-status{font-size:10px;font-weight:800;border-radius:999px;padding:4px 7px;background:#eee7d6;}
-@media(max-width:700px){
-  .perf-hero,.perf-insights{grid-template-columns:1fr;}
-  .perf-kpis{grid-template-columns:repeat(3,1fr);}
-  .perf-wrap{padding:15px 14px 30px;}
-}
-@media(min-width:900px){
-  body.performance-active .app{max-width:1100px;}
-}
-</style>
-</head>
-<body class="performance-active">
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script></head><body data-page="performance">
 <div class="app">
-<div class="screen active" id="screen-performance">
-    <div class="perf-top">
-      <button class="icon-btn" onclick="location.href='index.html'">←</button>
-      <div class="titles"><b>My Performance</b><span id="perf-subtitle">Learning overview</span></div>
-    </div>
-    <div class="perf-wrap">
-      <div class="perf-hero">
-        <div class="perf-card">
-          <div class="perf-score">
-            <div class="score-ring" id="perf-ring" style="--score:0%"><b id="perf-overall">0%</b></div>
-            <div>
-              <h2 style="margin:0 0 5px;font-family:'Fredoka';font-size:21px;">Your learning snapshot</h2>
-              <p id="perf-summary" style="margin:0;font-size:12px;line-height:1.45;color:var(--muted);">Loading your progress…</p>
-            </div>
-          </div>
-        </div>
-        <div class="perf-card">
-          <b style="font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:#9a916a;">How to read this</b>
-          <div class="perf-legend">90–100 Mastered · 80–89 Strong · 70–79 Growing · 50–69 Practice · 0–49 Needs more practice</div>
-          <div style="font-size:11.5px;line-height:1.5;color:#625b49;">Subject scores are derived from completed level stars. Chapter → topic → stage uses the question-bank metadata already attached to each question.</div>
-        </div>
-      </div>
-      <div class="perf-kpis">
-        <div class="perf-kpi"><b id="perf-subject-count">0</b><span>Enrolled subjects</span></div>
-        <div class="perf-kpi"><b id="perf-mastered">0</b><span>Mastered</span></div>
-        <div class="perf-kpi"><b id="perf-practice">0</b><span>Needs practice</span></div>
-      </div>
-      <div class="perf-section-title">Performance table</div>
-      <div class="perf-table-wrap"><table class="perf-table"><thead><tr><th>Subject</th><th>Level</th><th>Stars</th><th>Score</th><th>Status</th><th>XP</th></tr></thead><tbody id="perf-table-body"></tbody></table></div>
-      <div class="perf-section-title">Subject breakdown</div>
-      <div id="perf-subjects"></div>
-    </div>
-  </div>
+<div class="screen" id="screen-performance">
+<div class="perf-top">
+<button class="icon-btn" onclick="goto('screen-home')">←</button>
+<div class="titles">
+<b>My Performance</b>
+<span id="perf-subtitle">Your learning journey</span>
 </div>
-
-<script>
-const API_BASE = window.SQ_API_BASE || 'https://sq-git.onrender.com';
-
-const SUBJECTS = [
-  {key:'chemistry',  name:'Chemistry',   icon:'🧪', c:'--c-chemistry',   cd:'--c-chemistry-d'},
-  {key:'physics',    name:'Physics',     icon:'⚛️', c:'--c-physics',     cd:'--c-physics-d'},
-  {key:'botany',     name:'Botany',      icon:'🌿', c:'--c-botany',      cd:'--c-botany-d'},
-  {key:'zoology',    name:'Zoology',     icon:'🐾', c:'--c-zoology',     cd:'--c-zoology-d'},
-  {key:'commerce',   name:'Commerce',    icon:'💼', c:'--c-commerce',    cd:'--c-commerce-d'},
-  {key:'accounts',   name:'Accounts',    icon:'📒', c:'--c-accounts',    cd:'--c-accounts-d'},
-  {key:'mathematics',name:'Mathematics', icon:'📐', c:'--c-mathematics', cd:'--c-mathematics-d'},
-  {key:'nutrition',  name:'Nutrition',   icon:'🍎', c:'--c-nutrition',   cd:'--c-nutrition-d'},
-];
-
-const STATE = {token: localStorage.getItem('sq_token') || null, user: null, subjectMeta: {}};
-const LEGACY_GRADIENT_KEYS = ['garden','racetrack','space','ocean']; // built-in fallback look, used until/unless a real image is uploaded for that key
-let DYNAMIC_THEMES = []; // [{key, name, icon_count}, ...] — refreshed each time the picker opens
-
-function subjMeta(key){
-  const hardcoded = SUBJECTS.find(s=>s.key===key);
-  if(hardcoded) return hardcoded;
-  const dynamic = (STATE.subjectMeta || {})[key];
-  return {
-    key, name: dynamic ? dynamic.name : key, icon: dynamic ? (dynamic.icon || '📘') : '📘',
-    c: '--c-generic', cd: '--c-generic-d',
-  };
-}
-
-function currentThemeIconInfo(){
-  const key = (STATE.user && STATE.user.theme) || 'classic';
-  if(key === 'classic') return null;
-  const t = DYNAMIC_THEMES.find(t=>t.key===key);
-  if(!t || !t.icon_count) return null;
-  return {key, count: t.icon_count};
-}
-
-function escapeHtml(v){
-  return String(v ?? '').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
-}
-
-async function api(path, {method='GET', body=null, isForm=false, auth=true} = {}){
-  const headers = {};
-  if(!isForm) headers['Content-Type'] = 'application/json';
-  if(auth && STATE.token) headers['Authorization'] = `Bearer ${STATE.token}`;
-
-  const res = await fetch(`${API_BASE}${path}`, {
-    method,
-    headers,
-    body: body ? (isForm ? body : JSON.stringify(body)) : undefined,
-  });
-
-  let data = null;
-  try{ data = await res.json(); }catch(e){ /* no body */ }
-
-  if(!res.ok){
-    const msg = (data && (data.detail || data.message)) || `Request failed (${res.status})`;
-    if(res.status === 401){ handleAuthExpired(); }
-    throw new Error(typeof msg === 'string' ? msg : JSON.stringify(msg));
-  }
-  return data;
-}
-
-async function loadThemes(){
-  try{ DYNAMIC_THEMES = await api('/api/themes', {auth:false}); }
-  catch(err){ DYNAMIC_THEMES = []; }
-}
-
-function applyTheme(theme){
-  document.body.classList.remove(...LEGACY_GRADIENT_KEYS.map(k=>`theme-${k}`));
-  document.body.style.removeProperty('--theme-outer-bg');
-  document.body.style.removeProperty('--theme-home-bg');
-  if(!theme || theme === 'classic') return;
-
-  // Fallback gradient look for the 4 original keys, shown until a real
-  // image exists for them (or forever, for any brand-new custom key that
-  // doesn't match one of these — in which case there's just no fallback and
-  // the background stays blank until an image is uploaded for it).
-  if(LEGACY_GRADIENT_KEYS.includes(theme)) document.body.classList.add(`theme-${theme}`);
-
-  // A real uploaded image (a row that actually exists in DYNAMIC_THEMES,
-  // fetched fresh via loadThemes() before this runs) wins over the gradient
-  // fallback. Themes with no upload yet — e.g. a legacy key nobody has
-  // uploaded art for — correctly keep showing just the gradient instead of
-  // pointing at an image URL that would 404.
-  const hasRealUpload = DYNAMIC_THEMES.some(t => t.key === theme);
-  if(!hasRealUpload) return;
-
-  const bgUrl = `${API_BASE}/api/themes/${encodeURIComponent(theme)}/background`;
-  document.body.style.setProperty('--theme-outer-bg', `url('${bgUrl}') center/cover no-repeat`);
-  document.body.style.setProperty('--theme-home-bg', `url('${bgUrl}') center/cover no-repeat`);
-}
-
-function scoreTone(score){
-  if(score === null || score === undefined) return 'na';
-  if(score >= 90) return 'mastered';
-  if(score >= 80) return 'strong';
-  if(score >= 70) return 'growing';
-  if(score >= 50) return 'practice';
-  return 'needs';
-}
-
-async function loadPerformanceDashboard(){
-  const container=document.getElementById('perf-subjects');
-  container.innerHTML='<p class="empty-note">Loading performance…</p>';
-  try{
-    const d=await api('/api/progress/performance');
-    document.getElementById('perf-subtitle').textContent=`Grade ${d.student.grade || '—'} · ${d.student.board || '—'}`;
-    document.getElementById('perf-overall').textContent=`${d.overall_score}%`;
-    document.getElementById('perf-ring').style.setProperty('--score', `${d.overall_score}%`);
-    document.getElementById('perf-subject-count').textContent=d.enrolled_subjects;
-    document.getElementById('perf-mastered').textContent=d.mastered_subjects;
-    document.getElementById('perf-practice').textContent=d.needs_practice;
-    document.getElementById('perf-summary').textContent =
-      d.enrolled_subjects
-        ? `${d.enrolled_subjects} enrolled subject${d.enrolled_subjects===1?'':'s'} are included. Performance is calculated directly from your saved level stars and XP.`
-        : 'No subjects are enrolled yet.';
-
-    const tableBody=document.getElementById('perf-table-body');
-    const rows=d.performance_table || [];
-    tableBody.innerHTML=rows.length ? rows.map(r=>{
-      const status=r.completed ? (r.score>=90?'Mastered':r.score>=70?'Progressing':'Practice') : 'Not attempted';
-      return `<tr><td><b>${escapeHtml(r.subject)}</b></td><td>Level ${r.level}</td><td class="perf-stars">${'★'.repeat(r.stars)}${'☆'.repeat(3-r.stars)}</td><td class="score">${r.completed?r.score+'%':'—'}</td><td><span class="perf-status">${status}</span></td><td>${r.xp}</td></tr>`;
-    }).join('') : '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:18px;">No performance records yet. Complete a level to see it here.</td></tr>';
-
-    // Same subject identity + theme artwork the home grid and level map use,
-    // so the dashboard reflects the student's chosen theme instead of always
-    // showing plain emoji on a paper background.
-    const themeIcons=currentThemeIconInfo();
-    container.innerHTML=d.subjects.map((s,idx)=>{
-      const meta=subjMeta(s.key);
-      const iconHtml=themeIcons
-        ? `<div class="perf-subj-icon has-theme-icon" style="background-image:url('${API_BASE}/api/themes/${encodeURIComponent(themeIcons.key)}/icons/${idx % themeIcons.count}');"></div>`
-        : `<div class="perf-subj-icon" style="background:linear-gradient(155deg, var(${meta.c}), var(${meta.cd}));">${meta.icon || s.icon}</div>`;
-      const enrolled=s.enrolled;
-      const score=s.score;
-      const tone=scoreTone(score);
-      const chapterHtml=(s.chapters||[]).map(c=>`
-        <div class="perf-chapter">
-          <div class="perf-chapter-head"><b>${escapeHtml(c.name)}</b><span>${c.score}%</span></div>
-          <div class="perf-mini-bar"><i style="width:${Math.max(0,Math.min(100,c.score))}%"></i></div>
-          ${(c.topics||[]).map(t=>`
-            <div class="perf-topic">
-              <div class="perf-topic-row"><span>${escapeHtml(t.name)}</span><b>${t.score}%</b></div>
-              ${(t.stages||[]).map(st=>`<div style="display:flex;justify-content:space-between;margin-top:4px;color:#817963;"><span>${escapeHtml(st.name)}</span><span>${st.score}%</span></div>`).join('')}
-            </div>`).join('')}
-        </div>`).join('');
-      const strong=(s.what_went_well||[]).join(', ') || 'Keep building consistency.';
-      const improve=(s.improvement||[]).join(', ') || 'No immediate improvement area flagged.';
-      return `<div class="perf-subject ${!enrolled?'perf-unenrolled':''}" id="perf-${s.key}">
-        <div class="perf-subj-head" onclick="${enrolled?`togglePerfSubject('${s.key}')`:''}">
-          ${iconHtml}
-          <div class="perf-subj-main">
-            <b>${escapeHtml(s.name)}</b>
-            <span>${enrolled ? `${s.unlocked_level} / ${s.max_level} levels unlocked · ${tone}` : 'Not enrolled · no evaluation'}</span>
-            ${enrolled?`<div class="perf-bar"><i style="width:${score||0}%"></i></div>`:''}
-          </div>
-          <div class="perf-score-text">${enrolled?`${score}%`:'—'}</div>
-          ${enrolled?'<span>⌄</span>':''}
-        </div>
-        ${enrolled?`<div class="perf-subj-body">
-          <div class="perf-section-title" style="margin-top:13px;">Chapter → Topic → Stage</div>
-          ${chapterHtml || '<p class="empty-note">Question metadata has not been mapped yet.</p>'}
-          <div class="perf-section-title">Reflection</div>
-          <div class="perf-insights">
-            <div class="perf-insight"><b>🌱 What went well</b><p>${escapeHtml(strong)}</p></div>
-            <div class="perf-insight"><b>🧭 Improvement</b><p>${escapeHtml(improve)}</p></div>
-            <div class="perf-insight"><b>💭 Reflection</b><p>${escapeHtml(s.reflection||'Keep practising and review your next level.')}</p></div>
-          </div>
-        </div>`:''}
-      </div>`;
-    }).join('');
-  }catch(err){
-    container.innerHTML=`<p class="empty-note">${escapeHtml(err.message||'Could not load performance data.')}</p>`;
-  }
-}
-
-function togglePerfSubject(key){
-  const el=document.getElementById(`perf-${key}`);
-  if(el) el.classList.toggle('open');
-}
-
-function handleAuthExpired(){
-  STATE.token = null; STATE.user = null;
-  localStorage.removeItem('sq_token');
-}
-
-/* Resume the session stored by index.html (same origin -> same localStorage token). */
-(async function init(){
-  if(!STATE.token){ location.replace('index.html'); return; }
-  try{
-    const me = await api('/api/auth/me');
-    if(me.role === 'admin' || me.account_tier === 'guest'){ location.replace('index.html'); return; }
-    STATE.user = {name:me.name, grade:me.grade, board:me.board, theme:me.theme || 'classic', account_tier:me.account_tier};
-    await loadThemes();
-    applyTheme(STATE.user.theme);
-    try{
-      const q = me.grade ? `?grade=${encodeURIComponent(me.grade)}` : '';
-      const subs = await api(`/api/subjects${q}`, {auth:false});
-      subs.forEach(s => { STATE.subjectMeta[s.key] = {name:s.name, icon:s.icon}; });
-    }catch(e){ /* falls back to the subject data already in the performance response */ }
-    await loadPerformanceDashboard();
-  }catch(err){
-    if(!STATE.token){ location.replace('index.html'); return; }
-    document.getElementById('perf-subjects').innerHTML = `<p class="empty-note">${escapeHtml(err.message || 'Could not load performance data.')}</p>`;
-  }
-})();
-</script>
-</body>
-</html>
+</div>
+<div class="perf-wrap">
+<section class="mountain-hero">
+<div class="mountain-sun"></div>
+<div class="mountain-cloud c1"></div>
+<div class="mountain-cloud c2"></div>
+<div class="mountain-cloud c3"></div>
+<div class="mountain-cloud c4"></div>
+<div class="mountain-back"></div>
+<div class="mountain-score-card">
+<div class="small">Your overall performance</div>
+<div class="big" id="mountain-overall">0%</div>
+<div class="zone" id="mountain-zone">Loading...</div>
+<div class="message" id="mountain-message">Loading your learning journey...</div>
+</div>
+<div class="mountain">
+<div class="mountain-zone outstanding"></div>
+<div class="mountain-zone excellent"></div>
+<div class="mountain-zone good"></div>
+<div class="mountain-zone developing"></div>
+<div class="mountain-zone needs"></div>
+<div class="mountain-flag"></div>
+<div class="mountain-path"></div>
+<div class="mountain-marker m90"></div>
+<div class="mountain-marker m80"></div>
+<div class="mountain-marker m70"></div>
+<div class="mountain-marker m60"></div>
+<div class="mountain-marker m40"></div>
+<div class="student-climber" id="student-climber">🧗</div>
+</div>
+<div class="mountain-label label-outstanding"><div class="dot"></div><div><b>Outstanding</b><span>90 – 100%</span></div></div>
+<div class="mountain-label label-excellent"><div class="dot"></div><div><b>Excellent</b><span>80 – 89%</span></div></div>
+<div class="mountain-label label-good"><div class="dot"></div><div><b>Good</b><span>70 – 79%</span></div></div>
+<div class="mountain-label label-developing"><div class="dot"></div><div><b>Developing</b><span>60 – 69%</span></div></div>
+<div class="mountain-label label-needs"><div class="dot"></div><div><b>Needs Improvement</b><span>0 – 59%</span></div></div>
+<div class="mountain-bottom">
+<div class="mountain-stat">
+<b id="perf-subject-count">0</b>
+<span>Enrolled Subjects</span>
+</div>
+<div class="mountain-stat">
+<b id="perf-mastered">0</b>
+<span>Strong Subjects</span>
+</div>
+<div class="mountain-stat">
+<b id="perf-practice">0</b>
+<span>Need Practice</span>
+</div>
+</div>
+</section>
+<div class="mountain-performance-title">Subject Journey</div>
+<div class="perf-subjects-grid" id="perf-subjects">
+<div class="perf-subject-card" style="padding:25px;text-align:center;">Loading performance...</div>
+</div>
+<div class="mountain-performance-title">Level Progress</div>
+<div class="mountain-table-wrap">
+<table class="mountain-table">
+<thead>
+<tr>
+<th>Subject</th>
+<th>Level</th>
+<th>Stars</th>
+<th>Score</th>
+<th>Status</th>
+<th>XP</th>
+</tr>
+</thead>
+<tbody id="perf-table-body"></tbody>
+</table>
+</div>
+<div id="perf-summary" style="display:none;"></div>
+<div id="perf-ring" style="display:none;"></div>
+</div>
+</div>
+</div>
+<div class="toast" id="toast"></div>
+<script src="app.js"></script>
+</body></html>
