@@ -1436,8 +1436,10 @@ async function api(path, {method='GET', body=null, isForm=false, auth=true} = {}
   return data;
 }
 function handleAuthExpired(){
-  STATE.token = null; STATE.user = null;
+  STATE.token = null; STATE.user = null; STATE.progress = {};
   localStorage.removeItem('sq_token');
+  localStorage.removeItem('sq_user');
+  localStorage.removeItem('sq_progress');
 }
 
 /* =========================================================
@@ -1531,6 +1533,7 @@ async function onLoginSuccess(data){
   STATE.token = data.access_token;
   STATE.user = {userid:data.userid, name:data.name, role:data.role, avatar:data.avatar, grade:data.grade, board:data.board, theme:data.theme || 'classic', account_tier:data.account_tier || 'silver'};
   localStorage.setItem('sq_token', STATE.token);
+  localStorage.setItem('sq_user', JSON.stringify(STATE.user));
   await loadThemes();
   applyTheme(STATE.user.theme);
 }
@@ -1659,12 +1662,16 @@ async function selectTheme(theme){
 function logout(){
   STATE.token = null; STATE.user = null; STATE.progress = {};
   localStorage.removeItem('sq_token');
+  localStorage.removeItem('sq_user');
+  localStorage.removeItem('sq_progress');
   applyTheme('classic');
   goto('screen-auth');
 }
 function adminLogout(){
   STATE.token = null; STATE.user = null; STATE.isAdmin = false;
   localStorage.removeItem('sq_token');
+  localStorage.removeItem('sq_user');
+  localStorage.removeItem('sq_progress');
   goto('screen-auth');
 }
 
@@ -1718,6 +1725,7 @@ async function loadMyProgress(){
   const map = {};
   rows.forEach(r => map[r.subject] = {unlocked_level:r.unlocked_level, max_level:r.max_level, demo_level_cap:r.demo_level_cap, xp:r.xp, stars:r.stars || {}, enrolled:r.enrolled});
   STATE.progress = map;
+  try{ localStorage.setItem('sq_progress', JSON.stringify(STATE.progress)); }catch(e){}
 
   // Full grade-appropriate subject list (name/icon), so newly admin-created
   // subjects (e.g. "Science" for grade 8) render correctly even though
@@ -2072,7 +2080,10 @@ async function openSubject(key){
 
   const prog = STATE.progress[key];
   document.getElementById('map-title').textContent = s.name;
-  document.getElementById('map-sub').textContent = `${s.icon} ${prog.max_level} levels · Level ${prog.unlocked_level} unlocked`;
+  const displayUnlocked = String(STATE.user?.account_tier || '').toLowerCase() === 'premium'
+    ? prog.max_level
+    : prog.unlocked_level;
+  document.getElementById('map-sub').textContent = `${s.icon} ${prog.max_level} levels · Level ${displayUnlocked} unlocked`;
   document.getElementById('map-xp').textContent = prog.xp;
   const mapScreen = document.getElementById('screen-map');
   const theme = (STATE.user && STATE.user.theme) || 'classic';
@@ -2386,7 +2397,10 @@ function openSubjectLevelMap(key){
   const s = subjMeta(key);
   const prog = STATE.progress[key];
   document.getElementById('map-title').textContent = s.name;
-  document.getElementById('map-sub').textContent = `${s.icon} ${prog.max_level} levels · Level ${prog.unlocked_level} unlocked`;
+  const displayUnlocked = String(STATE.user?.account_tier || '').toLowerCase() === 'premium'
+    ? prog.max_level
+    : prog.unlocked_level;
+  document.getElementById('map-sub').textContent = `${s.icon} ${prog.max_level} levels · Level ${displayUnlocked} unlocked`;
   document.getElementById('map-xp').textContent = prog.xp;
   const mapScreen = document.getElementById('screen-map');
   const theme = (STATE.user && STATE.user.theme) || 'classic';
@@ -2402,6 +2416,7 @@ function renderPath(key){
   const wrap = document.getElementById('path-wrap');
   const iconInfo = currentThemeIconInfo();
   const isGuest = STATE.user.account_tier === 'guest';
+  const isPremium = String(STATE.user?.account_tier || '').toLowerCase() === 'premium';
   let html = '';
   for(let lvl=prog.max_level; lvl>=1; lvl--){
     const meta = levelMeta(lvl);
@@ -2414,7 +2429,10 @@ function renderPath(key){
     // as the single frontier node, just without the pulse (since several
     // can be available simultaneously here, not just one "next" step).
     let state;
-    if(isGuest || !isConceptLevel){
+    if(isPremium){
+      // Premium users have unrestricted access to every configured level.
+      state = stars > 0 ? 'done' : 'unlocked';
+    } else if(isGuest || !isConceptLevel){
       state = lvl < prog.unlocked_level ? 'done' : (lvl === prog.unlocked_level ? 'unlocked' : 'locked');
     } else {
       state = prog.unlocked_level >= 6 ? (stars > 0 ? 'done' : 'unlocked') : 'locked';
@@ -3333,14 +3351,25 @@ function clearAdminQuestionFilters(){
 renderAvatarPicker();
 (async function init(){
   if(!STATE.token) return;
+
+  // Restore the last known session immediately so a refresh does not throw
+  // the student back to the login screen while the API is being contacted.
+  try{
+    const cachedUser = JSON.parse(localStorage.getItem('sq_user') || 'null');
+    const cachedProgress = JSON.parse(localStorage.getItem('sq_progress') || 'null');
+    if(cachedUser) STATE.user = cachedUser;
+    if(cachedProgress) STATE.progress = cachedProgress;
+  }catch(e){}
+
   try{
     const me = await api('/api/auth/me');
     STATE.user = {userid:me.userid, name:me.name, role:me.role, avatar:me.avatar, grade:me.grade, board:me.board, theme:me.theme || 'classic', account_tier:me.account_tier || 'silver'};
+    localStorage.setItem('sq_user', JSON.stringify(STATE.user));
     await loadThemes();
     applyTheme(STATE.user.theme);
     if(me.role === 'admin'){
       STATE.isAdmin = true;
-      goto('screen-admin'); // show the screen regardless of whether every panel below renders cleanly
+      goto('screen-admin');
       try{
         await renderAdminSubjRow();
         await searchAdminQuestions(true);
@@ -3357,7 +3386,19 @@ renderAvatarPicker();
       enterHome();
     }
   }catch(err){
-    // stored token is invalid/expired — api() already cleared it
+    // Only a real authentication failure should send the user to login.
+    // Network/server errors leave the saved session intact.
+    if(STATE.token && STATE.user){
+      console.warn('Session validation failed during refresh; keeping saved session:', err);
+      try{ await loadThemes(); applyTheme(STATE.user.theme || 'classic'); }catch(e){}
+      if(STATE.user.role === 'admin'){
+        STATE.isAdmin = true;
+        goto('screen-admin');
+      }else{
+        enterHome();
+      }
+      return;
+    }
     goto('screen-auth');
   }
 })();
