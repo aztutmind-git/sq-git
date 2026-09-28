@@ -2479,8 +2479,13 @@ function renderPath(key){
         ? `<span class="lock">🔒</span>`
         : `<span class="num">${lvl}</span><span class="tag">${meta.diff}</span>`;
     }
-    let starsHtml = state!=='locked' && (state==='done' || stars>0)
-      ? `<div class="stars-row">${[1,2,3].map(i=>`<span>${i<=stars?'⭐':'☆'}</span>`).join('')}</div>` : '';
+    // Always show the 3-star progress indicator for an available level.
+    // Filled stars come from the latest merged progress; empty stars mean
+    // the level has not earned those stars yet. Locked levels keep the
+    // indicator hidden.
+    const visibleStars = Math.max(0, Math.min(3, Number(stars) || 0));
+    let starsHtml = state!=='locked'
+      ? `<div class="stars-row" aria-label="${visibleStars} of 3 stars">${[1,2,3].map(i=>`<span>${i<=visibleStars?'⭐':'☆'}</span>`).join('')}</div>` : '';
     // A concept level's real topic name (e.g. "Newton's Laws") wins over the
     // generic "Level N" fallback, once the admin has tagged questions with one.
     const conceptLabel = isConceptLevel && prog.level_labels && prog.level_labels[String(lvl)];
