@@ -328,6 +328,16 @@ body.theme-ocean{
   filter:brightness(1.08);
   transform:translateY(-1px);
 }
+.toc-map-launch{
+  display:flex;
+  justify-content:flex-end;
+  margin:-2px 0 12px;
+}
+.toc-map-launch .toc-action-map{
+  padding:12px 18px;
+  font-size:13px;
+  border-radius:12px;
+}
 
 .quiz-launch-card{max-width:440px;}
 .quiz-launch-note{background:#f8f4e8;border:1px solid #eadfbd;border-radius:14px;padding:10px 12px;font-size:13px;line-height:1.45;margin:12px 0;}
@@ -2349,7 +2359,7 @@ async function openTableOfContent(board,grade,subject){
     document.getElementById('toc-title').textContent=subject||'Table of Content'; document.getElementById('toc-subtitle').textContent=`${String(board||'').toUpperCase()} · Grade ${grade} · Question Bank`; document.getElementById('toc-xp').textContent=totalXp();
     const table=renderQuestionGroupedTable(toc); const allLevels=[...new Set(questions.map(normalizeQuestionLevel).filter(Boolean))].sort((a,b)=>a-b);
     const levelOptions=allLevels.length?allLevels.map(l=>{const m=tocStageMeta(l);return `<option value="${l}">${m.icon} Level ${l} · ${escapeHtml(m.stage)}</option>`}).join(''):'<option value="">No levels available</option>';
-    wrap.innerHTML=`<div class="toc-hero"><div class="eyebrow">📚 Student Quiz Board · Question Bank</div><h2>${escapeHtml(subject)}</h2><p>This learning roadmap is generated only from published question data: subject, world/unit, chapter and topic are grouped directly from the questions table.</p></div><div class="toc-controls"><div class="toc-control-row"><div class="toc-control"><label>Quiz level</label><select id="toc-global-level">${levelOptions}</select></div><div class="toc-control"><label>Quiz time</label><select id="toc-time-limit"><option value="5">5 minutes</option><option value="20" selected>20 minutes</option><option value="30">30 minutes</option><option value="60">60 minutes (max)</option></select></div></div><div class="toc-actions"><button class="toc-action-btn toc-action-secondary" onclick="toggleAllTocChapters(true)">Select all</button><button class="toc-action-btn toc-action-secondary" onclick="toggleAllTocChapters(false)">Clear</button><button class="toc-action-btn toc-action-primary" onclick="startSelectedTocQuiz()">▶ Start selected chapters</button><span class="toc-selection-note" id="toc-selection-note">No chapters selected</span></div></div><div class="toc-table-card"><table class="toc-table"><thead><tr><th>Subject</th><th>World / Unit</th><th>Chapter</th><th>Topic</th><th>Available levels · questions</th><th class="toc-start-cell">Start</th></tr></thead><tbody>${table||'<tr><td colspan="6"><div class="toc-status">No questions are available for this subject.</div></td></tr>'}</tbody></table></div>`;
+    wrap.innerHTML=`<div class="toc-hero"><div class="eyebrow">📚 Student Quiz Board · Question Bank</div><h2>${escapeHtml(subject)}</h2><p>This learning roadmap is generated only from published question data: subject, world/unit, chapter and topic are grouped directly from the questions table.</p></div><div class="toc-map-launch"><button class="toc-action-btn toc-action-map" onclick="openSubjectLevelMap('mathematics')">🎮 Open Gamified Level Map</button></div><div class="toc-controls"><div class="toc-control-row"><div class="toc-control"><label>Quiz level</label><select id="toc-global-level">${levelOptions}</select></div><div class="toc-control"><label>Quiz time</label><select id="toc-time-limit"><option value="5">5 minutes</option><option value="20" selected>20 minutes</option><option value="30">30 minutes</option><option value="60">60 minutes (max)</option></select></div></div><div class="toc-actions"><button class="toc-action-btn toc-action-secondary" onclick="toggleAllTocChapters(true)">Select all</button><button class="toc-action-btn toc-action-secondary" onclick="toggleAllTocChapters(false)">Clear</button><button class="toc-action-btn toc-action-primary" onclick="startSelectedTocQuiz()">▶ Start selected chapters</button><span class="toc-selection-note" id="toc-selection-note">No chapters selected</span></div></div><div class="toc-table-card"><table class="toc-table"><thead><tr><th>Subject</th><th>World / Unit</th><th>Chapter</th><th>Topic</th><th>Available levels · questions</th><th class="toc-start-cell">Start</th></tr></thead><tbody>${table||'<tr><td colspan="6"><div class="toc-status">No questions are available for this subject.</div></td></tr>'}</tbody></table></div>`;
     document.querySelectorAll('.toc-chapter-check').forEach(x=>x.addEventListener('change',onTocChapterSelectionChanged)); refreshGlobalLevelOptions(); goto('screen-toc');
   }catch(err){wrap.innerHTML=`<div class="toc-empty">Could not load questions. ${escapeHtml(err.message||'')}</div>`;goto('screen-toc');}
 }
