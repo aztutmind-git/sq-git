@@ -349,57 +349,116 @@ body.theme-ocean{
   .toc-table{min-width:850px;}
   .toc-selection-note{margin-left:0;width:100%;}
 }
-/* ---------- PERFORMANCE DASHBOARD ---------- */
-#screen-performance{background:var(--paper);color:var(--ink);min-height:100vh;}
-.perf-top{background:var(--ink);color:#fff;padding:16px 20px 20px;display:flex;align-items:center;gap:12px;}
-.perf-top .titles{flex:1;}
-.perf-top b{font-family:'Fredoka';font-size:19px;display:block;}
-.perf-top span{font-size:11.5px;color:#b6b1e0;}
-.perf-wrap{padding:18px 20px 40px;max-width:1100px;margin:0 auto;}
-.perf-hero{display:grid;grid-template-columns:1.2fr .8fr;gap:14px;margin-bottom:16px;}
-.perf-card{background:var(--white);border:1px solid var(--paper-line);border-radius:18px;padding:16px;box-shadow:0 8px 18px rgba(23,19,53,.06);}
-.perf-score{display:flex;align-items:center;gap:18px;}
-.score-ring{width:92px;height:92px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:conic-gradient(var(--gold) var(--score,0%),#eee7d6 0);position:relative;flex:0 0 auto;}
-.score-ring::after{content:"";position:absolute;inset:8px;border-radius:50%;background:var(--white);}
-.score-ring b{position:relative;z-index:1;font-family:'Fredoka';font-size:24px;}
-.perf-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
-.perf-kpi{background:var(--white);border:1px solid var(--paper-line);border-radius:15px;padding:13px;}
-.perf-kpi b{display:block;font-family:'Fredoka';font-size:22px;}
-.perf-kpi span{font-size:11px;color:var(--muted);}
-.perf-section-title{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#9a916a;margin:18px 0 9px;}
-.perf-subject{border:1px solid var(--paper-line);border-radius:17px;background:var(--white);margin-bottom:12px;overflow:hidden;}
-.perf-subj-head{display:flex;align-items:center;gap:12px;padding:14px 15px;cursor:pointer;}
-.perf-subj-icon{font-size:25px;width:38px;text-align:center;}
-.perf-subj-main{flex:1;}
-.perf-subj-main b{display:block;font-size:15px;}
-.perf-subj-main span{font-size:11px;color:var(--muted);}
-.perf-bar{height:8px;background:#eee7d6;border-radius:99px;overflow:hidden;margin-top:7px;}
-.perf-bar i{display:block;height:100%;border-radius:99px;background:var(--gold-dark);}
-.perf-score-text{font-family:'Fredoka';font-size:19px;min-width:48px;text-align:right;}
-.perf-subj-body{display:none;padding:0 15px 15px;border-top:1px solid var(--paper-line);}
-.perf-subj.open .perf-subj-body{display:block;}
-.perf-chapter{border-bottom:1px solid #eee8d9;padding:11px 0;}
-.perf-chapter:last-child{border-bottom:0;}
-.perf-chapter-head{display:flex;align-items:center;gap:8px;}
-.perf-chapter-head b{flex:1;font-size:13px;}
-.perf-chapter-head span{font-size:12px;font-weight:800;}
-.perf-mini-bar{height:5px;background:#eee7d6;border-radius:99px;margin:7px 0;}
-.perf-mini-bar i{display:block;height:100%;border-radius:99px;background:#8bbf8a;}
-.perf-topic{margin:7px 0 0 12px;padding:7px 9px;border-left:3px solid var(--paper-line);font-size:11.5px;}
-.perf-topic-row{display:flex;justify-content:space-between;gap:10px;}
-.perf-insights{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
-.perf-insight{border-radius:15px;padding:13px;background:#faf7ed;border:1px solid var(--paper-line);}
-.perf-insight b{display:block;font-size:12px;margin-bottom:7px;}
-.perf-insight p{font-size:11.5px;line-height:1.45;margin:0;color:#625b49;}
-.perf-legend{font-size:10.5px;color:var(--muted);margin:5px 0 14px;}
-.perf-unenrolled{opacity:.58;background:#f3f1eb;}
-.perf-table-wrap{overflow-x:auto;background:var(--white);border:1px solid var(--paper-line);border-radius:17px;}
-.perf-table{width:100%;border-collapse:collapse;font-size:11.5px;min-width:620px;}
-.perf-table th{padding:10px 11px;text-align:left;background:#faf7ed;color:#817963;font-size:10px;text-transform:uppercase;letter-spacing:.05em;}
-.perf-table td{padding:10px 11px;border-top:1px solid #eee8d9;}
-.perf-table .score{font-family:'Fredoka';font-size:15px;}
-.perf-stars{letter-spacing:1px;white-space:nowrap;}
-.perf-status{font-size:10px;font-weight:800;border-radius:999px;padding:4px 7px;background:#eee7d6;}
+
+/* ---------- MOUNTAIN PERFORMANCE DASHBOARD ---------- */
+#screen-performance{
+  background:linear-gradient(180deg,#dff2ff 0%,#eef8ff 35%,#fff7df 72%,#f5ead0 100%);
+  color:var(--ink);min-height:100vh;overflow-x:hidden;
+}
+#screen-performance .perf-top{
+  background:rgba(255,255,255,.88);color:var(--ink);padding:16px 20px;
+  display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(23,19,53,.08);
+  position:sticky;top:0;z-index:30;backdrop-filter:blur(12px);
+}
+#screen-performance .perf-top .titles{flex:1}
+#screen-performance .perf-top b{font-family:'Fredoka';font-size:19px;display:block}
+#screen-performance .perf-top span{font-size:11.5px;color:var(--muted)}
+#screen-performance .perf-wrap{width:min(1250px,100%);padding:24px 18px 55px;margin:0 auto}
+
+.mountain-hero{
+  position:relative;overflow:hidden;min-height:760px;border-radius:30px;
+  background:linear-gradient(180deg,#a9d9f4 0%,#d8edfa 34%,#fff2d0 67%,#f1dfbb 100%);
+  box-shadow:0 20px 45px rgba(23,19,53,.12),inset 0 1px 0 rgba(255,255,255,.8);
+}
+.mountain-sun{position:absolute;width:170px;height:170px;border-radius:50%;right:18%;top:45px;background:radial-gradient(circle,rgba(255,244,173,1),rgba(255,225,100,.75) 38%,rgba(255,220,100,0) 72%)}
+.mountain-cloud{position:absolute;border-radius:999px;background:rgba(255,255,255,.82)}
+.mountain-cloud.c1{width:180px;height:42px;left:-25px;top:135px}
+.mountain-cloud.c2{width:125px;height:30px;left:75px;top:115px}
+.mountain-cloud.c3{width:170px;height:40px;right:-35px;top:250px}
+.mountain-cloud.c4{width:110px;height:28px;right:65px;top:230px}
+.mountain-back{
+  position:absolute;left:-5%;right:-5%;bottom:0;height:430px;
+  clip-path:polygon(0 82%,10% 65%,20% 78%,31% 48%,43% 73%,55% 45%,67% 72%,80% 52%,90% 70%,100% 50%,100% 100%,0 100%);
+  background:linear-gradient(180deg,#c5d1dc,#9baabd);opacity:.58;
+}
+.mountain{
+  position:absolute;left:50%;bottom:30px;transform:translateX(-50%);width:min(680px,68vw);height:650px;
+  clip-path:polygon(50% 0%,56% 12%,64% 27%,72% 42%,82% 61%,92% 81%,100% 100%,0% 100%,8% 81%,18% 61%,28% 42%,36% 27%,44% 12%);
+  background:linear-gradient(115deg,#687486 0%,#7e766d 19%,#8f7758 35%,#628c3e 52%,#4c7938 66%,#d5b52d 82%,#f1b511 100%);
+  box-shadow:inset 30px 0 50px rgba(0,0,0,.12),inset -35px 0 50px rgba(255,255,255,.12);
+}
+.mountain-zone{position:absolute;left:50%;transform:translateX(-50%);width:100%;pointer-events:none}
+.mountain-zone.outstanding{top:0;height:25%;background:rgba(246,181,14,.72);clip-path:polygon(50% 0,100% 100%,0 100%)}
+.mountain-zone.excellent{top:25%;height:18%;background:rgba(211,220,55,.64);clip-path:polygon(33% 0,67% 0,100% 100%,0 100%)}
+.mountain-zone.good{top:43%;height:19%;background:rgba(74,127,48,.75)}
+.mountain-zone.developing{top:62%;height:18%;background:rgba(143,143,54,.70)}
+.mountain-zone.needs{top:80%;height:20%;background:rgba(139,111,78,.72)}
+.mountain-flag{position:absolute;left:50%;top:0;width:4px;height:72px;background:#654a20;transform:translateX(-50%);z-index:5}
+.mountain-flag::after{content:"";position:absolute;top:2px;left:4px;width:76px;height:38px;background:#f5b400;clip-path:polygon(0 0,100% 20%,72% 55%,100% 82%,0 100%)}
+.mountain-path{position:absolute;left:50%;top:8%;bottom:5%;width:3px;transform:translateX(-50%);background:repeating-linear-gradient(to bottom,rgba(255,255,255,.92) 0 10px,transparent 10px 19px);z-index:4}
+.mountain-marker{position:absolute;left:50%;width:27px;height:27px;border:4px solid white;border-radius:50%;transform:translate(-50%,-50%);background:#fff;box-shadow:0 4px 12px rgba(0,0,0,.25);z-index:8}
+.mountain-marker.m90{top:8%}.mountain-marker.m80{top:25%}.mountain-marker.m70{top:43%}.mountain-marker.m60{top:62%}.mountain-marker.m40{top:80%}
+.student-climber{
+  position:absolute;left:50%;transform:translate(-50%,-50%);width:62px;height:62px;border-radius:50%;
+  background:#fff;border:5px solid #f0b429;display:flex;align-items:center;justify-content:center;font-size:34px;z-index:15;
+  box-shadow:0 7px 20px rgba(0,0,0,.25),0 0 0 8px rgba(255,255,255,.28);
+  transition:top 1.2s cubic-bezier(.2,.8,.2,1),transform .3s ease;
+}
+.student-climber:hover{transform:translate(-50%,-50%) scale(1.08)}
+.student-climber::after{content:"YOU";position:absolute;top:-27px;background:var(--ink);color:#fff;font-family:'Fredoka';font-size:9px;padding:4px 8px;border-radius:999px;letter-spacing:.05em}
+.mountain-score-card{
+  position:absolute;left:34px;top:35px;width:220px;padding:18px;border-radius:22px;background:rgba(255,255,255,.86);
+  backdrop-filter:blur(12px);box-shadow:0 10px 30px rgba(23,19,53,.12);z-index:20;
+}
+.mountain-score-card .small{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#91886d}
+.mountain-score-card .big{margin-top:4px;font-family:'Fredoka';font-size:46px;line-height:1;color:var(--ink)}
+.mountain-score-card .zone{margin-top:7px;font-size:12px;font-weight:700}
+.mountain-score-card .message{margin-top:8px;font-size:11px;line-height:1.4;color:var(--muted)}
+.mountain-label{
+  position:absolute;right:7%;min-width:190px;padding:11px 17px;border-radius:999px;background:rgba(255,255,255,.78);
+  backdrop-filter:blur(8px);box-shadow:0 5px 14px rgba(23,19,53,.08);z-index:10;display:flex;align-items:center;gap:11px;
+}
+.mountain-label::before{content:"";position:absolute;right:100%;width:90px;height:2px;background:rgba(255,255,255,.85)}
+.mountain-label .dot{width:17px;height:17px;border-radius:50%;flex:0 0 auto}
+.mountain-label b{display:block;font-family:'Fredoka';font-size:15px}
+.mountain-label span{display:block;font-size:11px;color:#625b49;margin-top:2px}
+.label-outstanding{top:15%}.label-excellent{top:31%}.label-good{top:49%}.label-developing{top:67%}.label-needs{top:85%}
+.label-outstanding .dot{background:#f0b429}.label-excellent .dot{background:#91bd21}.label-good .dot{background:#7da52a}.label-developing .dot{background:#efb31a}.label-needs .dot{background:#d48742}
+.mountain-bottom{position:absolute;left:50%;bottom:17px;transform:translateX(-50%);width:min(650px,75%);display:flex;justify-content:space-between;gap:12px;z-index:20}
+.mountain-stat{flex:1;padding:11px 14px;border-radius:15px;background:rgba(255,255,255,.83);backdrop-filter:blur(10px);text-align:center;box-shadow:0 5px 15px rgba(23,19,53,.08)}
+.mountain-stat b{display:block;font-family:'Fredoka';font-size:20px;color:var(--ink)}
+.mountain-stat span{font-size:10px;color:var(--muted)}
+.mountain-performance-title{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:#8c805e;margin:25px 0 10px}
+.perf-subjects-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.perf-subject-card{background:rgba(255,255,255,.94);border:1px solid var(--paper-line);border-radius:20px;overflow:hidden;box-shadow:0 7px 18px rgba(23,19,53,.06)}
+.perf-subject-head{display:flex;align-items:center;gap:12px;padding:15px}
+.perf-subject-icon{width:45px;height:45px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;color:#fff}
+.perf-subject-main{flex:1}.perf-subject-main b{display:block;font-size:14px}.perf-subject-main span{font-size:10px;color:var(--muted)}
+.perf-subject-score{font-family:'Fredoka';font-size:21px}
+.perf-subject-bar{height:8px;background:#ece6d7;margin:0 15px 15px;border-radius:999px;overflow:hidden}
+.perf-subject-bar i{display:block;height:100%;border-radius:999px;transition:width 1s ease}
+.perf-subject-details{border-top:1px solid #eee8d9;padding:12px 15px}
+.perf-detail-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:11px;border-bottom:1px dashed #eee8d9}
+.perf-detail-row:last-child{border-bottom:0}.perf-detail-row b{font-family:'Fredoka'}
+.mountain-table-wrap{background:rgba(255,255,255,.94);border:1px solid var(--paper-line);border-radius:20px;overflow:auto;box-shadow:0 7px 18px rgba(23,19,53,.05)}
+.mountain-table{width:100%;border-collapse:collapse;min-width:650px}
+.mountain-table th{text-align:left;padding:12px;background:#faf5e7;color:#81765a;font-size:10px;text-transform:uppercase;letter-spacing:.05em}
+.mountain-table td{padding:12px;border-top:1px solid #eee8d9;font-size:12px}
+.mountain-table .stars{letter-spacing:2px}.mountain-table .score{font-family:'Fredoka';font-size:16px}
+@media(max-width:900px){
+  .mountain-hero{min-height:700px}.mountain{width:600px;height:580px;bottom:35px}.mountain-score-card{left:18px;top:18px;width:175px}
+  .mountain-score-card .big{font-size:38px}.mountain-label{right:12px;min-width:150px;padding:9px 12px}
+  .mountain-label::before{width:35px}.mountain-label b{font-size:12px}.mountain-bottom{width:90%}.perf-subjects-grid{grid-template-columns:1fr}
+}
+@media(max-width:600px){
+  #screen-performance .perf-wrap{padding:12px 10px 40px}.mountain-hero{min-height:650px;border-radius:22px}
+  .mountain{width:510px;height:520px;bottom:45px}.mountain-label{right:5px;min-width:130px;padding:7px 9px}
+  .mountain-label::before{display:none}.mountain-label b{font-size:10px}.mountain-label span{font-size:9px}
+  .mountain-score-card{width:150px;padding:13px}.mountain-score-card .big{font-size:32px}.mountain-bottom{width:94%;gap:5px}
+  .mountain-stat{padding:8px 5px}.mountain-stat b{font-size:15px}.mountain-stat span{font-size:8px}
+  .student-climber{width:50px;height:50px;font-size:27px}
+}
+
 @media(max-width:700px){
   .perf-hero,.perf-insights{grid-template-columns:1fr;}
   .perf-kpis{grid-template-columns:repeat(3,1fr);}
@@ -796,38 +855,111 @@ body.theme-ocean{
     <div class="toc-wrap" id="toc-wrap"></div>
   </div>
 
-  <!-- ================= PERFORMANCE DASHBOARD ================= -->
+
+  <!-- ================= MOUNTAIN PERFORMANCE DASHBOARD ================= -->
   <div class="screen" id="screen-performance">
+
     <div class="perf-top">
       <button class="icon-btn" onclick="goto('screen-home')">←</button>
-      <div class="titles"><b>My Performance</b><span id="perf-subtitle">Learning overview</span></div>
+      <div class="titles">
+        <b>My Performance</b>
+        <span id="perf-subtitle">Your learning journey</span>
+      </div>
     </div>
+
     <div class="perf-wrap">
-      <div class="perf-hero">
-        <div class="perf-card">
-          <div class="perf-score">
-            <div class="score-ring" id="perf-ring" style="--score:0%"><b id="perf-overall">0%</b></div>
-            <div>
-              <h2 style="margin:0 0 5px;font-family:'Fredoka';font-size:21px;">Your learning snapshot</h2>
-              <p id="perf-summary" style="margin:0;font-size:12px;line-height:1.45;color:var(--muted);">Loading your progress…</p>
-            </div>
+
+      <section class="mountain-hero">
+
+        <div class="mountain-sun"></div>
+        <div class="mountain-cloud c1"></div>
+        <div class="mountain-cloud c2"></div>
+        <div class="mountain-cloud c3"></div>
+        <div class="mountain-cloud c4"></div>
+        <div class="mountain-back"></div>
+
+        <div class="mountain-score-card">
+          <div class="small">Your overall performance</div>
+          <div class="big" id="mountain-overall">0%</div>
+          <div class="zone" id="mountain-zone">Loading...</div>
+          <div class="message" id="mountain-message">Loading your learning journey...</div>
+        </div>
+
+        <div class="mountain">
+
+          <div class="mountain-zone outstanding"></div>
+          <div class="mountain-zone excellent"></div>
+          <div class="mountain-zone good"></div>
+          <div class="mountain-zone developing"></div>
+          <div class="mountain-zone needs"></div>
+
+          <div class="mountain-flag"></div>
+          <div class="mountain-path"></div>
+
+          <div class="mountain-marker m90"></div>
+          <div class="mountain-marker m80"></div>
+          <div class="mountain-marker m70"></div>
+          <div class="mountain-marker m60"></div>
+          <div class="mountain-marker m40"></div>
+
+          <div class="student-climber" id="student-climber">🧗</div>
+
+        </div>
+
+        <div class="mountain-label label-outstanding"><div class="dot"></div><div><b>Outstanding</b><span>90 – 100%</span></div></div>
+        <div class="mountain-label label-excellent"><div class="dot"></div><div><b>Excellent</b><span>80 – 89%</span></div></div>
+        <div class="mountain-label label-good"><div class="dot"></div><div><b>Good</b><span>70 – 79%</span></div></div>
+        <div class="mountain-label label-developing"><div class="dot"></div><div><b>Developing</b><span>60 – 69%</span></div></div>
+        <div class="mountain-label label-needs"><div class="dot"></div><div><b>Needs Improvement</b><span>0 – 59%</span></div></div>
+
+        <div class="mountain-bottom">
+
+          <div class="mountain-stat">
+            <b id="perf-subject-count">0</b>
+            <span>Enrolled Subjects</span>
           </div>
+
+          <div class="mountain-stat">
+            <b id="perf-mastered">0</b>
+            <span>Strong Subjects</span>
+          </div>
+
+          <div class="mountain-stat">
+            <b id="perf-practice">0</b>
+            <span>Need Practice</span>
+          </div>
+
         </div>
-        <div class="perf-card">
-          <b style="font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:#9a916a;">How to read this</b>
-          <div class="perf-legend">90–100 Mastered · 80–89 Strong · 70–79 Growing · 50–69 Practice · 0–49 Needs more practice</div>
-          <div style="font-size:11.5px;line-height:1.5;color:#625b49;">Subject scores are derived from completed level stars. Chapter → topic → stage uses the question-bank metadata already attached to each question.</div>
-        </div>
+
+      </section>
+
+      <div class="mountain-performance-title">Subject Journey</div>
+
+      <div id="perf-subjects" class="perf-subjects-grid">
+        <div class="perf-subject-card" style="padding:25px;text-align:center;">Loading performance...</div>
       </div>
-      <div class="perf-kpis">
-        <div class="perf-kpi"><b id="perf-subject-count">0</b><span>Enrolled subjects</span></div>
-        <div class="perf-kpi"><b id="perf-mastered">0</b><span>Mastered</span></div>
-        <div class="perf-kpi"><b id="perf-practice">0</b><span>Needs practice</span></div>
+
+      <div class="mountain-performance-title">Level Progress</div>
+
+      <div class="mountain-table-wrap">
+        <table class="mountain-table">
+          <thead>
+            <tr>
+              <th>Subject</th>
+              <th>Level</th>
+              <th>Stars</th>
+              <th>Score</th>
+              <th>Status</th>
+              <th>XP</th>
+            </tr>
+          </thead>
+          <tbody id="perf-table-body"></tbody>
+        </table>
       </div>
-      <div class="perf-section-title">Performance table</div>
-      <div class="perf-table-wrap"><table class="perf-table"><thead><tr><th>Subject</th><th>Level</th><th>Stars</th><th>Score</th><th>Status</th><th>XP</th></tr></thead><tbody id="perf-table-body"></tbody></table></div>
-      <div class="perf-section-title">Subject breakdown</div>
-      <div id="perf-subjects"></div>
+
+      <div id="perf-summary" style="display:none;"></div>
+      <div id="perf-ring" style="display:none;"></div>
+
     </div>
   </div>
 
@@ -1632,17 +1764,43 @@ function renderSubjectGrid(){
 }
 
 
+
 /* =========================================================
-   PERFORMANCE DASHBOARD
+   MOUNTAIN PERFORMANCE DASHBOARD
+   Uses the existing /api/progress/performance endpoint.
    ========================================================= */
-function scoreTone(score){
-  if(score === null || score === undefined) return 'na';
-  if(score >= 90) return 'mastered';
-  if(score >= 80) return 'strong';
-  if(score >= 70) return 'growing';
-  if(score >= 50) return 'practice';
-  return 'needs';
+
+function performanceZone(score){
+  if(score === null || score === undefined){
+    return {key:'not-enrolled',name:'Not Enrolled',message:'No evaluation available yet.'};
+  }
+  score = Number(score);
+  if(score >= 90) return {key:'outstanding',name:'Outstanding',message:'You are at the summit. Keep challenging yourself!'};
+  if(score >= 80) return {key:'excellent',name:'Excellent',message:'You are climbing strongly toward the summit.'};
+  if(score >= 70) return {key:'good',name:'Good',message:'A solid climb. Keep building your skills.'};
+  if(score >= 60) return {key:'developing',name:'Developing',message:'Your progress is growing. Keep practising regularly.'};
+  return {key:'needs',name:'Needs Improvement',message:'This is your practice zone. Keep climbing!'};
 }
+
+function mountainPosition(score){
+  score = Number(score);
+  if(!Number.isFinite(score)) return 95;
+
+  const points = [
+    {score:0,pos:95},{score:40,pos:80},{score:60,pos:62},
+    {score:70,pos:43},{score:80,pos:25},{score:90,pos:8},{score:100,pos:2}
+  ];
+
+  for(let i=0;i<points.length-1;i++){
+    const a=points[i], b=points[i+1];
+    if(score>=a.score && score<=b.score){
+      const ratio=(score-a.score)/(b.score-a.score);
+      return a.pos+(b.pos-a.pos)*ratio;
+    }
+  }
+  return score<0 ? 95 : 2;
+}
+
 function openPerformance(){
   if(!STATE.user || STATE.user.account_tier === 'guest'){
     toast('Performance dashboard is available after registration.');
@@ -1651,78 +1809,198 @@ function openPerformance(){
   goto('screen-performance');
   loadPerformanceDashboard();
 }
+
 async function loadPerformanceDashboard(){
+
   const container=document.getElementById('perf-subjects');
-  container.innerHTML='<p class="empty-note">Loading performance…</p>';
+  if(!container) return;
+
+  container.innerHTML='<div class="perf-subject-card" style="padding:25px;text-align:center;">Loading your learning journey...</div>';
+
   try{
+
     const d=await api('/api/progress/performance');
-    document.getElementById('perf-subtitle').textContent=`Grade ${d.student.grade || '—'} · ${d.student.board || '—'}`;
-    document.getElementById('perf-overall').textContent=`${d.overall_score}%`;
-    document.getElementById('perf-ring').style.setProperty('--score', `${d.overall_score}%`);
-    document.getElementById('perf-subject-count').textContent=d.enrolled_subjects;
-    document.getElementById('perf-mastered').textContent=d.mastered_subjects;
-    document.getElementById('perf-practice').textContent=d.needs_practice;
-    document.getElementById('perf-summary').textContent =
-      d.enrolled_subjects
-        ? `${d.enrolled_subjects} enrolled subject${d.enrolled_subjects===1?'':'s'} are included. Performance is calculated directly from your saved level stars and XP.`
-        : 'No subjects are enrolled yet.';
+    const overall=Number(d.overall_score||0);
+    const zone=performanceZone(overall);
 
-    const tableBody=document.getElementById('perf-table-body');
-    const rows=d.performance_table || [];
-    tableBody.innerHTML=rows.length ? rows.map(r=>{
-      const status=r.completed ? (r.score>=90?'Mastered':r.score>=70?'Progressing':'Practice') : 'Not attempted';
-      return `<tr><td><b>${escapeHtml(r.subject)}</b></td><td>Level ${r.level}</td><td class="perf-stars">${'★'.repeat(r.stars)}${'☆'.repeat(3-r.stars)}</td><td class="score">${r.completed?r.score+'%':'—'}</td><td><span class="perf-status">${status}</span></td><td>${r.xp}</td></tr>`;
-    }).join('') : '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:18px;">No performance records yet. Complete a level to see it here.</td></tr>';
+    const scoreEl=document.getElementById('mountain-overall');
+    const zoneEl=document.getElementById('mountain-zone');
+    const messageEl=document.getElementById('mountain-message');
+    const climber=document.getElementById('student-climber');
 
-    container.innerHTML=d.subjects.map((s,idx)=>{
-      const enrolled=s.enrolled;
-      const score=s.score;
-      const tone=scoreTone(score);
-      const chapterHtml=(s.chapters||[]).map(c=>`
-        <div class="perf-chapter">
-          <div class="perf-chapter-head"><b>${escapeHtml(c.name)}</b><span>${c.score}%</span></div>
-          <div class="perf-mini-bar"><i style="width:${Math.max(0,Math.min(100,c.score))}%"></i></div>
-          ${(c.topics||[]).map(t=>`
-            <div class="perf-topic">
-              <div class="perf-topic-row"><span>${escapeHtml(t.name)}</span><b>${t.score}%</b></div>
-              ${(t.stages||[]).map(st=>`<div style="display:flex;justify-content:space-between;margin-top:4px;color:#817963;"><span>${escapeHtml(st.name)}</span><span>${st.score}%</span></div>`).join('')}
-            </div>`).join('')}
-        </div>`).join('');
-      const strong=(s.what_went_well||[]).join(', ') || 'Keep building consistency.';
-      const improve=(s.improvement||[]).join(', ') || 'No immediate improvement area flagged.';
-      return `<div class="perf-subject ${!enrolled?'perf-unenrolled':''}" id="perf-${s.key}">
-        <div class="perf-subj-head" onclick="${enrolled?`togglePerfSubject('${s.key}')`:''}">
-          <div class="perf-subj-icon">${s.icon}</div>
-          <div class="perf-subj-main">
-            <b>${escapeHtml(s.name)}</b>
-            <span>${enrolled ? `${s.unlocked_level} / ${s.max_level} levels unlocked · ${tone}` : 'Not enrolled · no evaluation'}</span>
-            ${enrolled?`<div class="perf-bar"><i style="width:${score||0}%"></i></div>`:''}
-          </div>
-          <div class="perf-score-text">${enrolled?`${score}%`:'—'}</div>
-          ${enrolled?'<span>⌄</span>':''}
-        </div>
-        ${enrolled?`<div class="perf-subj-body">
-          <div class="perf-section-title" style="margin-top:13px;">Chapter → Topic → Stage</div>
-          ${chapterHtml || '<p class="empty-note">Question metadata has not been mapped yet.</p>'}
-          <div class="perf-section-title">Reflection</div>
-          <div class="perf-insights">
-            <div class="perf-insight"><b>🌱 What went well</b><p>${escapeHtml(strong)}</p></div>
-            <div class="perf-insight"><b>🧭 Improvement</b><p>${escapeHtml(improve)}</p></div>
-            <div class="perf-insight"><b>💭 Reflection</b><p>${escapeHtml(s.reflection||'Keep practising and review your next level.')}</p></div>
-          </div>
-        </div>`:''}
-      </div>`;
-    }).join('');
+    if(scoreEl) scoreEl.textContent=`${overall}%`;
+    if(zoneEl) zoneEl.textContent=zone.name;
+    if(messageEl) messageEl.textContent=zone.message;
+
+    if(climber){
+      climber.style.top=`${mountainPosition(overall)}%`;
+      climber.textContent=STATE.user?.avatar || '🧗';
+    }
+
+    const subtitle=document.getElementById('perf-subtitle');
+    if(subtitle){
+      subtitle.textContent=`Grade ${d.student?.grade || STATE.user?.grade || '—'} · ${d.student?.board || STATE.user?.board || '—'}`;
+    }
+
+    document.getElementById('perf-subject-count').textContent=d.enrolled_subjects||0;
+    document.getElementById('perf-mastered').textContent=d.mastered_subjects||0;
+    document.getElementById('perf-practice').textContent=d.needs_practice||0;
+
+    renderMountainSubjects(d.subjects||[]);
+    renderMountainTable(d.performance_table||[]);
+
   }catch(err){
-    container.innerHTML=`<p class="empty-note">${escapeHtml(err.message||'Could not load performance data.')}</p>`;
+
+    console.error('Performance dashboard error:',err);
+
+    container.innerHTML=`
+      <div class="perf-subject-card" style="padding:25px;text-align:center;">
+        <b>Could not load performance</b>
+        <div style="margin-top:7px;font-size:11px;color:var(--muted);">
+          ${escapeHtml(err.message||'Please try again.')}
+        </div>
+      </div>
+    `;
   }
 }
-function togglePerfSubject(key){
-  const el=document.getElementById(`perf-${key}`);
-  if(el) el.classList.toggle('open');
+
+function renderMountainSubjects(subjects){
+
+  const container=document.getElementById('perf-subjects');
+
+  if(!subjects.length){
+    container.innerHTML=`
+      <div class="perf-subject-card" style="grid-column:1/-1;padding:25px;text-align:center;">
+        <div style="font-size:38px;">🏔️</div>
+        <b>Your mountain journey starts here</b>
+        <div style="margin-top:7px;font-size:11px;color:var(--muted);">
+          Complete a level to see your subject performance.
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML=subjects.map(s=>{
+
+    const enrolled=!!s.enrolled;
+    const score=(s.score===null || s.score===undefined) ? null : Number(s.score);
+    const zone=performanceZone(score);
+    const safeScore=score===null ? 0 : Math.max(0,Math.min(100,score));
+    const meta=subjMeta(s.key);
+    const colorVariable=meta?.c||'--c-generic';
+    const chapters=s.chapters||[];
+
+    let details='';
+
+    if(enrolled){
+
+      if(chapters.length){
+
+        details=chapters.map(c=>`
+          <div class="perf-detail-row">
+            <span>${escapeHtml(c.name||'Chapter')}</span>
+            <b>${Number(c.score||0)}%</b>
+          </div>
+        `).join('');
+
+      }else{
+
+        details=`
+          <div style="font-size:11px;color:var(--muted);padding:5px 0;">
+            Complete levels to see chapter performance.
+          </div>
+        `;
+      }
+
+    }else{
+
+      details=`
+        <div style="font-size:11px;color:var(--muted);padding:5px 0;">
+          This subject is not enrolled.
+        </div>
+      `;
+    }
+
+    return `
+      <div class="perf-subject-card">
+
+        <div class="perf-subject-head">
+
+          <div class="perf-subject-icon"
+               style="background:linear-gradient(145deg,var(${colorVariable}),rgba(23,19,53,.75));">
+            ${s.icon||'📘'}
+          </div>
+
+          <div class="perf-subject-main">
+            <b>${escapeHtml(s.name||s.key||'Subject')}</b>
+            <span>${enrolled ? zone.name : 'Not enrolled'}</span>
+          </div>
+
+          <div class="perf-subject-score">
+            ${enrolled && score!==null ? `${score}%` : '—'}
+          </div>
+
+        </div>
+
+        <div class="perf-subject-bar">
+          <i style="width:${safeScore}%;background:var(${colorVariable});"></i>
+        </div>
+
+        <div class="perf-subject-details">
+          ${details}
+        </div>
+
+      </div>
+    `;
+
+  }).join('');
 }
-function escapeHtml(v){
-  return String(v ?? '').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+
+function renderMountainTable(rows){
+
+  const body=document.getElementById('perf-table-body');
+  if(!body) return;
+
+  if(!rows.length){
+    body.innerHTML=`
+      <tr>
+        <td colspan="6" style="text-align:center;padding:25px;color:var(--muted);">
+          Complete a level to see your progress here.
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  body.innerHTML=rows.map(r=>{
+
+    const starsCount=Math.max(0,Math.min(3,Number(r.stars||0)));
+    const stars=`${'★'.repeat(starsCount)}${'☆'.repeat(3-starsCount)}`;
+    const score=r.completed ? Number(r.score||0) : null;
+
+    let status='Not attempted';
+
+    if(r.completed){
+      if(score>=90) status='Outstanding';
+      else if(score>=80) status='Excellent';
+      else if(score>=70) status='Good';
+      else if(score>=60) status='Developing';
+      else status='Needs improvement';
+    }
+
+    return `
+      <tr>
+        <td><b>${escapeHtml(r.subject||'Subject')}</b></td>
+        <td>Level ${r.level}</td>
+        <td class="stars">${stars}</td>
+        <td class="score">${r.completed ? `${score}%` : '—'}</td>
+        <td>${status}</td>
+        <td>${Number(r.xp||0)}</td>
+      </tr>
+    `;
+
+  }).join('');
 }
 
 /* =========================================================
