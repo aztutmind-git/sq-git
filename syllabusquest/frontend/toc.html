@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>SyllabusQuest — Grade 11 & 12 Exam Trainer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script></head><body data-page="toc">
+<div class="app">
+<div class="screen" id="screen-toc">
+<div class="toc-top">
+<button class="icon-btn" onclick="goto('screen-home')">←</button>
+<div class="titles">
+<b id="toc-title">Table of Content</b>
+<span id="toc-subtitle">CBSE · Grade 11 · Mathematics</span>
+</div>
+<div class="xp-pill">⚡ <span id="toc-xp">0</span></div>
+</div>
+<div class="toc-wrap" id="toc-wrap"></div>
+</div>
+</div>
+<div class="modal" id="quiz-launch-modal">
+<div class="modal-card quiz-launch-card" style="position:relative;">
+<button class="close-x" onclick="closeQuizLaunchModal()">✕</button>
+<h3 id="quiz-launch-title">Start Level</h3>
+<p class="quiz-launch-note" id="quiz-launch-note"></p>
+<div id="quiz-time-picker">
+<label style="font-weight:800;display:block;margin-bottom:6px;">Choose quiz time</label>
+<div class="quiz-time-grid">
+<button class="quiz-time-btn" onclick="confirmQuizLaunch(5)"><strong>5 min</strong><span>5 questions</span></button>
+<button class="quiz-time-btn" onclick="confirmQuizLaunch(10)"><strong>10 min</strong><span>10 questions</span></button>
+<button class="quiz-time-btn" onclick="confirmQuizLaunch(20)"><strong>20 min</strong><span>20 questions</span></button>
+<button class="quiz-time-btn" onclick="confirmQuizLaunch(30)"><strong>30 min</strong><span>30 questions</span></button>
+</div>
+</div>
+<div id="quiz-resume-actions" style="display:none;gap:8px;flex-direction:column;">
+<button class="btn-primary btn-gold" onclick="resumeSavedQuiz()">▶ Resume where I stopped</button>
+<button class="result-action-secondary" onclick="retakeSavedQuiz()">🔄 Retake from the beginning</button>
+<button class="result-action-secondary" onclick="closeQuizLaunchModal()">Cancel</button>
+</div>
+</div>
+</div>
+<div class="toast" id="toast"></div>
+<script src="app.js"></script>
+</body></html>

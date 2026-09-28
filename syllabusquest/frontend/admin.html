@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>SyllabusQuest — Grade 11 & 12 Exam Trainer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script></head><body data-page="admin">
+<div class="app">
+<div class="screen" id="screen-admin-login">
+<div class="admin-box">
+<h2>Admin console</h2>
+<p>Manage the question bank — add or remove questions per subject and level.</p>
+<div class="field"><label>Admin user ID</label><input id="admin-userid" onkeydown="if(event.key==='Enter')document.getElementById('admin-pw').focus()" placeholder="e.g. admin"/></div>
+<div class="field"><label>Admin password</label><input id="admin-pw" onkeydown="if(event.key==='Enter')adminLogin()" placeholder="••••••••" type="password"/></div>
+<button class="btn-primary" onclick="adminLogin()">Enter console</button>
+<button class="admin-link" onclick="openForgotModal()" style="margin-top:14px;">Forgot password?</button>
+<button class="admin-link" onclick="goto('screen-auth')">← Back to student login</button>
+</div>
+</div>
+<div class="screen" id="screen-admin">
+<div class="admin-top">
+<b>Admin console</b>
+<button class="topbar-btn" onclick="adminLogout()">Log out</button>
+</div>
+<div class="admin-tabs" id="admin-tabs">
+<button class="admin-tab-btn active" data-tab="tab-students" onclick="switchAdminTab('tab-students')">👤 Students</button>
+<button class="admin-tab-btn" data-tab="tab-questions" onclick="switchAdminTab('tab-questions')">📚 Questions</button>
+<button class="admin-tab-btn" data-tab="tab-subjects" onclick="switchAdminTab('tab-subjects')">🧭 Subjects &amp; Grades</button>
+<button class="admin-tab-btn" data-tab="tab-themes" onclick="switchAdminTab('tab-themes')">🎨 Themes</button>
+</div>
+<div class="admin-tab-content active" id="tab-students">
+<div class="admin-pay-settings" id="admin-students">
+<h4>Student accounts</h4>
+<div class="two-col">
+<div class="field"><label>User ID</label><input id="new-stu-userid" placeholder="e.g. ananya11"/></div>
+<div class="field"><label>Password</label><input id="new-stu-password" placeholder="Set a password"/></div>
+</div>
+<div class="field"><label>Full name</label><input id="new-stu-name" placeholder="e.g. Ananya Rao"/></div>
+<div class="field"><label>Email (for password reset)</label><input id="new-stu-email" placeholder="e.g. ananya@gmail.com" type="email"/></div>
+<div class="two-col">
+<div class="field"><label>Grade</label>
+<select id="new-stu-grade"><option value="6">Grade 6</option><option value="10">Grade 10</option><option value="11">Grade 11</option><option value="12">Grade 12</option></select>
+</div>
+<div class="field"><label>Board</label>
+<select id="new-stu-board"><option>CBSE</option><option>IB</option><option>IGCSE</option></select>
+</div>
+</div>
+<div class="field"><label>Avatar</label>
+<div class="avatar-row" id="admin-avatar-row"></div>
+</div>
+<div class="field"><label>Account tier</label>
+<select id="new-stu-tier"><option value="silver">Silver</option><option value="premium">Premium</option></select>
+</div>
+<div class="field" style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+<input checked="" id="new-stu-force-reset" style="width:auto;" type="checkbox"/>
+<label style="margin:0;text-transform:none;font-weight:600;font-size:12.5px;color:var(--ink);letter-spacing:normal;">Require password reset on first login</label>
+</div>
+<button class="btn-primary" onclick="addStudent()">Add student</button>
+<div class="existing-users" id="admin-student-list" style="margin-top:14px;"></div>
+</div>
+</div>
+<div class="admin-tab-content" id="tab-questions">
+<div class="admin-pay-settings" id="admin-upload">
+<h4>Upload questions from Excel</h4>
+<p class="pay-opt-hint" style="margin:-2px 0 12px;">The Level column decides which level in the map a question appears in. See the downloaded template for every supported column.</p>
+<div class="qr-upload-row">
+<input accept=".xlsx,.xls,.csv" id="admin-excel-file" onchange="handleExcelUpload(event)" type="file"/>
+<button class="link-btn" onclick="downloadExcelTemplate()" type="button">Download template</button>
+</div>
+<p class="msg-note" id="excel-upload-status"></p>
+</div>
+<div class="admin-pay-settings" id="admin-question-search">
+<h4>Find questions</h4>
+<p class="pay-opt-hint" style="margin:-2px 0 12px;">Search instead of browsing everything — pick at least one filter and hit Search.</p>
+<div class="two-col">
+<div class="field"><label>Subject</label>
+<select id="qf-subject"><option value="">Any</option></select>
+</div>
+<div class="field"><label>Grade</label><input id="qf-grade" placeholder="e.g. 9"/></div>
+</div>
+<div class="two-col">
+<div class="field"><label>Level</label><input id="qf-level" min="1" placeholder="e.g. 6" type="number"/></div>
+<div class="field"><label>Question ID</label><input id="qf-id" placeholder="e.g. 42" type="number"/></div>
+</div>
+<div class="two-col">
+<div class="field"><label>Status</label>
+<select id="qf-status"><option value="">Any</option><option value="published">Published</option><option value="draft">Draft</option></select>
+</div>
+<div class="field"><label>Topic contains</label><input id="qf-topic" placeholder="e.g. Newton"/></div>
+</div>
+<div class="field"><label>Question text contains</label><input id="qf-search" placeholder="Search question wording"/></div>
+<button class="btn-primary" onclick="searchAdminQuestions()">Search</button>
+<button class="admin-link" onclick="clearAdminQuestionFilters()">Clear filters</button>
+<button class="btn-primary" onclick="openAddModal()" style="background:var(--gold-dark, #C98A0A);margin-top:14px;">+ Add new question</button>
+<div id="admin-section" style="margin-top:16px;"></div>
+</div>
+</div>
+<div class="admin-tab-content" id="tab-subjects">
+<div class="admin-pay-settings" id="admin-subjects">
+<h4>Subjects</h4>
+<p class="pay-opt-hint" style="margin:-2px 0 12px;">Add subjects here (e.g. "Science" or "Social Studies" for younger grades) — the demo-cap number is how many levels a guest can play before being asked to register; Silver/Premium always have full access.</p>
+<div class="field"><label>Key (lowercase, e.g. science)</label><input id="new-subj-key" placeholder="science"/></div>
+<div class="field"><label>Display name</label><input id="new-subj-name" placeholder="Science"/></div>
+<div class="field"><label>Icon (one emoji)</label><input id="new-subj-icon" placeholder="🔬"/></div>
+<div class="field"><label>Demo level cap</label><input id="new-subj-cap" min="1" style="width:80px;" type="number" value="5"/></div>
+<button class="btn-primary" onclick="createSubject()">Add subject</button>
+<p class="msg-note" id="new-subj-status"></p>
+<div id="admin-subject-cap-list" style="margin-top:14px;"></div>
+</div>
+<div class="admin-pay-settings" id="admin-grade-subjects">
+<h4>Grade → Subject mapping</h4>
+<p class="pay-opt-hint" style="margin:-2px 0 12px;">Which subjects are offered for each grade — e.g. grade 8 might get Mathematics/Science/Social Studies, while grade 12 gets Chemistry/Physics/Accounts. This drives the guest demo form and what a newly-created student sees. A grade with no mapping here shows every subject (safe default until you configure it).</p>
+<div class="field"><label>Add a grade band</label>
+<div style="display:flex;gap:8px;">
+<input id="new-grade-band" placeholder="e.g. 8" style="flex:1;"/>
+<button onclick="addGradeBand()">Add</button>
+</div>
+</div>
+<div id="admin-grade-subject-list"></div>
+</div>
+</div>
+<div class="admin-tab-content" id="tab-themes">
+<div class="admin-pay-settings" id="admin-themes">
+<h4>Visual themes</h4>
+<p class="pay-opt-hint" style="margin:-2px 0 12px;">Upload a background scene (no numbers/path baked in) and, optionally, a few character icons — these get cycled through as level markers. Students pick from whatever themes exist here, plus the built-in Classic look.</p>
+<div class="field"><label>Theme key</label><input id="new-theme-key" placeholder="e.g. race-track (lowercase, no spaces)"/></div>
+<div class="field"><label>Display name</label><input id="new-theme-name" placeholder="e.g. Race Track"/></div>
+<div class="field"><label>Background image</label><input accept="image/*" id="new-theme-bg" type="file"/></div>
+<div class="field"><label>Character icons (optional, select multiple)</label><input accept="image/*" id="new-theme-icons" multiple="" type="file"/></div>
+<button class="btn-primary" onclick="uploadTheme()">Upload theme</button>
+<p class="msg-note" id="theme-upload-status"></p>
+<div id="admin-theme-list" style="margin-top:14px;"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="modal" id="add-modal">
+<div class="modal-card" style="position:relative;">
+<button class="close-x" onclick="closeAddModal()">✕</button>
+<h3 id="add-modal-title">Add a question</h3>
+<div class="field"><label>Subject</label>
+<select id="new-subject"></select>
+</div>
+<div class="field"><label>Level (1 = easiest — no upper limit)</label>
+<input id="new-level" min="1" placeholder="e.g. 1, 5, 12..." step="1" type="number" value="1"/>
+</div>
+<div class="field"><label>Grade (optional — leave blank to show to every grade)</label>
+<input id="new-grade" placeholder="e.g. 8"/>
+</div>
+<div class="field"><label>Board</label>
+<div class="radio-row">
+<label><input checked="" name="new-board" type="radio" value="CBSE"/> CBSE</label>
+<label><input name="new-board" type="radio" value="IB"/> IB</label>
+<label><input name="new-board" type="radio" value="IGCSE"/> IGCSE</label>
+</div>
+</div>
+<div class="field"><label>Question</label><input id="new-qtext" placeholder="Type the question..."/></div>
+<div class="field"><label>Option A</label><input id="new-optA"/></div>
+<div class="field"><label>Option B</label><input id="new-optB"/></div>
+<div class="field"><label>Option C</label><input id="new-optC"/></div>
+<div class="field"><label>Option D</label><input id="new-optD"/></div>
+<div class="field"><label>Correct option</label>
+<select id="new-correct"><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option></select>
+</div>
+<div class="field"><label>Explanation (shown to students after they answer)</label><input id="new-expl" placeholder="Why is this the correct answer?"/></div>
+<div class="field"><label>Topic (used as the level's name for Level 6+, optional otherwise)</label><input id="new-topic" placeholder="e.g. Newton's Laws"/></div>
+<div class="field"><label>Hint (optional, shown to students during the quiz)</label><input id="new-hint" placeholder="A nudge in the right direction"/></div>
+<button class="btn-primary" id="add-modal-submit-btn" onclick="submitQuestionForm()">Save question</button>
+</div>
+</div>
+<div class="modal" id="forgot-modal">
+<div class="modal-card" style="position:relative;">
+<button class="close-x" onclick="closeForgotModal()">✕</button>
+<h3>Reset your password</h3>
+<div id="forgot-step-request">
+<div class="field"><label>User ID</label><input id="forgot-userid" onkeydown="if(event.key==='Enter')requestPasswordReset()" placeholder="Your user ID"/></div>
+<button class="btn-primary" onclick="requestPasswordReset()">Send reset link</button>
+<p class="msg-note">We'll email you a link if that user ID has an account on file.</p>
+</div>
+<div class="hidden" id="forgot-step-reset">
+<p class="msg-note" id="forgot-dev-note" style="margin-bottom:10px;"></p>
+<div class="field"><label>New password</label><input id="forgot-new-password" placeholder="At least 6 characters" type="password"/></div>
+<button class="btn-primary" onclick="submitPasswordReset()">Set new password</button>
+</div>
+</div>
+</div>
+<div class="toast" id="toast"></div>
+<script src="app.js"></script>
+</body></html>
