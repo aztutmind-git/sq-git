@@ -319,6 +319,34 @@ body.theme-ocean{
 .toc-control select{width:100%;padding:10px 11px;border:1px solid #d9d1bd;border-radius:10px;background:#fff;color:var(--ink);font-weight:700;font-size:12px;}
 .toc-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px;}
 .toc-action-btn{border:0;border-radius:10px;padding:10px 13px;font-weight:800;font-size:12px;cursor:pointer;}
+.toc-action-map{
+  background:linear-gradient(135deg,#123653,#0d5276);
+  color:#fff;
+  box-shadow:0 3px 0 #092d45;
+}
+.toc-action-map:hover{
+  filter:brightness(1.08);
+  transform:translateY(-1px);
+}
+.toc-map-launch{
+  display:flex;
+  justify-content:flex-end;
+  margin:-2px 0 12px;
+}
+.toc-map-launch .toc-action-map{
+  padding:12px 18px;
+  font-size:13px;
+  border-radius:12px;
+}
+
+.quiz-launch-card{max-width:440px;}
+.quiz-launch-note{background:#f8f4e8;border:1px solid #eadfbd;border-radius:14px;padding:10px 12px;font-size:13px;line-height:1.45;margin:12px 0;}
+.quiz-time-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:14px 0;}
+.quiz-time-btn{border:2px solid #d9d0b8;background:#fffdf7;border-radius:14px;padding:13px 10px;font-weight:900;cursor:pointer;}
+.quiz-time-btn:hover{border-color:#123653;transform:translateY(-1px);}
+.quiz-time-btn strong{display:block;font-size:18px;color:#123653;}
+.quiz-time-btn span{font-size:11px;color:#756f61;}
+
 .toc-action-primary{background:linear-gradient(135deg,var(--gold),#d79a16);color:#fff;box-shadow:0 3px 0 #a8750d;}
 .toc-action-secondary{background:#edf5fb;color:#16466a;border:1px solid #d7e8f4;}
 .toc-selection-note{font-size:11px;color:#746b57;margin-left:auto;}
@@ -1151,6 +1179,29 @@ body.theme-ocean{
 
 </div>
 
+<!-- QUIZ LAUNCH / RESUME -->
+<div class="modal" id="quiz-launch-modal">
+  <div class="modal-card quiz-launch-card" style="position:relative;">
+    <button class="close-x" onclick="closeQuizLaunchModal()">✕</button>
+    <h3 id="quiz-launch-title">Start Level</h3>
+    <p id="quiz-launch-note" class="quiz-launch-note"></p>
+    <div id="quiz-time-picker">
+      <label style="font-weight:800;display:block;margin-bottom:6px;">Choose quiz time</label>
+      <div class="quiz-time-grid">
+        <button class="quiz-time-btn" onclick="confirmQuizLaunch(5)"><strong>5 min</strong><span>5 questions</span></button>
+        <button class="quiz-time-btn" onclick="confirmQuizLaunch(10)"><strong>10 min</strong><span>10 questions</span></button>
+        <button class="quiz-time-btn" onclick="confirmQuizLaunch(20)"><strong>20 min</strong><span>20 questions</span></button>
+        <button class="quiz-time-btn" onclick="confirmQuizLaunch(30)"><strong>30 min</strong><span>30 questions</span></button>
+      </div>
+    </div>
+    <div id="quiz-resume-actions" style="display:none;gap:8px;flex-direction:column;">
+      <button class="btn-primary btn-gold" onclick="resumeSavedQuiz()">▶ Resume where I stopped</button>
+      <button class="result-action-secondary" onclick="retakeSavedQuiz()">🔄 Retake from the beginning</button>
+      <button class="result-action-secondary" onclick="closeQuizLaunchModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <!-- RESULT OVERLAY -->
 <div class="overlay" id="result-overlay">
   <div class="result-sheet">
@@ -1385,8 +1436,10 @@ async function api(path, {method='GET', body=null, isForm=false, auth=true} = {}
   return data;
 }
 function handleAuthExpired(){
-  STATE.token = null; STATE.user = null;
+  STATE.token = null; STATE.user = null; STATE.progress = {};
   localStorage.removeItem('sq_token');
+  localStorage.removeItem('sq_user');
+  localStorage.removeItem('sq_progress');
 }
 
 /* =========================================================
@@ -1480,6 +1533,7 @@ async function onLoginSuccess(data){
   STATE.token = data.access_token;
   STATE.user = {userid:data.userid, name:data.name, role:data.role, avatar:data.avatar, grade:data.grade, board:data.board, theme:data.theme || 'classic', account_tier:data.account_tier || 'silver'};
   localStorage.setItem('sq_token', STATE.token);
+  localStorage.setItem('sq_user', JSON.stringify(STATE.user));
   await loadThemes();
   applyTheme(STATE.user.theme);
 }
@@ -1608,12 +1662,16 @@ async function selectTheme(theme){
 function logout(){
   STATE.token = null; STATE.user = null; STATE.progress = {};
   localStorage.removeItem('sq_token');
+  localStorage.removeItem('sq_user');
+  localStorage.removeItem('sq_progress');
   applyTheme('classic');
   goto('screen-auth');
 }
 function adminLogout(){
   STATE.token = null; STATE.user = null; STATE.isAdmin = false;
   localStorage.removeItem('sq_token');
+  localStorage.removeItem('sq_user');
+  localStorage.removeItem('sq_progress');
   goto('screen-auth');
 }
 
@@ -1664,9 +1722,35 @@ async function submitPasswordReset(){
    ========================================================= */
 async function loadMyProgress(){
   const rows = await api('/api/progress');
+  let savedLocal = {};
+  try{ savedLocal = JSON.parse(localStorage.getItem('sq_progress') || '{}') || {}; }catch(e){}
   const map = {};
-  rows.forEach(r => map[r.subject] = {unlocked_level:r.unlocked_level, max_level:r.max_level, demo_level_cap:r.demo_level_cap, xp:r.xp, stars:r.stars || {}, enrolled:r.enrolled});
+  rows.forEach(r => {
+    const local = savedLocal[r.subject] || {};
+    const serverStars = r.stars || {};
+    const localStars = local.stars || {};
+    const mergedStars = {...localStars, ...serverStars};
+    Object.keys(serverStars).forEach(k => {
+      mergedStars[k] = Math.max(Number(localStars[k] || 0), Number(serverStars[k] || 0));
+    });
+    const isPremium = String(STATE.user?.account_tier || '').toLowerCase() === 'premium';
+    const serverMax = Number(r.max_level || 0);
+    // Premium accounts can use every configured level. Keep the normal
+    // five-level roadmap as the minimum, while preserving a larger server
+    // configured maximum when one exists.
+    const effectiveMax = isPremium ? Math.max(serverMax, 5) : serverMax;
+    map[r.subject] = {
+      ...local,
+      ...r,
+      unlocked_level: isPremium ? Math.max(Number(r.unlocked_level || 1), effectiveMax) : Number(r.unlocked_level || local.unlocked_level || 1),
+      max_level: effectiveMax,
+      xp: Math.max(Number(local.xp || 0), Number(r.xp || 0)),
+      stars: mergedStars,
+      enrolled:r.enrolled,
+    };
+  });
   STATE.progress = map;
+  try{ localStorage.setItem('sq_progress', JSON.stringify(STATE.progress)); }catch(e){}
 
   // Full grade-appropriate subject list (name/icon), so newly admin-created
   // subjects (e.g. "Science" for grade 8) render correctly even though
@@ -1975,8 +2059,8 @@ function renderMountainTable(rows){
 
   body.innerHTML=rows.map(r=>{
 
-    const starsCount=Math.max(0,Math.min(3,Number(r.stars||0)));
-    const stars=`${'★'.repeat(starsCount)}${'☆'.repeat(3-starsCount)}`;
+    const starsCount=Math.max(0,Math.min(5,Number(r.stars||0)));
+    const stars=`${'★'.repeat(starsCount)}${'☆'.repeat(5-starsCount)}`;
     const score=r.completed ? Number(r.score||0) : null;
 
     let status='Not attempted';
@@ -2021,7 +2105,10 @@ async function openSubject(key){
 
   const prog = STATE.progress[key];
   document.getElementById('map-title').textContent = s.name;
-  document.getElementById('map-sub').textContent = `${s.icon} ${prog.max_level} levels · Level ${prog.unlocked_level} unlocked`;
+  const displayUnlocked = String(STATE.user?.account_tier || '').toLowerCase() === 'premium'
+    ? prog.max_level
+    : prog.unlocked_level;
+  document.getElementById('map-sub').textContent = `${s.icon} ${prog.max_level} levels · Level ${displayUnlocked} unlocked`;
   document.getElementById('map-xp').textContent = prog.xp;
   const mapScreen = document.getElementById('screen-map');
   const theme = (STATE.user && STATE.user.theme) || 'classic';
@@ -2187,21 +2274,125 @@ function startSingleChapterFromRow(button){
 
 function getQuizMinutes(){return Number(document.getElementById('toc-time-limit')?.value||20);}
 
+function quizSessionKey(subject, level, chapters){
+  const ch = [...new Set((chapters||[]).filter(Boolean).map(String))].sort();
+  return `sq_quiz_${String(subject||'').toLowerCase()}_${Number(level)||0}_${ch.join('|').toLowerCase()}`;
+}
+function saveQuizSession(){
+  const q=STATE.quiz; if(!q) return;
+  const copy={...q,timerId:null};
+  try{ localStorage.setItem(quizSessionKey(q.subject,q.level,q.chapters||[]),JSON.stringify(copy)); }catch(e){console.warn('Could not save quiz session',e);}
+}
+function loadQuizSession(subject,level,chapters){
+  try{const raw=localStorage.getItem(quizSessionKey(subject,level,chapters)); return raw?JSON.parse(raw):null;}catch(e){return null;}
+}
+function clearQuizSession(q=STATE.quiz){
+  if(!q) return;
+  try{localStorage.removeItem(quizSessionKey(q.subject,q.level,q.chapters||[]));}catch(e){}
+}
+function hasSavedQuiz(subject,level,chapters){
+  const q=loadQuizSession(subject,level,chapters);
+  return !!(q && Array.isArray(q.questions) && q.questions.length && !q.levelComplete);
+}
+
+function questionsForMinutes(pool,minutes){
+  const count=Math.max(1,Math.min(60,Number(minutes)||5));
+  return pool.slice(0,count);
+}
+
+function beginQuizFromPool({subject,level,chapters,allQuestions,minutes,resume=false}){
+  const clean=[...new Set((chapters||[]).filter(Boolean))];
+  if(resume){
+    const saved=loadQuizSession(subject,level,clean);
+    if(saved){
+      STATE.quiz=saved;
+      STATE.quiz.timerId=null;
+      if(!STATE.quiz.deadline || STATE.quiz.deadline<=Date.now()){
+        STATE.quiz.finished=false;
+        finishQuizBatch(true);
+        return;
+      }
+      startQuizTimerFromDeadline(); renderQuestion(); goto('screen-quiz'); return;
+    }
+  }
+  const shuffled=[...(allQuestions||[])].sort(()=>Math.random()-0.5);
+  if(!shuffled.length){toast('No questions are available for the selected chapter(s) and level');return;}
+  const batchSize=Math.min(shuffled.length,Math.max(1,Number(minutes)||5));
+  STATE.quiz={
+    subject,level:Number(level),chapter:clean.length===1?clean[0]:null,chapters:clean,
+    allQuestions:shuffled, batchStart:0, batchSize, questions:questionsForMinutes(shuffled,minutes),
+    idx:0,correct:0,batchCorrect:0,totalCorrect:0,hearts:5,failed:false,
+    durationMinutes:Number(minutes)||5,plannedSeconds:(Number(minutes)||5)*60,
+    startedAt:Date.now(),deadline:null,timerId:null,finished:false,levelComplete:false
+  };
+  startQuizTimer(minutes); saveQuizSession(); renderQuestion(); goto('screen-quiz');
+}
+
 function buildTimedQuestionSet(chapters,level,minutes){
-  const pool=[]; chapters.forEach(chapter=>{const qs=STATE.tocQuestionCache?.[String(chapter).trim().toLowerCase()]?.[level]||[];qs.forEach(q=>pool.push({...q,__chapter:chapter,__level:level}));});
-  const shuffled=[...pool].sort(()=>Math.random()-0.5); const budgetSeconds=Math.min(60,Math.max(5,minutes))*60; let used=0; const selected=[];
-  for(const q of shuffled){const seconds=Math.max(15,Number(q.time_limit||60));if(selected.length&&used+seconds>budgetSeconds)continue;selected.push(q);used+=seconds;if(used>=budgetSeconds)break;}
-  return {selected,usedSeconds:used,available:pool.length};
+  const pool=[];
+  chapters.forEach(chapter=>{
+    const byLevel=STATE.tocQuestionCache?.[String(chapter).trim().toLowerCase()]?.[level]||[];
+    byLevel.forEach(q=>pool.push({...q,__chapter:chapter,__level:level}));
+  });
+  const shuffled=[...pool].sort(()=>Math.random()-0.5);
+  return {selected:questionsForMinutes(shuffled,minutes),available:pool.length,allQuestions:shuffled};
+}
+
+let PENDING_QUIZ_LAUNCH=null;
+function openQuizLaunchModal(config){
+  PENDING_QUIZ_LAUNCH=config;
+  const saved=hasSavedQuiz(config.subject,config.level,config.chapters||[]);
+  document.getElementById('quiz-launch-title').textContent=`Level ${config.level}`;
+  document.getElementById('quiz-launch-note').textContent=saved
+    ? 'A saved attempt is available. Resume it to continue with the remaining questions, or retake the level from the beginning.'
+    : 'Choose the time for this attempt. The time directly sets the number of questions: 1 minute = 1 question.';
+  document.getElementById('quiz-time-picker').style.display=saved?'none':'block';
+  document.getElementById('quiz-resume-actions').style.display=saved?'flex':'none';
+  document.getElementById('quiz-launch-modal').classList.add('active');
+}
+function closeQuizLaunchModal(){PENDING_QUIZ_LAUNCH=null;document.getElementById('quiz-launch-modal').classList.remove('active');}
+function confirmQuizLaunch(minutes){
+  const c=PENDING_QUIZ_LAUNCH; if(!c) return;
+  closeQuizLaunchModal();
+  if(c.type==='map') loadAndStartMapQuiz(c.subject,c.level,minutes);
+  else beginQuizFromPool({...c,minutes});
+}
+function resumeSavedQuiz(){
+  const c=PENDING_QUIZ_LAUNCH; if(!c) return;
+  closeQuizLaunchModal();
+  const saved=loadQuizSession(c.subject,c.level,c.chapters||[]);
+  if(saved){STATE.quiz=saved;STATE.quiz.timerId=null;startQuizTimerFromDeadline();renderQuestion();goto('screen-quiz');}
+}
+function retakeSavedQuiz(){
+  const c=PENDING_QUIZ_LAUNCH; if(!c) return;
+  const ok = confirm('Restart this level from the beginning? Your saved position for this attempt will be cleared.');
+  if(!ok) return;
+  closeQuizLaunchModal();
+  const saved=loadQuizSession(c.subject,c.level,c.chapters||[]);
+  if(saved){
+    try{ localStorage.removeItem(quizSessionKey(c.subject,c.level,c.chapters||[])); }catch(e){}
+  }
+  if(c.type==='map') loadAndStartMapQuiz(c.subject,c.level,c.minutes||savedDefaultMinutes(c.subject,c.level,c.chapters||[]),true);
+  else beginQuizFromPool({...c,minutes:c.minutes||savedDefaultMinutes(c.subject,c.level,c.chapters||[]),resume:false});
+}
+function savedDefaultMinutes(subject,level,chapters){
+  const q=loadQuizSession(subject,level,chapters); return Number(q?.durationMinutes||5);
 }
 
 function startConfiguredQuiz(chapters,level){
-  chapters=[...new Set(chapters)].filter(Boolean); if(!chapters.length){toast('Select at least one chapter');return;} if(!level){toast('Choose a quiz level');return;}
-  const minutes=getQuizMinutes(); const pack=buildTimedQuestionSet(chapters,Number(level),minutes); if(!pack.selected.length){toast('No questions are available for the selected chapter(s) and level');return;}
-  STATE.quiz={subject:STATE.currentSubject||'mathematics',level:Number(level),chapter:null,chapters,questions:pack.selected,idx:0,correct:0,hearts:5,failed:false,durationMinutes:minutes,plannedSeconds:Math.min(60,minutes)*60,usedSeconds:pack.usedSeconds,startedAt:Date.now(),deadline:null,timerId:null,finished:false};
-  startQuizTimer(minutes);renderQuestion();goto('screen-quiz');
+  chapters=[...new Set(chapters)].filter(Boolean);
+  if(!chapters.length){toast('Select at least one chapter');return;}
+  if(!level){toast('Choose a quiz level');return;}
+  const minutes=getQuizMinutes();
+  const pack=buildTimedQuestionSet(chapters,Number(level),minutes);
+  if(!pack.allQuestions.length){toast('No questions are available for the selected chapter(s) and level');return;}
+  const subject=STATE.currentSubject||'mathematics';
+  if(hasSavedQuiz(subject,Number(level),chapters)){
+    openQuizLaunchModal({type:'toc',subject,level:Number(level),chapters,allQuestions:pack.allQuestions,minutes});
+  }else{
+    beginQuizFromPool({type:'toc',subject,level:Number(level),chapters,allQuestions:pack.allQuestions,minutes});
+  }
 }
-
-function startSelectedTocQuiz(){const chapters=collectSelectedChapters();if(!chapters.length){toast('Select one or more chapters first');return;}const level=getSelectedLevel();startConfiguredQuiz(chapters,level);}
 
 async function openTableOfContent(board,grade,subject){
   const wrap=document.getElementById('toc-wrap'); wrap.innerHTML='<div class="toc-empty">Loading questions…</div>';
@@ -2210,69 +2401,16 @@ async function openTableOfContent(board,grade,subject){
     document.getElementById('toc-title').textContent=subject||'Table of Content'; document.getElementById('toc-subtitle').textContent=`${String(board||'').toUpperCase()} · Grade ${grade} · Question Bank`; document.getElementById('toc-xp').textContent=totalXp();
     const table=renderQuestionGroupedTable(toc); const allLevels=[...new Set(questions.map(normalizeQuestionLevel).filter(Boolean))].sort((a,b)=>a-b);
     const levelOptions=allLevels.length?allLevels.map(l=>{const m=tocStageMeta(l);return `<option value="${l}">${m.icon} Level ${l} · ${escapeHtml(m.stage)}</option>`}).join(''):'<option value="">No levels available</option>';
-    wrap.innerHTML=`<div class="toc-hero"><div class="eyebrow">📚 Student Quiz Board · Question Bank</div><h2>${escapeHtml(subject)}</h2><p>This learning roadmap is generated only from published question data: subject, world/unit, chapter and topic are grouped directly from the questions table.</p></div><div class="toc-controls"><div class="toc-control-row"><div class="toc-control"><label>Quiz level</label><select id="toc-global-level">${levelOptions}</select></div><div class="toc-control"><label>Quiz time</label><select id="toc-time-limit"><option value="5">5 minutes</option><option value="20" selected>20 minutes</option><option value="30">30 minutes</option><option value="60">60 minutes (max)</option></select></div></div><div class="toc-actions"><button class="toc-action-btn toc-action-secondary" onclick="toggleAllTocChapters(true)">Select all</button><button class="toc-action-btn toc-action-secondary" onclick="toggleAllTocChapters(false)">Clear</button><button class="toc-action-btn toc-action-primary" onclick="startSelectedTocQuiz()">▶ Start selected chapters</button><span class="toc-selection-note" id="toc-selection-note">No chapters selected</span></div></div><div class="toc-table-card"><table class="toc-table"><thead><tr><th>Subject</th><th>World / Unit</th><th>Chapter</th><th>Topic</th><th>Available levels · questions</th><th class="toc-start-cell">Start</th></tr></thead><tbody>${table||'<tr><td colspan="6"><div class="toc-status">No questions are available for this subject.</div></td></tr>'}</tbody></table></div>`;
+    wrap.innerHTML=`<div class="toc-hero"><div class="eyebrow">📚 Student Quiz Board · Question Bank</div><h2>${escapeHtml(subject)}</h2><p>This learning roadmap is generated only from published question data: subject, world/unit, chapter and topic are grouped directly from the questions table.</p></div><div class="toc-map-launch"><button class="toc-action-btn toc-action-map" onclick="openSubjectLevelMap('mathematics')">🎮 Open Gamified Level Map</button></div><div class="toc-controls"><div class="toc-control-row"><div class="toc-control"><label>Quiz level</label><select id="toc-global-level">${levelOptions}</select></div><div class="toc-control"><label>Quiz time</label><select id="toc-time-limit"><option value="5">5 minutes</option><option value="20" selected>20 minutes</option><option value="30">30 minutes</option><option value="60">60 minutes (max)</option></select></div></div><div class="toc-actions"><button class="toc-action-btn toc-action-secondary" onclick="toggleAllTocChapters(true)">Select all</button><button class="toc-action-btn toc-action-secondary" onclick="toggleAllTocChapters(false)">Clear</button><button class="toc-action-btn toc-action-primary" onclick="startSelectedTocQuiz()">▶ Start selected chapters</button><span class="toc-selection-note" id="toc-selection-note">No chapters selected</span></div></div><div class="toc-table-card"><table class="toc-table"><thead><tr><th>Subject</th><th>World / Unit</th><th>Chapter</th><th>Topic</th><th>Available levels · questions</th><th class="toc-start-cell">Start</th></tr></thead><tbody>${table||'<tr><td colspan="6"><div class="toc-status">No questions are available for this subject.</div></td></tr>'}</tbody></table></div>`;
     document.querySelectorAll('.toc-chapter-check').forEach(x=>x.addEventListener('change',onTocChapterSelectionChanged)); refreshGlobalLevelOptions(); goto('screen-toc');
   }catch(err){wrap.innerHTML=`<div class="toc-empty">Could not load questions. ${escapeHtml(err.message||'')}</div>`;goto('screen-toc');}
 }
 
-function tocStageMeta(level, toc){
-  const fallback = {1:{stage:'Foundation',icon:'🌱'},2:{stage:'Intermediate',icon:'📘'},3:{stage:'Advanced',icon:'🚀'},4:{stage:'Application',icon:'🧠'},5:{stage:'Mastery',icon:'🏆'}};
-  const found = (toc?.levels || []).find(x => Number(x.level) === Number(level));
-  return found || {level:Number(level), ...(fallback[level] || {stage:`Level ${level}`,icon:'⭐'})};
-}
-
-function getAvailableLevels(chapterName){
-  const row = STATE.tocQuestionCache?.[String(chapterName).trim().toLowerCase()] || {};
-  return Object.keys(row).map(Number).filter(Boolean).sort((a,b)=>a-b);
-}
-
-function getQuizMinutes(){
-  return Number(document.getElementById('toc-time-limit')?.value || 20);
-}
-
-function buildTimedQuestionSet(chapters, level, minutes){
-  const pool = [];
-  chapters.forEach(chapter => {
-    const byLevel = STATE.tocQuestionCache?.[String(chapter).trim().toLowerCase()]?.[level] || [];
-    byLevel.forEach(q => pool.push({...q, __chapter:chapter, __level:level}));
-  });
-  const shuffled = [...pool].sort(()=>Math.random()-0.5);
-  const budgetSeconds = Math.min(60, Math.max(5, minutes)) * 60;
-  let used = 0;
-  const selected = [];
-  for(const q of shuffled){
-    const seconds = Math.max(15, Number(q.time_limit || 60));
-    if(selected.length && used + seconds > budgetSeconds) continue;
-    selected.push(q); used += seconds;
-    if(used >= budgetSeconds) break;
-  }
-  return {selected, usedSeconds:used, available:pool.length};
-}
-
-async function startConfiguredQuiz(chapters, level){
-  chapters = [...new Set(chapters)].filter(Boolean);
-  if(!chapters.length){ toast('Select at least one chapter'); return; }
-  if(!level){ toast('Choose a quiz level'); return; }
-  const minutes = getQuizMinutes();
-  const pack = buildTimedQuestionSet(chapters, Number(level), minutes);
-  if(!pack.selected.length){ toast('No questions are available for the selected chapter(s) and level'); return; }
-
-  STATE.quiz = {
-    subject:'mathematics', level:Number(level), chapter:null, chapters,
-    questions:pack.selected, idx:0, correct:0, hearts:5, failed:false,
-    durationMinutes:minutes, plannedSeconds:Math.min(60,minutes)*60,
-    usedSeconds:pack.usedSeconds, startedAt:Date.now(), deadline:null, timerId:null, finished:false
-  };
-  startQuizTimer(minutes);
-  renderQuestion();
-  goto('screen-quiz');
-}
 
 function startSelectedTocQuiz(){
-  const chapters = collectSelectedChapters();
-  if(!chapters.length){ toast('Select one or more chapters first'); return; }
-  const level = getSelectedLevel();
-  startConfiguredQuiz(chapters, level);
+  const chapters=collectSelectedChapters();
+  if(!chapters.length){toast('Select one or more chapters first');return;}
+  const level=getSelectedLevel(); startConfiguredQuiz(chapters,level);
 }
 
 function selectTocTime(minutes){
@@ -2284,7 +2422,10 @@ function openSubjectLevelMap(key){
   const s = subjMeta(key);
   const prog = STATE.progress[key];
   document.getElementById('map-title').textContent = s.name;
-  document.getElementById('map-sub').textContent = `${s.icon} ${prog.max_level} levels · Level ${prog.unlocked_level} unlocked`;
+  const displayUnlocked = String(STATE.user?.account_tier || '').toLowerCase() === 'premium'
+    ? prog.max_level
+    : prog.unlocked_level;
+  document.getElementById('map-sub').textContent = `${s.icon} ${prog.max_level} levels · Level ${displayUnlocked} unlocked`;
   document.getElementById('map-xp').textContent = prog.xp;
   const mapScreen = document.getElementById('screen-map');
   const theme = (STATE.user && STATE.user.theme) || 'classic';
@@ -2300,6 +2441,7 @@ function renderPath(key){
   const wrap = document.getElementById('path-wrap');
   const iconInfo = currentThemeIconInfo();
   const isGuest = STATE.user.account_tier === 'guest';
+  const isPremium = String(STATE.user?.account_tier || '').toLowerCase() === 'premium';
   let html = '';
   for(let lvl=prog.max_level; lvl>=1; lvl--){
     const meta = levelMeta(lvl);
@@ -2312,7 +2454,10 @@ function renderPath(key){
     // as the single frontier node, just without the pulse (since several
     // can be available simultaneously here, not just one "next" step).
     let state;
-    if(isGuest || !isConceptLevel){
+    if(isPremium){
+      // Premium users have unrestricted access to every configured level.
+      state = stars > 0 ? 'done' : 'unlocked';
+    } else if(isGuest || !isConceptLevel){
       state = lvl < prog.unlocked_level ? 'done' : (lvl === prog.unlocked_level ? 'unlocked' : 'locked');
     } else {
       state = prog.unlocked_level >= 6 ? (stars > 0 ? 'done' : 'unlocked') : 'locked';
@@ -2334,8 +2479,13 @@ function renderPath(key){
         ? `<span class="lock">🔒</span>`
         : `<span class="num">${lvl}</span><span class="tag">${meta.diff}</span>`;
     }
-    let starsHtml = state!=='locked' && (state==='done' || stars>0)
-      ? `<div class="stars-row">${[1,2,3].map(i=>`<span>${i<=stars?'⭐':'☆'}</span>`).join('')}</div>` : '';
+    // Always show the 3-star progress indicator for an available level.
+    // Filled stars come from the latest merged progress; empty stars mean
+    // the level has not earned those stars yet. Locked levels keep the
+    // indicator hidden.
+    const visibleStars = Math.max(0, Math.min(5, Number(stars) || 0));
+    let starsHtml = state!=='locked'
+      ? `<div class="stars-row" aria-label="${visibleStars} of 5 stars">${[1,2,3,4,5].map(i=>`<span>${i<=visibleStars?'⭐':'☆'}</span>`).join('')}</div>` : '';
     // A concept level's real topic name (e.g. "Newton's Laws") wins over the
     // generic "Level N" fallback, once the admin has tagged questions with one.
     const conceptLabel = isConceptLevel && prog.level_labels && prog.level_labels[String(lvl)];
@@ -2364,59 +2514,39 @@ async function startChapterLevel(subject, level, chapter){
 }
 
 async function startLevel(subject, level){
+  const saved=hasSavedQuiz(subject,level,[]);
+  openQuizLaunchModal({type:'map',subject,level,chapters:[],minutes:savedDefaultMinutes(subject,level,[])});
+}
+async function loadAndStartMapQuiz(subject,level,minutes,forceRetake=false){
   let qs;
-  try{
-    qs = await api(`/api/questions?subject=${encodeURIComponent(subject)}&level=${level}`);
-  }catch(err){
-    if(err.message === 'REGISTRATION_REQUIRED'){ openRegistrationCta(); return; }
-    toast(err.message || 'Could not load questions'); return;
-  }
-  if(!qs.length){ toast('No questions have been added for this level yet'); return; }
-  const shuffled = [...qs].sort(()=>Math.random()-0.5);
-  STATE.quiz = {subject, level, chapter:null, questions: shuffled, idx:0, correct:0, hearts:5, failed:false};
-  renderQuestion();
-  goto('screen-quiz');
+  try{qs=await api(`/api/questions?subject=${encodeURIComponent(subject)}&level=${level}`);}
+  catch(err){if(err.message==='REGISTRATION_REQUIRED'){openRegistrationCta();return;} toast(err.message||'Could not load questions');return;}
+  if(!qs.length){toast('No questions have been added for this level yet');return;}
+  beginQuizFromPool({subject,level,chapters:[],allQuestions:qs,minutes,resume:false});
 }
 function exitQuiz(){
-  if(confirm('Leave this level? Your progress on this attempt will be lost.')){
-    stopQuizTimer();
-    if(STATE.quiz && (STATE.quiz.chapter || STATE.quiz.chapters?.length)){
-      openTableOfContent('cbse', STATE.user.grade, 'mathematics');
-    }else{
-      goto('screen-map');
-    }
+  if(confirm('Save your current position and leave? You can resume this attempt later.')){
+    saveQuizSession(); stopQuizTimer();
+    if(STATE.quiz && (STATE.quiz.chapter || STATE.quiz.chapters?.length)) openTableOfContent('cbse',STATE.user.grade,'mathematics');
+    else goto('screen-map');
   }
 }
-function stopQuizTimer(){
-  if(STATE.quiz?.timerId){
-    clearInterval(STATE.quiz.timerId);
-    STATE.quiz.timerId = null;
-  }
+function stopQuizTimer(){if(STATE.quiz?.timerId){clearInterval(STATE.quiz.timerId);STATE.quiz.timerId=null;}}
+function startQuizTimerFromDeadline(){
+  stopQuizTimer(); if(!STATE.quiz)return;
+  updateQuizTimer(); STATE.quiz.timerId=setInterval(updateQuizTimer,1000);
 }
 function updateQuizTimer(){
-  const quiz = STATE.quiz;
-  const el = document.getElementById('quiz-timer');
-  if(!quiz || !el || !quiz.deadline) return;
-  const remaining = Math.max(0, quiz.deadline - Date.now());
-  const totalSeconds = Math.ceil(remaining / 1000);
-  const mins = Math.floor(totalSeconds / 60);
-  const secs = totalSeconds % 60;
-  el.textContent = `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
-  el.style.background = remaining <= 60000 ? '#ffe0df' : '#fff3cf';
-  el.style.color = remaining <= 60000 ? '#a62d2d' : '#7a5b12';
-  if(remaining <= 0 && !quiz.finished){
-    quiz.finished = true;
-    stopQuizTimer();
-    finishLevel(false, true);
-  }
+  const quiz=STATE.quiz, el=document.getElementById('quiz-timer'); if(!quiz||!el||!quiz.deadline)return;
+  const remaining=Math.max(0,quiz.deadline-Date.now()), totalSeconds=Math.ceil(remaining/1000);
+  el.textContent=`${String(Math.floor(totalSeconds/60)).padStart(2,'0')}:${String(totalSeconds%60).padStart(2,'0')}`;
+  el.style.background=remaining<=60000?'#ffe0df':'#fff3cf'; el.style.color=remaining<=60000?'#a62d2d':'#7a5b12';
+  if(remaining<=0&&!quiz.finished){quiz.finished=true;stopQuizTimer();saveQuizSession();finishQuizBatch(true);}
 }
 function startQuizTimer(minutes){
-  stopQuizTimer();
-  if(!STATE.quiz) return;
-  STATE.quiz.deadline = Date.now() + Math.min(60, Math.max(5, Number(minutes)||20))*60*1000;
-  STATE.quiz.finished = false;
-  updateQuizTimer();
-  STATE.quiz.timerId = setInterval(updateQuizTimer, 1000);
+  stopQuizTimer(); if(!STATE.quiz)return;
+  STATE.quiz.deadline=Date.now()+Math.max(1,Number(minutes)||5)*60*1000;
+  STATE.quiz.finished=false; updateQuizTimer(); STATE.quiz.timerId=setInterval(updateQuizTimer,1000);
 }
 
 function renderHearts(){
@@ -2428,7 +2558,7 @@ function renderQuestion(){
   const q = quiz.questions[quiz.idx];
   const s = subjMeta(quiz.subject);
   document.getElementById('screen-quiz').style.background = '#FBF7EC';
-  document.getElementById('quiz-progress').style.width = `${(quiz.idx/quiz.questions.length)*100}%`;
+  document.getElementById('quiz-progress').style.width = `${((quiz.idx + 1)/quiz.questions.length)*100}%`;
   renderHearts();
   updateQuizTimer();
   document.getElementById('q-difficulty').textContent = levelMeta(quiz.level).diff;
@@ -2462,7 +2592,7 @@ function selectOption(i){
   btns.forEach(b=>b.onclick=null);
   const wasCorrect = (i === q.correct);
   if(wasCorrect){
-    quiz.correct++;
+    quiz.correct++; quiz.batchCorrect++; quiz.totalCorrect++;
     btns[i].classList.add('correct');
     toast('Correct! ⚡ +10 XP');
   } else {
@@ -2481,62 +2611,138 @@ function selectOption(i){
   document.getElementById('quiz-continue').textContent = (quiz.hearts<=0) ? 'See result' : (quiz.idx===quiz.questions.length-1 ? 'Finish level' : 'Continue');
 }
 function nextQuestion(){
-  const quiz = STATE.quiz;
-  if(quiz.hearts <= 0){ finishLevel(true); return; }
+  const quiz=STATE.quiz;
+  if(quiz.hearts<=0){finishQuizBatch(false,true);return;}
   quiz.idx++;
-  if(quiz.idx >= quiz.questions.length){ finishLevel(false); return; }
-  renderQuestion();
+  if(quiz.idx>=quiz.questions.length){finishQuizBatch(false,false);return;}
+  saveQuizSession(); renderQuestion();
 }
-async function finishLevel(outOfHearts, timeUp=false){
-  const quiz = STATE.quiz;
-  if(!quiz) return;
-  if(quiz.finished && !timeUp && !outOfHearts) return;
-  quiz.finished = true;
-  stopQuizTimer();
-  const total = Math.max(1, quiz.questions.length);
-  const scorePct = Math.round((quiz.correct / total) * 100);
 
-  // The result screen must not depend on another question or another level
-  // existing. Even a one-question level is a valid completed level.
-  // The API is still used when available so saved progress/stars remain the
-  // source of truth. If that endpoint is unavailable, show the completion
-  // result locally instead of replacing it with a "Not Found" error.
-  let result = null;
-  try{
-    result = await api('/api/progress/attempt', {method:'POST', body:{
-      subject: quiz.subject, level: quiz.level,
-      correct_count: quiz.correct, total_questions: total,
-      out_of_hearts: !!outOfHearts,
-    }});
-  }catch(err){
-    console.warn('Progress save unavailable; showing local level result:', err);
+async function finishQuizBatch(timeUp=false,outOfHearts=false){
+  const quiz=STATE.quiz; if(!quiz)return;
+  if(quiz.finished && !timeUp && !outOfHearts)return;
+  quiz.finished=true; stopQuizTimer(); saveQuizSession();
+  const batchTotal=Math.max(1,quiz.questions.length), batchCorrect=Number(quiz.batchCorrect||0);
+  const nextStart=Number(quiz.batchStart||0)+batchTotal;
+  const levelComplete=nextStart>=Number(quiz.allQuestions?.length||batchTotal);
+  if(!levelComplete){
+    document.getElementById('result-emoji').textContent=timeUp?'⏰':(outOfHearts?'💔':'🎉');
+    document.getElementById('result-title').textContent=timeUp?"Time's up!":'Batch finished!';
+    document.getElementById('result-sub').textContent=`Batch ${Math.floor((quiz.batchStart||0)/quiz.batchSize)+1} finished · ${batchCorrect}/${batchTotal} correct · ${quiz.allQuestions.length-nextStart} questions remaining`;
+    document.getElementById('result-stars').textContent='⭐'.repeat(batchCorrect>=batchTotal?5:batchCorrect>=Math.ceil(batchTotal*.9)?4:batchCorrect>=Math.ceil(batchTotal*.8)?3:batchCorrect>=Math.ceil(batchTotal*.7)?2:batchCorrect>=Math.ceil(batchTotal*.5)?1:0);
+    document.getElementById('result-correct').textContent=`${batchCorrect}/${batchTotal}`;
+    document.getElementById('result-xp').textContent=`+${batchCorrect*10}`;
+    document.getElementById('result-actions').innerHTML=`
+      <button class="btn-primary btn-gold" onclick="continueQuizLevel()">▶ Continue Level</button>
+      <button class="result-action-secondary" onclick="retestCurrentBatch()">🔄 Retake This Batch</button>
+      <button class="result-action-secondary" onclick="saveAndExitBatch()">💾 Resume Later</button>
+      <button class="result-action-secondary" onclick="openResultProgress()">📊 Track Progress</button>`;
+    document.getElementById('result-overlay').classList.add('active'); return;
   }
-
-  const passed = result?.passed ?? (!outOfHearts && scorePct >= 50);
-  const stars = Number(result?.stars ?? (outOfHearts ? 0 : scorePct >= 90 ? 3 : scorePct >= 70 ? 2 : scorePct >= 50 ? 1 : 0));
-  const xpGained = Number(result?.xp_gained ?? (quiz.correct * 10));
-
-  if(result?.progress){
-    STATE.progress[quiz.subject] = result.progress;
-  }else{
-    // Keep the UI usable when the progress endpoint is not available yet.
-    const current = STATE.progress[quiz.subject] || {unlocked_level:quiz.level, xp:0, stars:{}, max_level:5};
-    current.stars = {...(current.stars || {}), [quiz.level]:Math.max(Number(current.stars?.[quiz.level] || 0), stars)};
-    current.xp = Number(current.xp || 0) + xpGained;
-    if(passed) current.unlocked_level = Math.max(Number(current.unlocked_level || 1), quiz.level + 1);
-    STATE.progress[quiz.subject] = current;
+  quiz.levelComplete=true; clearQuizSession(quiz);
+  const total=Math.max(1,quiz.allQuestions?.length||batchTotal), totalCorrect=Number(quiz.totalCorrect||quiz.correct||0), scorePct=Math.round((totalCorrect/total)*100);
+  let result=null;
+  try{result=await api('/api/progress/attempt',{method:'POST',body:{subject:quiz.subject,level:quiz.level,correct_count:totalCorrect,total_questions:total,out_of_hearts:!!outOfHearts}});}catch(err){console.warn('Progress save unavailable; showing local level result:',err);}
+  // Calculate the completion result locally first. The API may return a
+  // stale/partial progress object (or zero stars) while the student has
+  // already completed the level in this browser session. Never let that
+  // response hide the result or the Next Level action.
+  const localPassed = !outOfHearts && scorePct >= 50;
+  const localStars = outOfHearts ? 0 : (scorePct >= 100 ? 5 : scorePct >= 90 ? 4 : scorePct >= 80 ? 3 : scorePct >= 70 ? 2 : scorePct >= 50 ? 1 : 0);
+  const passed = result?.passed === true || (result?.passed == null && localPassed) || (result?.passed !== false && localPassed);
+  const serverStars = Number(result?.stars || 0);
+  const stars = Math.max(serverStars, localStars);
+  const xpGained = Math.max(Number(result?.xp_gained || 0), totalCorrect * 10);
+  // Merge the completed level with the server response. Never let a stale
+  // server snapshot move the unlock frontier backwards.
+  const serverProgress = result?.progress || {};
+  const current = STATE.progress[quiz.subject] || {};
+  const mergedStars = {...(current.stars || {}), ...(serverProgress.stars || {})};
+  if(stars > Number(mergedStars[String(quiz.level)] || 0)){
+    mergedStars[String(quiz.level)] = stars;
   }
+  const serverUnlocked = Number(serverProgress.unlocked_level || 0);
+  const currentUnlocked = Number(current.unlocked_level || 1);
+  const nextUnlocked = passed
+    ? Math.max(currentUnlocked, serverUnlocked, Number(quiz.level) + 1)
+    : Math.max(currentUnlocked, serverUnlocked || 1);
 
-  document.getElementById('result-emoji').textContent = outOfHearts ? '💔' : (passed ? (stars===3?'🏆':'🎉') : '📘');
-  document.getElementById('result-title').textContent = timeUp ? "Time's up!" : (outOfHearts ? 'Level finished' : 'Level finished!');
-  document.getElementById('result-sub').textContent = timeUp
-    ? `Your ${quiz.durationMinutes}-minute quiz time has ended. You earned ${stars} star${stars===1?'':'s'}.`
-    : `Level ${quiz.level} · ${quiz.correct}/${total} correct · ${stars} star${stars===1?'':'s'} obtained`;
-  document.getElementById('result-stars').textContent = '⭐'.repeat(stars) + '☆'.repeat(Math.max(0,3-stars));
-  document.getElementById('result-correct').textContent = `${quiz.correct}/${total}`;
-  document.getElementById('result-xp').textContent = `+${xpGained}`;
+  const premiumUser = String(STATE.user?.account_tier || '').toLowerCase() === 'premium';
+  const effectiveMaxLevel = premiumUser
+    ? Math.max(Number(serverProgress.max_level || 0), Number(current.max_level || 0), 5)
+    : Number(serverProgress.max_level || current.max_level || 5);
+  STATE.progress[quiz.subject] = {
+    ...current,
+    ...serverProgress,
+    unlocked_level: premiumUser ? Math.max(nextUnlocked, effectiveMaxLevel) : nextUnlocked,
+    stars: mergedStars,
+    xp: Math.max(Number(serverProgress.xp ?? 0), Number(current.xp ?? 0), Number(xpGained || 0)),
+    max_level: effectiveMaxLevel
+  };
+  try{ localStorage.setItem('sq_progress', JSON.stringify(STATE.progress)); }catch(e){}
+
+  // Refresh the roadmap immediately after a successful level completion.
+  if(STATE.currentSubject === quiz.subject){
+    renderPath(quiz.subject);
+    const p = STATE.progress[quiz.subject];
+    const s = subjMeta(quiz.subject);
+    document.getElementById('map-sub').textContent =
+      `${s.icon} ${p.max_level} levels · Level ${p.unlocked_level} unlocked`;
+    document.getElementById('map-xp').textContent = p.xp || 0;
+  }
+  document.getElementById('result-emoji').textContent=outOfHearts?'💔':(passed?(stars>=5?'🏆':'🎉'):'📘');
+  document.getElementById('result-title').textContent=timeUp?"Time's up!":'Level finished!';
+  document.getElementById('result-sub').textContent=`Level ${quiz.level} complete · ${quiz.correct}/${total} correct · ${stars} star${stars===1?'':'s'} obtained`;
+  document.getElementById('result-stars').textContent='⭐'.repeat(stars)+'☆'.repeat(Math.max(0,5-stars));
+  document.getElementById('result-correct').textContent=`${totalCorrect}/${total}`; document.getElementById('result-xp').textContent=`+${xpGained}`;
+  const nextLevel = Number(quiz.level) + 1;
+  const progressAfter = STATE.progress[quiz.subject] || {};
+  const availableMax = premiumUser ? Math.max(Number(progressAfter.max_level || 0), 5) : Number(progressAfter.max_level || 0);
+  // A Premium user can always move to the next configured level after a
+  // passed level, even if the server returned an outdated max_level.
+  const canGoNext = passed && (premiumUser ? nextLevel <= availableMax : nextLevel <= availableMax);
+  document.getElementById('result-actions').innerHTML=`
+    ${canGoNext ? `<button class="btn-primary btn-gold" onclick="goToNextGamifiedLevel()">▶ Next Level ${nextLevel}</button>` : ''}
+    <button class="result-action-secondary" onclick="openResultProgress()">📊 Track Progress</button>
+    <button class="result-action-secondary" onclick="retestFinishedLevel()">🔄 Take Retest</button>
+    <button class="result-action-secondary" onclick="exploreOtherLevels()">🧭 Explore Other Levels</button>
+    <button class="result-action-secondary" onclick="backHomeFromResult()">🏠 Back Home</button>`;
   document.getElementById('result-overlay').classList.add('active');
 }
+
+function goToNextGamifiedLevel(){
+  const quiz = STATE.quiz;
+  if(!quiz || !quiz.subject) return;
+  const next = Number(quiz.level) + 1;
+  const p = STATE.progress[quiz.subject] || {};
+  const premiumUser = String(STATE.user?.account_tier || '').toLowerCase() === 'premium';
+  const availableMax = premiumUser ? Math.max(Number(p.max_level || 0), 5) : Number(p.max_level || next);
+  if(next > availableMax){
+    document.getElementById('result-overlay').classList.remove('active');
+    goto('screen-map');
+    return;
+  }
+  if(premiumUser) p.max_level = availableMax;
+  p.unlocked_level = Math.max(Number(p.unlocked_level || 1), next);
+  document.getElementById('result-overlay').classList.remove('active');
+  renderPath(quiz.subject);
+  loadAndStartMapQuiz(quiz.subject, next, quiz.durationMinutes || 5, false);
+}
+
+function continueQuizLevel(){
+  const q=STATE.quiz; if(!q)return;
+  document.getElementById('result-overlay').classList.remove('active');
+  q.batchStart=(q.batchStart||0)+q.questions.length; q.questions=q.allQuestions.slice(q.batchStart,q.batchStart+q.batchSize); q.idx=0; q.batchCorrect=0; q.hearts=5; q.finished=false; startQuizTimer(q.durationMinutes); saveQuizSession(); renderQuestion(); goto('screen-quiz');
+}
+function retestCurrentBatch(){
+  const q=STATE.quiz; if(!q)return;
+  if(!confirm('Restart this batch from the beginning? Your answers from this batch will be cleared.')) return;
+  document.getElementById('result-overlay').classList.remove('active');
+  q.questions=q.allQuestions.slice(q.batchStart,q.batchStart+q.batchSize);
+  q.idx=0;q.batchCorrect=0;q.hearts=5;q.finished=false;
+  startQuizTimer(q.durationMinutes);saveQuizSession();renderQuestion();goto('screen-quiz');
+}
+function saveAndExitBatch(){const q=STATE.quiz;if(q){q.batchStart=(q.batchStart||0)+q.questions.length;q.questions=q.allQuestions.slice(q.batchStart,q.batchStart+q.batchSize);q.idx=0;q.batchCorrect=0;q.hearts=5;q.finished=false;saveQuizSession();}document.getElementById('result-overlay').classList.remove('active');if(q?.chapters?.length)openTableOfContent('cbse',STATE.user?.grade||11,'mathematics');else goto('screen-map');}
 
 function closeResult(){
   document.getElementById('result-overlay').classList.remove('active');
@@ -2549,16 +2755,16 @@ function openResultProgress(){
 }
 
 function retestFinishedLevel(){
-  const quiz = STATE.quiz;
+  const quiz=STATE.quiz;
+  if(!quiz||!quiz.level){goto('screen-home');return;}
+  if(!confirm('Restart this level from the beginning? This will start a completely new attempt.')) return;
   document.getElementById('result-overlay').classList.remove('active');
-  if(!quiz || !quiz.level){ goto('screen-home'); return; }
-  const chapters = quiz.chapters?.length ? quiz.chapters : (quiz.chapter ? [quiz.chapter] : []);
-  if(chapters.length){
-    startConfiguredQuiz(chapters, quiz.level);
-    return;
+  clearQuizSession(quiz);
+  if(quiz.chapters?.length){
+    const pack=buildTimedQuestionSet(quiz.chapters,quiz.level,quiz.durationMinutes||5);
+    beginQuizFromPool({subject:quiz.subject,level:quiz.level,chapters:quiz.chapters,allQuestions:pack.allQuestions,minutes:quiz.durationMinutes||5}); return;
   }
-  toast('This level is ready to retest from the Question Bank.');
-  openTableOfContent('cbse', STATE.user?.grade || 11, quiz.subject || STATE.currentSubject || 'mathematics');
+  loadAndStartMapQuiz(quiz.subject,quiz.level,quiz.durationMinutes||5,true);
 }
 
 function exploreOtherLevels(){
@@ -3194,14 +3400,25 @@ function clearAdminQuestionFilters(){
 renderAvatarPicker();
 (async function init(){
   if(!STATE.token) return;
+
+  // Restore the last known session immediately so a refresh does not throw
+  // the student back to the login screen while the API is being contacted.
+  try{
+    const cachedUser = JSON.parse(localStorage.getItem('sq_user') || 'null');
+    const cachedProgress = JSON.parse(localStorage.getItem('sq_progress') || 'null');
+    if(cachedUser) STATE.user = cachedUser;
+    if(cachedProgress) STATE.progress = cachedProgress;
+  }catch(e){}
+
   try{
     const me = await api('/api/auth/me');
     STATE.user = {userid:me.userid, name:me.name, role:me.role, avatar:me.avatar, grade:me.grade, board:me.board, theme:me.theme || 'classic', account_tier:me.account_tier || 'silver'};
+    localStorage.setItem('sq_user', JSON.stringify(STATE.user));
     await loadThemes();
     applyTheme(STATE.user.theme);
     if(me.role === 'admin'){
       STATE.isAdmin = true;
-      goto('screen-admin'); // show the screen regardless of whether every panel below renders cleanly
+      goto('screen-admin');
       try{
         await renderAdminSubjRow();
         await searchAdminQuestions(true);
@@ -3218,7 +3435,19 @@ renderAvatarPicker();
       enterHome();
     }
   }catch(err){
-    // stored token is invalid/expired — api() already cleared it
+    // Only a real authentication failure should send the user to login.
+    // Network/server errors leave the saved session intact.
+    if(STATE.token && STATE.user){
+      console.warn('Session validation failed during refresh; keeping saved session:', err);
+      try{ await loadThemes(); applyTheme(STATE.user.theme || 'classic'); }catch(e){}
+      if(STATE.user.role === 'admin'){
+        STATE.isAdmin = true;
+        goto('screen-admin');
+      }else{
+        enterHome();
+      }
+      return;
+    }
     goto('screen-auth');
   }
 })();
