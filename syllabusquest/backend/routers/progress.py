@@ -313,7 +313,12 @@ def get_performance_dashboard(
                 "topics": topics,
             })
 
-        # Use the Progress table for dashboard insights.
+        # Use only completed levels for dashboard insights.
+        completed = [
+            x for x in level_rows
+            if x["completed"]
+        ]
+
         strongest_levels = [x for x in sorted(completed, key=lambda r: r["score"], reverse=True) if x["score"] >= 80][:3]
         practice_levels = [x for x in sorted(completed, key=lambda r: r["score"]) if x["score"] < 70][:3]
 
