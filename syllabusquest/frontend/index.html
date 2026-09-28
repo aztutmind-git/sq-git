@@ -2059,8 +2059,8 @@ function renderMountainTable(rows){
 
   body.innerHTML=rows.map(r=>{
 
-    const starsCount=Math.max(0,Math.min(3,Number(r.stars||0)));
-    const stars=`${'★'.repeat(starsCount)}${'☆'.repeat(3-starsCount)}`;
+    const starsCount=Math.max(0,Math.min(5,Number(r.stars||0)));
+    const stars=`${'★'.repeat(starsCount)}${'☆'.repeat(5-starsCount)}`;
     const score=r.completed ? Number(r.score||0) : null;
 
     let status='Not attempted';
@@ -2483,9 +2483,9 @@ function renderPath(key){
     // Filled stars come from the latest merged progress; empty stars mean
     // the level has not earned those stars yet. Locked levels keep the
     // indicator hidden.
-    const visibleStars = Math.max(0, Math.min(3, Number(stars) || 0));
+    const visibleStars = Math.max(0, Math.min(5, Number(stars) || 0));
     let starsHtml = state!=='locked'
-      ? `<div class="stars-row" aria-label="${visibleStars} of 3 stars">${[1,2,3].map(i=>`<span>${i<=visibleStars?'⭐':'☆'}</span>`).join('')}</div>` : '';
+      ? `<div class="stars-row" aria-label="${visibleStars} of 5 stars">${[1,2,3,4,5].map(i=>`<span>${i<=visibleStars?'⭐':'☆'}</span>`).join('')}</div>` : '';
     // A concept level's real topic name (e.g. "Newton's Laws") wins over the
     // generic "Level N" fallback, once the admin has tagged questions with one.
     const conceptLabel = isConceptLevel && prog.level_labels && prog.level_labels[String(lvl)];
@@ -2629,7 +2629,7 @@ async function finishQuizBatch(timeUp=false,outOfHearts=false){
     document.getElementById('result-emoji').textContent=timeUp?'⏰':(outOfHearts?'💔':'🎉');
     document.getElementById('result-title').textContent=timeUp?"Time's up!":'Batch finished!';
     document.getElementById('result-sub').textContent=`Batch ${Math.floor((quiz.batchStart||0)/quiz.batchSize)+1} finished · ${batchCorrect}/${batchTotal} correct · ${quiz.allQuestions.length-nextStart} questions remaining`;
-    document.getElementById('result-stars').textContent='⭐'.repeat(batchCorrect>=Math.ceil(batchTotal*.9)?3:batchCorrect>=Math.ceil(batchTotal*.7)?2:batchCorrect>=Math.ceil(batchTotal*.5)?1:0);
+    document.getElementById('result-stars').textContent='⭐'.repeat(batchCorrect>=batchTotal?5:batchCorrect>=Math.ceil(batchTotal*.9)?4:batchCorrect>=Math.ceil(batchTotal*.8)?3:batchCorrect>=Math.ceil(batchTotal*.7)?2:batchCorrect>=Math.ceil(batchTotal*.5)?1:0);
     document.getElementById('result-correct').textContent=`${batchCorrect}/${batchTotal}`;
     document.getElementById('result-xp').textContent=`+${batchCorrect*10}`;
     document.getElementById('result-actions').innerHTML=`
@@ -2648,7 +2648,7 @@ async function finishQuizBatch(timeUp=false,outOfHearts=false){
   // already completed the level in this browser session. Never let that
   // response hide the result or the Next Level action.
   const localPassed = !outOfHearts && scorePct >= 50;
-  const localStars = outOfHearts ? 0 : (scorePct >= 90 ? 3 : scorePct >= 70 ? 2 : scorePct >= 50 ? 1 : 0);
+  const localStars = outOfHearts ? 0 : (scorePct >= 100 ? 5 : scorePct >= 90 ? 4 : scorePct >= 80 ? 3 : scorePct >= 70 ? 2 : scorePct >= 50 ? 1 : 0);
   const passed = result?.passed === true || (result?.passed == null && localPassed) || (result?.passed !== false && localPassed);
   const serverStars = Number(result?.stars || 0);
   const stars = Math.max(serverStars, localStars);
@@ -2690,10 +2690,10 @@ async function finishQuizBatch(timeUp=false,outOfHearts=false){
       `${s.icon} ${p.max_level} levels · Level ${p.unlocked_level} unlocked`;
     document.getElementById('map-xp').textContent = p.xp || 0;
   }
-  document.getElementById('result-emoji').textContent=outOfHearts?'💔':(passed?(stars===3?'🏆':'🎉'):'📘');
+  document.getElementById('result-emoji').textContent=outOfHearts?'💔':(passed?(stars>=5?'🏆':'🎉'):'📘');
   document.getElementById('result-title').textContent=timeUp?"Time's up!":'Level finished!';
   document.getElementById('result-sub').textContent=`Level ${quiz.level} complete · ${quiz.correct}/${total} correct · ${stars} star${stars===1?'':'s'} obtained`;
-  document.getElementById('result-stars').textContent='⭐'.repeat(stars)+'☆'.repeat(Math.max(0,3-stars));
+  document.getElementById('result-stars').textContent='⭐'.repeat(stars)+'☆'.repeat(Math.max(0,5-stars));
   document.getElementById('result-correct').textContent=`${totalCorrect}/${total}`; document.getElementById('result-xp').textContent=`+${xpGained}`;
   const nextLevel = Number(quiz.level) + 1;
   const progressAfter = STATE.progress[quiz.subject] || {};
