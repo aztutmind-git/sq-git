@@ -1722,8 +1722,33 @@ async function submitPasswordReset(){
    ========================================================= */
 async function loadMyProgress(){
   const rows = await api('/api/progress');
+  let savedLocal = {};
+  try{ savedLocal = JSON.parse(localStorage.getItem('sq_progress') || '{}') || {}; }catch(e){}
   const map = {};
-  rows.forEach(r => map[r.subject] = {unlocked_level:r.unlocked_level, max_level:r.max_level, demo_level_cap:r.demo_level_cap, xp:r.xp, stars:r.stars || {}, enrolled:r.enrolled});
+  rows.forEach(r => {
+    const local = savedLocal[r.subject] || {};
+    const serverStars = r.stars || {};
+    const localStars = local.stars || {};
+    const mergedStars = {...localStars, ...serverStars};
+    Object.keys(serverStars).forEach(k => {
+      mergedStars[k] = Math.max(Number(localStars[k] || 0), Number(serverStars[k] || 0));
+    });
+    const isPremium = String(STATE.user?.account_tier || '').toLowerCase() === 'premium';
+    const serverMax = Number(r.max_level || 0);
+    // Premium accounts can use every configured level. Keep the normal
+    // five-level roadmap as the minimum, while preserving a larger server
+    // configured maximum when one exists.
+    const effectiveMax = isPremium ? Math.max(serverMax, 5) : serverMax;
+    map[r.subject] = {
+      ...local,
+      ...r,
+      unlocked_level: isPremium ? Math.max(Number(r.unlocked_level || 1), effectiveMax) : Number(r.unlocked_level || local.unlocked_level || 1),
+      max_level: effectiveMax,
+      xp: Math.max(Number(local.xp || 0), Number(r.xp || 0)),
+      stars: mergedStars,
+      enrolled:r.enrolled,
+    };
+  });
   STATE.progress = map;
   try{ localStorage.setItem('sq_progress', JSON.stringify(STATE.progress)); }catch(e){}
 
@@ -2630,14 +2655,19 @@ async function finishQuizBatch(timeUp=false,outOfHearts=false){
     ? Math.max(currentUnlocked, serverUnlocked, Number(quiz.level) + 1)
     : Math.max(currentUnlocked, serverUnlocked || 1);
 
+  const premiumUser = String(STATE.user?.account_tier || '').toLowerCase() === 'premium';
+  const effectiveMaxLevel = premiumUser
+    ? Math.max(Number(serverProgress.max_level || 0), Number(current.max_level || 0), 5)
+    : Number(serverProgress.max_level || current.max_level || 5);
   STATE.progress[quiz.subject] = {
     ...current,
     ...serverProgress,
-    unlocked_level: nextUnlocked,
+    unlocked_level: premiumUser ? Math.max(nextUnlocked, effectiveMaxLevel) : nextUnlocked,
     stars: mergedStars,
-    xp: Number(serverProgress.xp ?? current.xp ?? 0),
-    max_level: Number(serverProgress.max_level || current.max_level || 5)
+    xp: Math.max(Number(serverProgress.xp ?? 0), Number(current.xp ?? 0), Number(xpGained || 0)),
+    max_level: effectiveMaxLevel
   };
+  try{ localStorage.setItem('sq_progress', JSON.stringify(STATE.progress)); }catch(e){}
 
   // Refresh the roadmap immediately after a successful level completion.
   if(STATE.currentSubject === quiz.subject){
@@ -2654,7 +2684,9 @@ async function finishQuizBatch(timeUp=false,outOfHearts=false){
   document.getElementById('result-stars').textContent='⭐'.repeat(stars)+'☆'.repeat(Math.max(0,3-stars));
   document.getElementById('result-correct').textContent=`${totalCorrect}/${total}`; document.getElementById('result-xp').textContent=`+${xpGained}`;
   const nextLevel = Number(quiz.level) + 1;
-  const canGoNext = passed && nextLevel <= Number(STATE.progress[quiz.subject]?.max_level || nextLevel);
+  const progressAfter = STATE.progress[quiz.subject] || {};
+  const availableMax = premiumUser ? Math.max(Number(progressAfter.max_level || 0), 5) : Number(progressAfter.max_level || 0);
+  const canGoNext = passed && nextLevel <= availableMax;
   document.getElementById('result-actions').innerHTML=`
     ${canGoNext ? `<button class="btn-primary btn-gold" onclick="goToNextGamifiedLevel()">▶ Next Level ${nextLevel}</button>` : ''}
     <button class="result-action-secondary" onclick="openResultProgress()">📊 Track Progress</button>
@@ -2669,11 +2701,14 @@ function goToNextGamifiedLevel(){
   if(!quiz || !quiz.subject) return;
   const next = Number(quiz.level) + 1;
   const p = STATE.progress[quiz.subject] || {};
-  if(next > Number(p.max_level || next)){
+  const premiumUser = String(STATE.user?.account_tier || '').toLowerCase() === 'premium';
+  const availableMax = premiumUser ? Math.max(Number(p.max_level || 0), 5) : Number(p.max_level || next);
+  if(next > availableMax){
     document.getElementById('result-overlay').classList.remove('active');
     goto('screen-map');
     return;
   }
+  if(premiumUser) p.max_level = availableMax;
   p.unlocked_level = Math.max(Number(p.unlocked_level || 1), next);
   document.getElementById('result-overlay').classList.remove('active');
   renderPath(quiz.subject);
