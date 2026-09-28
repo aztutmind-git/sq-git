@@ -2598,15 +2598,68 @@ async function finishQuizBatch(timeUp=false,outOfHearts=false){
   const passed=result?.passed??(!outOfHearts&&scorePct>=50);
   const stars=Number(result?.stars??(outOfHearts?0:scorePct>=90?3:scorePct>=70?2:scorePct>=50?1:0));
   const xpGained=Number(result?.xp_gained??(totalCorrect*10));
-  if(result?.progress)STATE.progress[quiz.subject]=result.progress;
-  else{const current=STATE.progress[quiz.subject]||{unlocked_level:quiz.level,xp:0,stars:{},max_level:5};current.stars={...(current.stars||{}),[quiz.level]:Math.max(Number(current.stars?.[quiz.level]||0),stars)};current.xp=Number(current.xp||0)+xpGained;if(passed)current.unlocked_level=Math.max(Number(current.unlocked_level||1),quiz.level+1);STATE.progress[quiz.subject]=current;}
+  // Merge the completed level with the server response. Never let a stale
+  // server snapshot move the unlock frontier backwards.
+  const serverProgress = result?.progress || {};
+  const current = STATE.progress[quiz.subject] || {};
+  const mergedStars = {...(current.stars || {}), ...(serverProgress.stars || {})};
+  if(stars > Number(mergedStars[String(quiz.level)] || 0)){
+    mergedStars[String(quiz.level)] = stars;
+  }
+  const serverUnlocked = Number(serverProgress.unlocked_level || 0);
+  const currentUnlocked = Number(current.unlocked_level || 1);
+  const nextUnlocked = passed
+    ? Math.max(currentUnlocked, serverUnlocked, Number(quiz.level) + 1)
+    : Math.max(currentUnlocked, serverUnlocked || 1);
+
+  STATE.progress[quiz.subject] = {
+    ...current,
+    ...serverProgress,
+    unlocked_level: nextUnlocked,
+    stars: mergedStars,
+    xp: Number(serverProgress.xp ?? current.xp ?? 0),
+    max_level: Number(serverProgress.max_level || current.max_level || 5)
+  };
+
+  // Refresh the roadmap immediately after a successful level completion.
+  if(STATE.currentSubject === quiz.subject){
+    renderPath(quiz.subject);
+    const p = STATE.progress[quiz.subject];
+    const s = subjMeta(quiz.subject);
+    document.getElementById('map-sub').textContent =
+      `${s.icon} ${p.max_level} levels · Level ${p.unlocked_level} unlocked`;
+    document.getElementById('map-xp').textContent = p.xp || 0;
+  }
   document.getElementById('result-emoji').textContent=outOfHearts?'💔':(passed?(stars===3?'🏆':'🎉'):'📘');
   document.getElementById('result-title').textContent=timeUp?"Time's up!":'Level finished!';
   document.getElementById('result-sub').textContent=`Level ${quiz.level} complete · ${quiz.correct}/${total} correct · ${stars} star${stars===1?'':'s'} obtained`;
   document.getElementById('result-stars').textContent='⭐'.repeat(stars)+'☆'.repeat(Math.max(0,3-stars));
   document.getElementById('result-correct').textContent=`${totalCorrect}/${total}`; document.getElementById('result-xp').textContent=`+${xpGained}`;
-  document.getElementById('result-actions').innerHTML=`<button class="btn-primary btn-gold" onclick="openResultProgress()">📊 Track Progress</button><button class="result-action-secondary" onclick="retestFinishedLevel()">🔄 Take Retest</button><button class="result-action-secondary" onclick="exploreOtherLevels()">🧭 Explore Other Levels</button><button class="result-action-secondary" onclick="backHomeFromResult()">🏠 Back Home</button>`;
+  const nextLevel = Number(quiz.level) + 1;
+  const canGoNext = passed && nextLevel <= Number(STATE.progress[quiz.subject]?.max_level || nextLevel);
+  document.getElementById('result-actions').innerHTML=`
+    ${canGoNext ? `<button class="btn-primary btn-gold" onclick="goToNextGamifiedLevel()">▶ Next Level ${nextLevel}</button>` : ''}
+    <button class="result-action-secondary" onclick="openResultProgress()">📊 Track Progress</button>
+    <button class="result-action-secondary" onclick="retestFinishedLevel()">🔄 Take Retest</button>
+    <button class="result-action-secondary" onclick="exploreOtherLevels()">🧭 Explore Other Levels</button>
+    <button class="result-action-secondary" onclick="backHomeFromResult()">🏠 Back Home</button>`;
   document.getElementById('result-overlay').classList.add('active');
+}
+
+function goToNextGamifiedLevel(){
+  const quiz = STATE.quiz;
+  if(!quiz || !quiz.subject) return;
+  const next = Number(quiz.level) + 1;
+  const p = STATE.progress[quiz.subject] || {};
+  if(next > Number(p.max_level || next)){
+    document.getElementById('result-overlay').classList.remove('active');
+    goto('screen-map');
+    return;
+  }
+  p.unlocked_level = Math.max(Number(p.unlocked_level || 1), next);
+  document.getElementById('result-overlay').classList.remove('active');
+  renderPath(quiz.subject);
+  loadAndStartMapQuiz(quiz.subject, next, quiz.durationMinutes || 5, false);
 }
 
 function continueQuizLevel(){
