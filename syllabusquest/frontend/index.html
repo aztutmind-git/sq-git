@@ -2638,9 +2638,16 @@ async function finishQuizBatch(timeUp=false,outOfHearts=false){
   const total=Math.max(1,quiz.allQuestions?.length||batchTotal), totalCorrect=Number(quiz.totalCorrect||quiz.correct||0), scorePct=Math.round((totalCorrect/total)*100);
   let result=null;
   try{result=await api('/api/progress/attempt',{method:'POST',body:{subject:quiz.subject,level:quiz.level,correct_count:totalCorrect,total_questions:total,out_of_hearts:!!outOfHearts}});}catch(err){console.warn('Progress save unavailable; showing local level result:',err);}
-  const passed=result?.passed??(!outOfHearts&&scorePct>=50);
-  const stars=Number(result?.stars??(outOfHearts?0:scorePct>=90?3:scorePct>=70?2:scorePct>=50?1:0));
-  const xpGained=Number(result?.xp_gained??(totalCorrect*10));
+  // Calculate the completion result locally first. The API may return a
+  // stale/partial progress object (or zero stars) while the student has
+  // already completed the level in this browser session. Never let that
+  // response hide the result or the Next Level action.
+  const localPassed = !outOfHearts && scorePct >= 50;
+  const localStars = outOfHearts ? 0 : (scorePct >= 90 ? 3 : scorePct >= 70 ? 2 : scorePct >= 50 ? 1 : 0);
+  const passed = result?.passed === true || (result?.passed == null && localPassed) || (result?.passed !== false && localPassed);
+  const serverStars = Number(result?.stars || 0);
+  const stars = Math.max(serverStars, localStars);
+  const xpGained = Math.max(Number(result?.xp_gained || 0), totalCorrect * 10);
   // Merge the completed level with the server response. Never let a stale
   // server snapshot move the unlock frontier backwards.
   const serverProgress = result?.progress || {};
@@ -2686,7 +2693,9 @@ async function finishQuizBatch(timeUp=false,outOfHearts=false){
   const nextLevel = Number(quiz.level) + 1;
   const progressAfter = STATE.progress[quiz.subject] || {};
   const availableMax = premiumUser ? Math.max(Number(progressAfter.max_level || 0), 5) : Number(progressAfter.max_level || 0);
-  const canGoNext = passed && nextLevel <= availableMax;
+  // A Premium user can always move to the next configured level after a
+  // passed level, even if the server returned an outdated max_level.
+  const canGoNext = passed && (premiumUser ? nextLevel <= availableMax : nextLevel <= availableMax);
   document.getElementById('result-actions').innerHTML=`
     ${canGoNext ? `<button class="btn-primary btn-gold" onclick="goToNextGamifiedLevel()">▶ Next Level ${nextLevel}</button>` : ''}
     <button class="result-action-secondary" onclick="openResultProgress()">📊 Track Progress</button>
