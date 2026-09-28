@@ -2329,8 +2329,14 @@ function resumeSavedQuiz(){
 }
 function retakeSavedQuiz(){
   const c=PENDING_QUIZ_LAUNCH; if(!c) return;
+  const ok = confirm('Restart this level from the beginning? Your saved position for this attempt will be cleared.');
+  if(!ok) return;
   closeQuizLaunchModal();
-  if(c.type==='map') loadAndStartMapQuiz(c.subject,c.level,c.minutes||5,true);
+  const saved=loadQuizSession(c.subject,c.level,c.chapters||[]);
+  if(saved){
+    try{ localStorage.removeItem(quizSessionKey(c.subject,c.level,c.chapters||[])); }catch(e){}
+  }
+  if(c.type==='map') loadAndStartMapQuiz(c.subject,c.level,c.minutes||savedDefaultMinutes(c.subject,c.level,c.chapters||[]),true);
   else beginQuizFromPool({...c,minutes:c.minutes||savedDefaultMinutes(c.subject,c.level,c.chapters||[]),resume:false});
 }
 function savedDefaultMinutes(subject,level,chapters){
@@ -2610,8 +2616,11 @@ function continueQuizLevel(){
 }
 function retestCurrentBatch(){
   const q=STATE.quiz; if(!q)return;
+  if(!confirm('Restart this batch from the beginning? Your answers from this batch will be cleared.')) return;
   document.getElementById('result-overlay').classList.remove('active');
-  q.questions=q.allQuestions.slice(q.batchStart,q.batchStart+q.batchSize); q.idx=0;q.batchCorrect=0;q.hearts=5;q.finished=false;startQuizTimer(q.durationMinutes);saveQuizSession();renderQuestion();goto('screen-quiz');
+  q.questions=q.allQuestions.slice(q.batchStart,q.batchStart+q.batchSize);
+  q.idx=0;q.batchCorrect=0;q.hearts=5;q.finished=false;
+  startQuizTimer(q.durationMinutes);saveQuizSession();renderQuestion();goto('screen-quiz');
 }
 function saveAndExitBatch(){const q=STATE.quiz;if(q){q.batchStart=(q.batchStart||0)+q.questions.length;q.questions=q.allQuestions.slice(q.batchStart,q.batchStart+q.batchSize);q.idx=0;q.batchCorrect=0;q.hearts=5;q.finished=false;saveQuizSession();}document.getElementById('result-overlay').classList.remove('active');if(q?.chapters?.length)openTableOfContent('cbse',STATE.user?.grade||11,'mathematics');else goto('screen-map');}
 
@@ -2626,8 +2635,11 @@ function openResultProgress(){
 }
 
 function retestFinishedLevel(){
-  const quiz=STATE.quiz; document.getElementById('result-overlay').classList.remove('active');
+  const quiz=STATE.quiz;
   if(!quiz||!quiz.level){goto('screen-home');return;}
+  if(!confirm('Restart this level from the beginning? This will start a completely new attempt.')) return;
+  document.getElementById('result-overlay').classList.remove('active');
+  clearQuizSession(quiz);
   if(quiz.chapters?.length){
     const pack=buildTimedQuestionSet(quiz.chapters,quiz.level,quiz.durationMinutes||5);
     beginQuizFromPool({subject:quiz.subject,level:quiz.level,chapters:quiz.chapters,allQuestions:pack.allQuestions,minutes:quiz.durationMinutes||5}); return;
