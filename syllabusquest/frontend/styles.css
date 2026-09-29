@@ -93,7 +93,7 @@ body.theme-ocean{
   overflow-x:hidden;
 }
 .motion-garden-bg {
-    position: left;
+    position: fixed;
     inset: 0;
     z-index: 0;
     overflow: hidden;
@@ -194,6 +194,8 @@ body.theme-ocean{
 .brand-tag{font-size:12.5px;color:#b6b1e0;margin-top:1px;}
 
 .hero-line{
+  width:fit-content;
+  max-width:90%;
   margin-top:45px;
   background:rgba(255,255,255,0.82);	
   padding:18px 22px;
