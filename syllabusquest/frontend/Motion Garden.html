@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Motion Garden</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#eef6e4;--ink:#213a24;--muted:#587355;--card:#fff;--sky1:#8fd0ff;--sky2:#eaf8ff;--h3:#a6d98a;--h2:#7cc46a;--h1:#57ad52;--stem:#3d8c40;--cloud:#fff;--sun:#ffd23f;--ray:#ffb703;--btn:#2f7d32;--btnink:#fff}
+:root:not([data-theme="light"]){}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1a12;--ink:#e6f2df;--muted:#9bb59a;--card:#14241a;--sky1:#0b1d3a;--sky2:#2d426e;--h3:#1f4d3a;--h2:#1a4232;--h1:#153a2a;--stem:#4fae5a;--cloud:#8195bb;--sun:#f4f1de;--ray:#c9d1e8;--btn:#7bd68a;--btnink:#0e1a12}}
+:root[data-theme="dark"]{--bg:#0e1a12;--ink:#e6f2df;--muted:#9bb59a;--card:#14241a;--sky1:#0b1d3a;--sky2:#2d426e;--h3:#1f4d3a;--h2:#1a4232;--h1:#153a2a;--stem:#4fae5a;--cloud:#8195bb;--sun:#f4f1de;--ray:#c9d1e8;--btn:#7bd68a;--btnink:#0e1a12}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Fredoka","Trebuchet MS",system-ui,sans-serif}
+main{max-width:960px;margin:0 auto;padding:20px 16px 28px}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+h1{margin:0;font-size:clamp(1.8rem,5vw,2.6rem);font-weight:600;letter-spacing:.01em}
+header p,.cap{margin:4px 0 0;color:var(--muted);font-size:1rem;line-height:1.5}
+button{font:inherit;font-weight:500;background:var(--btn);color:var(--btnink);border:0;border-radius:999px;padding:10px 20px;cursor:pointer}
+button:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+.card{background:var(--card);border-radius:22px;overflow:hidden}
+svg{display:block;width:100%;height:auto;cursor:cell;touch-action:manipulation}
+.off *{animation:none!important}
+.spin{animation:spin 50s linear infinite}
+.cloud{animation:cloud 90s linear infinite}
+.sway{animation:sway 4s ease-in-out infinite alternate}
+.grow{animation:grow .8s ease-out both}
+.wander{animation:wander linear infinite}
+.hop{animation:hop .75s ease-in-out infinite}
+.ear{transform-box:fill-box;transform-origin:50% 100%;animation:ear 1.4s ease-in-out infinite}
+.st{transform-box:fill-box;transform-origin:50% 100%;animation:ear 2.4s ease-in-out infinite}
+.wob{animation:wob .45s ease-in-out infinite alternate}
+.bee{animation:buzz 14s ease-in-out infinite}
+.wing{animation:wing .12s ease-in-out infinite}
+.bf{animation:flutter 18s ease-in-out infinite}
+.flap{animation:flap .35s ease-in-out infinite alternate}
+.fly{animation:fly 28s linear infinite}
+.bob{animation:bob 1s ease-in-out infinite alternate}
+.bw{animation:bw .45s ease-in-out infinite alternate}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes cloud{from{transform:translateX(-240px)}to{transform:translateX(900px)}}
+@keyframes sway{from{transform:rotate(-4deg)}to{transform:rotate(4deg)}}
+@keyframes grow{from{transform:scale(0)}to{transform:scale(1)}}
+@keyframes wander{0%{transform:translateX(0) scaleX(1)}47%{transform:translateX(var(--dx)) scaleX(1)}50%{transform:translateX(var(--dx)) scaleX(-1)}97%{transform:translateX(0) scaleX(-1)}100%{transform:translateX(0) scaleX(1)}}
+@keyframes hop{0%,100%{transform:translateY(0) scale(1.05,.93)}35%{transform:translateY(-34px) scale(.96,1.06)}70%{transform:translateY(0) scale(1.05,.93)}}
+@keyframes ear{0%,100%{transform:rotate(0)}50%{transform:rotate(-10deg)}}
+@keyframes wob{from{transform:rotate(-4deg)}to{transform:rotate(4deg)}}
+@keyframes wing{0%,100%{transform:rotate(-25deg)}50%{transform:rotate(20deg)}}
+@keyframes buzz{0%{transform:translate(0,0) scaleX(1)}20%{transform:translate(110px,-30px) scaleX(1)}40%{transform:translate(200px,30px) scaleX(1)}44%{transform:translate(190px,40px) scaleX(-1)}60%{transform:translate(120px,80px) scaleX(-1)}80%{transform:translate(20px,30px) scaleX(-1)}96%{transform:translate(0,0) scaleX(-1)}100%{transform:translate(0,0) scaleX(1)}}
+@keyframes flutter{0%,100%{transform:translate(0,0) rotate(-10deg)}25%{transform:translate(80px,-40px) rotate(15deg)}50%{transform:translate(170px,10px) rotate(-5deg)}75%{transform:translate(70px,50px) rotate(20deg)}}
+@keyframes flap{from{transform:scaleX(1)}to{transform:scaleX(.2)}}
+@keyframes fly{from{transform:translateX(-80px)}to{transform:translateX(900px)}}
+@keyframes bob{from{transform:translateY(-6px)}to{transform:translateY(6px)}}
+@keyframes bw{from{transform:scaleY(1)}to{transform:scaleY(-.8)}}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <div>
+    <h1>Motion Garden</h1>
+    <p>Tap the meadow to plant a flower.</p>
+  </div>
+  <button id="t" type="button" aria-pressed="false">Pause motion</button>
+</header>
+<div class="card">
+<svg id="s" viewBox="0 0 800 480" role="img" aria-label="An animated garden with a hopping rabbit, a crawling snail and ladybug, a buzzing bee, a butterfly, birds and swaying flowers">
+<defs>
+  <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--sky1)"/><stop offset="1" style="stop-color:var(--sky2)"/></linearGradient>
+  <g id="cl" style="fill:var(--cloud)"><circle cx="30" cy="20" r="18"/><circle cx="55" cy="12" r="22"/><circle cx="82" cy="20" r="17"/><rect x="20" y="20" width="72" height="18" rx="9"/></g>
+  <g id="wl"><path d="M0 -2C-8 -26-38 -30-34 -8C-32 2-10 4 0 -2Z" fill="#ff8fab"/><path d="M0 2C-6 12-22 24-18 8C-16 2-6 0 0 2Z" fill="#ffb703"/><circle cx="-24" cy="-14" r="3.5" fill="#fff" opacity=".8"/></g>
+</defs>
+<rect width="800" height="480" fill="url(#sky)"/>
+<g transform="translate(670 84)"><g class="spin" id="rays"></g><circle r="30" style="fill:var(--sun)"/></g>
+<g class="cloud" style="animation-delay:-30s"><use href="#cl" y="50"/></g>
+<g class="cloud" style="animation-duration:120s;animation-delay:-80s"><use href="#cl" y="140" transform="translate(0 0) scale(.8)"/></g>
+<path style="fill:var(--h3)" d="M0 300Q200 240 400 290T800 270V480H0Z"/>
+<path style="fill:var(--h2)" d="M0 345Q250 295 500 340T800 325V480H0Z"/>
+<path style="fill:var(--h1)" d="M0 388Q400 352 800 388V480H0Z"/>
+<g id="grass"></g>
+<g id="flowers"></g>
+
+<!-- rabbit -->
+<g transform="translate(80 428) scale(.95)"><g class="wander" style="--dx:170px;animation-duration:12s"><g class="hop">
+  <circle cx="-27" cy="-27" r="8" fill="#fff"/>
+  <ellipse cx="0" cy="-22" rx="30" ry="19" fill="#f1e9df"/>
+  <ellipse cx="-14" cy="-3" rx="14" ry="6" fill="#e6dccf"/>
+  <ellipse cx="18" cy="-4" rx="10" ry="5" fill="#e6dccf"/>
+  <g class="ear"><ellipse cx="20" cy="-64" rx="6" ry="17" fill="#f1e9df" transform="rotate(-10 20 -64)"/><ellipse cx="20" cy="-64" rx="2.8" ry="12" fill="#f7b6c2" transform="rotate(-10 20 -64)"/></g>
+  <g class="ear" style="animation-delay:-.5s"><ellipse cx="32" cy="-63" rx="6" ry="17" fill="#f1e9df" transform="rotate(8 32 -63)"/><ellipse cx="32" cy="-63" rx="2.8" ry="12" fill="#f7b6c2" transform="rotate(8 32 -63)"/></g>
+  <circle cx="28" cy="-38" r="14" fill="#f1e9df"/>
+  <circle cx="34" cy="-42" r="2" fill="#333"/><circle cx="41" cy="-37" r="2.3" fill="#f28ba0"/>
+</g></g></g>
+
+<!-- snail -->
+<g transform="translate(420 462)"><g class="wander" style="--dx:210px;animation-duration:44s">
+  <ellipse cx="0" cy="-6" rx="32" ry="6" fill="#d9b382"/><ellipse cx="26" cy="-18" rx="6" ry="13" fill="#d9b382"/><circle cx="27" cy="-30" r="6" fill="#d9b382"/>
+  <g class="st"><path d="M25 -34L22 -46" stroke="#d9b382" stroke-width="2" stroke-linecap="round"/><circle cx="22" cy="-47" r="2.2" fill="#333"/></g>
+  <g class="st" style="animation-delay:-1s"><path d="M30 -34L34 -46" stroke="#d9b382" stroke-width="2" stroke-linecap="round"/><circle cx="34" cy="-47" r="2.2" fill="#333"/></g>
+  <circle cx="-6" cy="-24" r="17" fill="#c46b3a"/><g fill="none" stroke="#f4c9a0" stroke-width="2.4"><circle cx="-6" cy="-24" r="11"/><circle cx="-6" cy="-24" r="5.5"/></g>
+</g></g>
+
+<!-- ladybug -->
+<g transform="translate(230 446) scale(1.2)"><g class="wander" style="--dx:250px;animation-duration:26s"><g class="wob">
+  <circle cy="-9" r="9" fill="#e63946"/><path d="M0 -18V0" stroke="#222" stroke-width="1.5"/>
+  <circle cx="-4" cy="-12" r="1.7" fill="#222"/><circle cx="4" cy="-12" r="1.7" fill="#222"/><circle cx="-3" cy="-5" r="1.5" fill="#222"/><circle cx="4" cy="-5" r="1.5" fill="#222"/>
+  <circle cx="10" cy="-9" r="4" fill="#222"/>
+</g></g></g>
+
+<!-- bee -->
+<g transform="translate(280 230)"><g class="bee">
+  <g transform="translate(-2 -7)"><g class="wing"><ellipse cx="-3" cy="-7" rx="4" ry="8" transform="rotate(-20)" fill="#e9f6ff" opacity=".85"/></g></g>
+  <g transform="translate(3 -7)"><g class="wing" style="animation-delay:-.05s"><ellipse cx="3" cy="-7" rx="4" ry="8" transform="rotate(20)" fill="#e9f6ff" opacity=".85"/></g></g>
+  <ellipse rx="12" ry="8" fill="#ffcc33"/><path d="M-3 -7.5V7.5M4 -6.5V6.5" stroke="#3b2a1a" stroke-width="3.5"/>
+  <circle cx="12" cy="-1" r="5" fill="#3b2a1a"/><path d="M-12 -1L-18 1.5-12 4z" fill="#3b2a1a"/>
+</g></g>
+
+<!-- butterfly -->
+<g transform="translate(520 210)"><g class="bf">
+  <g class="flap"><use href="#wl"/><use href="#wl" transform="scale(-1 1)"/></g>
+  <ellipse rx="1.8" ry="10" fill="#3b2a1a"/><path d="M0 -10Q-4 -18-8 -19M0 -10Q4 -18 8 -19" stroke="#3b2a1a" fill="none" stroke-width="1"/>
+</g></g>
+
+<!-- bird -->
+<g id="b1" transform="translate(0 100)"><g class="fly"><g class="bob">
+  <path d="M-12 -2L-27 -7-24 3z" fill="#4f6f9f"/><ellipse rx="14" ry="7" fill="#6c8ebf"/><circle cx="13" cy="-4" r="6" fill="#6c8ebf"/>
+  <path d="M18 -5L26 -2 18 1z" fill="#ffb703"/><circle cx="15" cy="-5.5" r="1.4" fill="#222"/>
+  <g class="bw"><ellipse cx="-4" cy="-10" rx="5" ry="12" fill="#4f6f9f"/></g>
+</g></g></g>
+</svg>
+</div>
+<p class="cap">A rabbit, a snail, a ladybug, a bee, a butterfly and two birds share the meadow. Each new flower sways with the rest.</p>
+</main>
+<script>
+const NS='http://www.w3.org/2000/svg',svg=document.getElementById('s');
+const $=(t,a,p)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);p&&p.appendChild(e);return e};
+let seed=7;const r=()=>(seed=seed*16807%2147483647)/2147483647;
+for(let i=0;i<12;i++)$('line',{y1:-40,y2:-55,stroke:'var(--ray)','stroke-width':4,'stroke-linecap':'round',transform:`rotate(${i*30})`},document.getElementById('rays'));
+const fl=document.getElementById('flowers'),cols=['#ff6b8b','#ffb703','#c77dff','#ff8fab','#f8f4e3','#ff7b54'];
+function flower(x,y,d){
+  const sc=Math.max(.6,Math.min(1.3,(y-300)/100)),h=40+r()*50,c=cols[r()*cols.length|0],n=5+(r()*3|0);
+  const g=$('g',{transform:`translate(${x} ${y}) scale(${sc})`},fl);
+  const gr=$('g',{class:'grow',style:`animation-delay:${d}s`},g);
+  const sw=$('g',{class:'sway',style:`animation-duration:${3+r()*2}s;animation-delay:${-r()*4}s`},gr);
+  $('path',{d:`M0 0Q${r()*8-4} ${-h/2} 0 ${-h}`,stroke:'var(--stem)','stroke-width':3,fill:'none','stroke-linecap':'round'},sw);
+  $('ellipse',{cx:9,cy:-h*.35,rx:9,ry:3.5,transform:`rotate(-30 9 ${-h*.35})`,style:'fill:var(--stem)'},sw);
+  const hd=$('g',{transform:`translate(0 ${-h})`},sw);
+  for(let k=0;k<n;k++)$('ellipse',{cy:-8,rx:5,ry:9,fill:c,transform:`rotate(${k*360/n})`},hd);
+  $('circle',{r:5,fill:'#ffd166'},hd);
+}
+const pts=[];for(let i=0;i<16;i++)pts.push([30+i*47+r()*30,352+r()*105]);
+pts.sort((a,b)=>a[1]-b[1]).forEach((p,i)=>flower(p[0],p[1],i*.07));
+const gs=document.getElementById('grass');
+for(let i=0;i<70;i++){const y=385+r()*90,g=$('g',{transform:`translate(${r()*800} ${y}) scale(${.6+(y-380)/90})`},gs);
+  $('path',{d:'M-4 0Q-3 -10-8 -18Q2 -10 4 0Z',style:'fill:var(--stem)'},$('g',{class:'sway',style:`animation-delay:${-r()*3}s`},g));}
+const b=document.getElementById('b1'),c=b.cloneNode(true);c.removeAttribute('id');
+c.setAttribute('transform','translate(0 55) scale(.7)');c.querySelector('.fly').style.animationDelay='-13s';b.after(c);
+svg.addEventListener('click',e=>{const p=svg.createSVGPoint();p.x=e.clientX;p.y=e.clientY;const q=p.matrixTransform(svg.getScreenCTM().inverse());if(q.y>345&&q.y<470)flower(q.x,q.y,0)});
+const t=document.getElementById('t');let off=matchMedia('(prefers-reduced-motion: reduce)').matches;
+function set(){svg.classList.toggle('off',off);t.textContent=off?'Play motion':'Pause motion';t.setAttribute('aria-pressed',String(off))}
+t.onclick=()=>{off=!off;set()};set();
+</script>
+</body>
+</html>

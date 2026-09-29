@@ -1,7 +1,6 @@
 import enum
 import uuid
 from datetime import datetime
-
 from sqlalchemy import (
     Column,
     String,
@@ -451,6 +450,31 @@ class Progress(Base):
         JSON,
         nullable=False,
         default=dict
+    )
+    # First-attempt tracking stays inside the existing Progress row.
+    # No separate question-attempt table is required.
+    question_attempts = Column(
+        JSON,
+        nullable=False,
+        default=dict
+    )
+
+    first_attempt_questions = Column(
+        Integer,
+        nullable=False,
+        default=0
+    )
+
+    first_attempt_correct = Column(
+        Integer,
+        nullable=False,
+        default=0
+    )
+
+    first_attempt_points = Column(
+        Integer,
+        nullable=False,
+        default=0
     )
 
     enrolled = Column(

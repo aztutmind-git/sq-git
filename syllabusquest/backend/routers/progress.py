@@ -63,6 +63,9 @@ def _to_schema(db: Session, p: models.Progress) -> schemas.SubjectProgress:
         max_level=max_level,
         demo_level_cap=_demo_cap_for_subject(db, p.subject),
         xp=p.xp, stars={str(k): v for k, v in (p.stars or {}).items()},
+        first_attempt_questions=int(p.first_attempt_questions or 0),
+        first_attempt_correct=int(p.first_attempt_correct or 0),
+        first_attempt_points=int(p.first_attempt_points or 0),
         enrolled=p.enrolled,
         level_labels=_level_labels_for_subject(db, p.subject, max_level),
     )
@@ -125,7 +128,11 @@ def save_quiz_attempt(
     # 90%+ = 3, 70%+ = 2, 50%+ = 1, otherwise 0.
     if payload.out_of_hearts:
         stars = 0
+    elif score_pct >= 100:
+        stars = 5
     elif score_pct >= 90:
+        stars = 4
+    elif score_pct >= 80:
         stars = 3
     elif score_pct >= 70:
         stars = 2
@@ -145,10 +152,40 @@ def save_quiz_attempt(
     previous_stars = current_stars.get(str(payload.level), 0)
     saved_stars = max(previous_stars, stars)
     current_stars[str(payload.level)] = saved_stars
+    saved_stars = max(previous_stars, stars)
+    current_stars[str(payload.level)] = saved_stars
 
-    # Award XP for the current attempt. Keep the frontend's existing
-    # 10-XP-per-correct-answer rule as the server-side source of truth.
-    xp_gained = payload.correct_count * 10
+    # Question points are awarded ONLY for questions that are new to this
+    # student's Progress row. Retakes/re-attends never add points again.
+    attempts = dict(progress.question_attempts or {})
+    new_questions = 0
+    new_correct = 0
+    new_points = 0
+    for answer in (payload.first_attempt_answers or []):
+        qid = str(answer.get("question_id") or answer.get("id") or "").strip()
+        if not qid:
+            continue
+        key = qid
+        if key in attempts:
+            continue
+        is_correct = bool(answer.get("correct"))
+        attempts[key] = {
+            "subject": subject,
+            "level": int(payload.level),
+            "correct": is_correct,
+        }
+        new_questions += 1
+        if is_correct:
+            new_correct += 1
+            new_points += 10
+
+    progress.question_attempts = attempts
+    progress.first_attempt_questions = int(progress.first_attempt_questions or 0) + new_questions
+    progress.first_attempt_correct = int(progress.first_attempt_correct or 0) + new_correct
+    progress.first_attempt_points = int(progress.first_attempt_points or 0) + new_points
+
+    # XP now follows the same first-attempt-only rule.
+    xp_gained = new_points
     progress.xp = (progress.xp or 0) + xp_gained
 
     # Unlock only the next sequential level for levels 1-5.

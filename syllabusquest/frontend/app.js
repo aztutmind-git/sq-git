@@ -59,6 +59,7 @@ let STATE = {
   currentToc: null,
   adminSubject: 'chemistry',
   pendingResetToken: null,
+  firstAttemptLedger: {}, // questionKey -> {correct, points, subject, level, answeredAt}
 };
 
 function escapeHtml(s){
@@ -430,6 +431,50 @@ async function submitPasswordReset(){
   }catch(err){
     toast(err.message || 'Could not reset password');
   }
+}
+/* =========================================================
+   FIRST-ATTEMPT QUESTION POINTS
+   A question can earn points only the first time this student answers it.
+   Retakes/re-attends never add question points again.
+   ========================================================= */
+function firstAttemptStorageKey(){
+  const uid = String(STATE.user?.userid || STATE.user?.email || 'guest');
+  return `sq_first_attempts_${uid}`;
+}
+function questionProgressKey(q){
+  if(q == null) return '';
+  const id = q.question_id ?? q.id ?? q.questionId;
+  if(id != null && String(id).trim()) return `id:${String(id).trim()}`;
+  const raw = [q.subject||STATE.quiz?.subject||'', q.level||STATE.quiz?.level||'', q.chapter||'', q.topic||'', q.question||''].map(v=>String(v).trim().toLowerCase()).join('|');
+  return `fp:${raw}`;
+}
+function loadFirstAttemptLedger(){
+  try{
+    const raw=localStorage.getItem(firstAttemptStorageKey());
+    STATE.firstAttemptLedger = raw ? (JSON.parse(raw)||{}) : {};
+  }catch(e){ STATE.firstAttemptLedger={}; }
+}
+function saveFirstAttemptLedger(){
+  try{ localStorage.setItem(firstAttemptStorageKey(), JSON.stringify(STATE.firstAttemptLedger||{})); }catch(e){}
+}
+function registerQuestionFirstAttempt(q, wasCorrect){
+  const key=questionProgressKey(q);
+  if(!key) return {isFirstAttempt:true, points:wasCorrect?10:0};
+  if(STATE.firstAttemptLedger[key]) return {isFirstAttempt:false, points:0};
+  const entry={correct:!!wasCorrect, points:wasCorrect?10:0, subject:q.subject||STATE.quiz?.subject||'', level:Number(q.level||STATE.quiz?.level||0), answeredAt:new Date().toISOString()};
+  STATE.firstAttemptLedger[key]=entry;
+  saveFirstAttemptLedger();
+  return {isFirstAttempt:true, points:entry.points};
+}
+function firstAttemptStatsForQuiz(quiz){
+  const subject=quiz?.subject||'';
+  const level=Number(quiz?.level||0);
+  const entries=Object.values(STATE.firstAttemptLedger||{}).filter(e=>String(e.subject||subject)===String(subject) && Number(e.level||level)===level);
+  return {
+    total:entries.length,
+    correct:entries.filter(e=>e.correct).length,
+    points:entries.reduce((n,e)=>n+Number(e.points||0),0),
+  };
 }
 
 /* =========================================================
@@ -1317,6 +1362,13 @@ function selectOption(i){
   btns.forEach(b=>b.classList.add('disabled'));
   btns.forEach(b=>b.onclick=null);
   const wasCorrect = (i === q.correct);
+  const firstAttempt = registerQuestionFirstAttempt(q, wasCorrect);
+  quiz.firstAttemptAnswered = Number(quiz.firstAttemptAnswered||0) + (firstAttempt.isFirstAttempt ? 1 : 0);
+  quiz.firstAttemptCorrect = Number(quiz.firstAttemptCorrect||0) + (firstAttempt.isFirstAttempt && wasCorrect ? 1 : 0);
+  quiz.firstAttemptPoints = Number(quiz.firstAttemptPoints||0) + Number(firstAttempt.points||0);
+  quiz.batchFirstAttemptAnswered = Number(quiz.batchFirstAttemptAnswered||0) + (firstAttempt.isFirstAttempt ? 1 : 0);
+  quiz.batchFirstAttemptCorrect = Number(quiz.batchFirstAttemptCorrect||0) + (firstAttempt.isFirstAttempt && wasCorrect ? 1 : 0);
+  quiz.batchFirstAttemptPoints = Number(quiz.batchFirstAttemptPoints||0) + Number(firstAttempt.points||0);
   if(wasCorrect){
     quiz.correct++; quiz.batchCorrect++; quiz.totalCorrect++;
     btns[i].classList.add('correct');
@@ -1368,7 +1420,18 @@ async function finishQuizBatch(timeUp=false,outOfHearts=false){
   quiz.levelComplete=true; clearQuizSession(quiz);
   const total=Math.max(1,quiz.allQuestions?.length||batchTotal), totalCorrect=Number(quiz.totalCorrect||quiz.correct||0), scorePct=Math.round((totalCorrect/total)*100);
   let result=null;
-  try{result=await api('/api/progress/attempt',{method:'POST',body:{subject:quiz.subject,level:quiz.level,correct_count:totalCorrect,total_questions:total,out_of_hearts:!!outOfHearts}});}catch(err){console.warn('Progress save unavailable; showing local level result:',err);}
+  try{result=await api('/api/progress/attempt',{method:'POST',body:{
+      subject:quiz.subject, level:quiz.level,
+      correct_count:totalCorrect, total_questions:total,
+      out_of_hearts:!!outOfHearts,
+      first_attempt_correct:Number(quiz.firstAttemptCorrect||0),
+      first_attempt_total:Number(quiz.firstAttemptAnswered||0),
+      first_attempt_points:Number(quiz.firstAttemptPoints||0),
+      question_points:Number(quiz.firstAttemptPoints||0),
+      first_attempt_answers:Object.entries(STATE.firstAttemptLedger||{})
+        .filter(([key,e])=>String(e.subject||'')===String(quiz.subject) && Number(e.level||0)===Number(quiz.level) && String(key).startsWith('id:'))
+        .map(([key,e])=>({question_id:Number(String(key).slice(3)),correct:!!e.correct}))
+    }});}catch(err){console.warn('Progress save unavailable; showing local level result:',err);}  
   // Calculate the completion result locally first. The API may return a
   // stale/partial progress object (or zero stars) while the student has
   // already completed the level in this browser session. Never let that

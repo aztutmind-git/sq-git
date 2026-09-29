@@ -268,6 +268,9 @@ class SubjectProgress(BaseModel):
     demo_level_cap: int  # guest-tier ceiling for this subject; irrelevant for silver/premium
     xp: int
     stars: Dict[str, int]
+    first_attempt_questions: int = 0
+    first_attempt_correct: int = 0
+    first_attempt_points: int = 0
     enrolled: bool  # false = shown locked (with an upgrade/registration prompt) rather than hidden
     # Display label for levels beyond 5 — e.g. {"6": "Newton's Laws"} — derived
     # from each level's questions' Topic tag. Levels 1-5 always use their
@@ -281,7 +284,7 @@ class QuizAttemptRequest(BaseModel):
     correct_count: int
     total_questions: int
     out_of_hearts: bool = False
-
+    first_attempt_answers: List[Dict] = Field(default_factory=list)
 
 class QuizAttemptResult(BaseModel):
     passed: bool
