@@ -93,7 +93,7 @@ body.theme-ocean{
   overflow-x:hidden;
 }
 .motion-garden-bg {
-    position: fixed;
+    position: left;
     inset: 0;
     z-index: 0;
     overflow: hidden;
@@ -101,8 +101,8 @@ body.theme-ocean{
 }
 
 .motion-garden-bg iframe {
-    width: 25%;
-    height: 25%;
+    width: 100%;
+    height: 50%;
     border: 0;
     pointer-events: none;
 }
