@@ -87,10 +87,26 @@ body.theme-ocean{
   max-width:480px;
   margin:0 auto;
   min-height:100vh;
-  background:var(--pink);
+  background:transparent;
   position:relative;
+  z-index:1;
   overflow-x:hidden;
 }
+.motion-garden-bg {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.motion-garden-bg iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    pointer-events: none;
+}
+
 /* On tablet/desktop widths, the app becomes a centered "phone shell" — give
    it a shadow and let the themed outer background show around it, instead
    of stranding a full-bleed mobile layout in the middle of a wide viewport. */
